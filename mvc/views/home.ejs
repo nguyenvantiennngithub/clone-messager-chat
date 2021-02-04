@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <title>VanTiennn</title>
+</head>
+<body class="bg-light">
+
+    
+    <div class="container ">
+    
+        <div class="row">
+            <div class="col-8 mt-5 pt-5">
+                <h1 class="text-primary mt-5 font-weight-bold">facebook</h1>
+                <h3 class="mt-5">Facebook giúp bạn kết nối và chia sẻ với mọi người trong cuộc sống của bạn.</h3>
+            </div>
+            <div class="col-4">
+                <h1 class="mt-5 pt-5">Đăng nhập</h1>
+                <div >
+                    <form class="py-3" action="/auth/checkLogin" method="POST">
+                        <p class="text-danger"><%-messageError%></p>
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" value="<%-username%>" placeholder="Enter your username">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" id="password" name="password"  value="<%-password%>"placeholder="Enter your password">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Login</button>
+                    </form>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="/auth/register">New around here? Sign up</a>
+                    <a class="dropdown-item" href="#">Forgot password?</a>
+                  </div>
+            </div>
+        </div>
+    </div>
+   
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</body>
+</html>

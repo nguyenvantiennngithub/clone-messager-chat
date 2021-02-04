@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <title>VanTiennn</title>
+</head>
+<body>
+    
+    <div class="container">
+        <div class="row">
+            <div class="col-4"></div>
+            <div class="col-4">
+                <h1 class="mt-5 pd-5 mb-5">Đăng ký</h1>
+                <a href="/">Bạn đã có tài khoảng?</a>
+                <form action="/auth/checkRegister" method="POST">
+                    <p class="text-danger"><%- messageError%></p>
+                    <div class="form-group">
+                      <label for="nickname">Name account</label>
+                      <input type="text" class="form-control" id="nickname" name="nickname" value="<%-nickname%>" placeholder="Enter your name account">
+                    </div>
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" value="<%-username%>" placeholder="Enter your username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" value="<%-password%>" placeholder="Enter your password">
+                    </div>
+
+                    <input type="text" id="socketid" name="socketid" hidden>
+                    <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+                  </form>
+            </div>
+            <div class="col-4"></div>
+        </div>
+    </div>
+    <script src="/js/jquery.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+        $(document).ready(()=>{
+            socket.on('connect', ()=>{
+                $('#socketid').val(socket.id)
+            })
+        })
+        
+
+    </script>
+</body>
+</html>
