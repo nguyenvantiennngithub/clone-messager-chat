@@ -1,11 +1,9 @@
 const homeRouter = require('./home.router')
 const authRouter = require('./auth.router')
-const apiRouter = require('./api.router')
-
+const middleware = require('../../middleware/index.middleware')
 function connect(app){
     app.use('/', homeRouter)
     app.use('/auth', authRouter)
-    app.use('/api', apiRouter)
 }
 
 module.exports = connect

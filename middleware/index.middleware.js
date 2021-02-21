@@ -1,16 +1,15 @@
 class indexMiddleware{
     checkAuth(req, res, next){
+        // console.log('isauth: ', req.session.isAuth)
         if (req.session.isAuth){
             res.locals.username = req.session.username
-            res.locals.password = req.session.password
             next()
         }
         else{
-            console.log("ve nha")
             res.render('home', {
                 username: '',
                 password: '',
-                messageError: 'You need to login '
+                messageError: 'You need to login'
             })
         }
     }

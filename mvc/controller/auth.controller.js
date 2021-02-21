@@ -4,16 +4,16 @@ class authController{
     //[POST] /auth/checkLogin
     checkLogin(req, res){
         const {username, password} = req.body
-        var sql = `select password from users where username='${username}'`
+        var sql = `select password, socketid from users where username='${username}'`
         db.query(sql, (err, result)=>{
             if (err) console.log(err)
             if (result.length == 1){
                 var isMatch = bcrypt.compareSync(password, result[0].password)
                 if (isMatch){
+                    // console.log("sessionid: ", req.session.id)
                     req.session.isAuth = isMatch
-                    console.log(req.session.isMatch)
                     req.session.username = username
-                    console.log("go to chat")
+                    
                     return res.redirect('/chat')
                 }
             }
@@ -38,17 +38,22 @@ class authController{
     //[POST] /auth/checkRegister
     checkRegister(req, res){
         const saltRounds = 8
+        const io = req.app.get('socketio');
         const {nickname, username, password, socketid} = req.body
         const hashPsw = bcrypt.hashSync(password, saltRounds);
+
+        //tìm xem là user này đã tồn tại chưa
         var sql = `select * from users where username='${req.body.username}'`
         db.query(sql, (err, result)=>{
             if (err) console.log(err)
-            console.log(result)
-            if (result.length == 0){
+            if (result.length == 0){ // nếu chưa tồn tại thì insert vào db
                 var insert = `insert into users (nickname, username, password, socketid) values ('${nickname}', '${username}', '${hashPsw}', '${socketid}')`
                 db.query(insert, (err, result)=>{
                     if (err) console.log(err)
-                    else return res.send("ok insert successfully await redirect to chat page")
+                    else{
+                        io.emit('new user', {username, nickname}) //sau khi đã insert thì sẽ báo cho clinet biết
+                        return res.redirect("/")
+                    } 
                 })
             }else{
                 return res.render('register', {
@@ -64,7 +69,7 @@ class authController{
         req.session.destroy(function(err) {
             if (err) throw err
             res.redirect('/')
-          })
+        })
     }
 }
 
