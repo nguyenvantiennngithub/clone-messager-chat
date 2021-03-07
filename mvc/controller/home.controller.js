@@ -13,6 +13,8 @@ class homeController{
     }
 
     addChatList(req, res, next){
+
+        console.log('17 add chat list')
         //hàm lấy socketid từ db để tránh trùng code gây mệt mỏi cho mắt
         const io = req.app.get('socketio')
         const {sender, receiver} = req.body
@@ -49,23 +51,23 @@ class homeController{
                 })
                
                 //kiem tra ton tai roi moi insert vao
-                sqlCheckExists = `select * from list_receiver where sender='${receiver}' AND receiver='${sender}'`
-                db.query(sqlCheckExists, (err, result)=>{
-                    if (err) throw err
-                    if (result.length == 0){
-                        var insertReceiver = `insert into list_receiver (sender, receiver) values ('${receiver}', '${sender}')`
-                        db.query(insertReceiver, (err, result)=>{
-                            if (err) throw err
-                            else{
-                                //emit tới người nhận
-                                functionClass.getSocketid(receiver).then((socketidReceiver)=>{
-                                    io.in(socketidReceiver).emit('receiver add chat list', {sender})
-                                })
-                            }
-                        })
-                    }
+                // sqlCheckExists = `select * from list_receiver where sender='${receiver}' AND receiver='${sender}'`
+                // db.query(sqlCheckExists, (err, result)=>{
+                //     if (err) throw err
+                //     if (result.length == 0){
+                //         var insertReceiver = `insert into list_receiver (sender, receiver) values ('${receiver}', '${sender}')`
+                //         db.query(insertReceiver, (err, result)=>{
+                //             if (err) throw err
+                //             else{
+                //                 //emit tới người nhận
+                //                 functionClass.getSocketid(receiver).then((socketidReceiver)=>{
+                //                     io.in(socketidReceiver).emit('receiver add chat list', {sender})
+                //                 })
+                //             }
+                //         })
+                //     }
 
-                })
+                // })
             }
         })
         res.end()
