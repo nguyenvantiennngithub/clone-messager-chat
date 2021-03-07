@@ -22,7 +22,7 @@ class apiController{
 
     userChatList(req, res, next){
         const username = res.locals.username
-        var sql =  `select sender, receiver from list_receiver where sender='${username}' AND active=1`
+        var sql =  `select sender, receiver from list_receiver where sender='${username}'`
         db.query(sql, (err, result)=>{
             if (err) throw err
             res.json(result)

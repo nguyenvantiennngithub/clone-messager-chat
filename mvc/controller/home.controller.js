@@ -12,9 +12,8 @@ class homeController{
         res.render("chat")
     }
 
-    addChatList(req, res){
+    addChatList(req, res, next){
         //hàm lấy socketid từ db để tránh trùng code gây mệt mỏi cho mắt
-       
         const io = req.app.get('socketio')
         const {sender, receiver} = req.body
         console.log(req.body)
@@ -39,7 +38,7 @@ class homeController{
                         db.query(insertSender, (err, result)=>{
                             if (err) throw err
                             else{
-                                //emit tới người gữi
+                                // emit tới người gữi
                                 functionClass.getSocketid(sender).then((socketidSender)=>{
                                     io.in(socketidSender).emit('sender add chat list', {receiver})
                                 })
@@ -65,9 +64,11 @@ class homeController{
                             }
                         })
                     }
+
                 })
             }
         })
+        res.end()
     }
     hideChatList(req, res, next){
         const io = req.app.get('socketio')
@@ -75,14 +76,13 @@ class homeController{
         var sqlDelete = `delete from list_receiver where sender='${sender}' AND receiver='${receiver}'`
         db.query(sqlDelete, (err, result)=>{
             if (err) throw err
-            console.log(sender, receiver)
+            console.log("77 home", result)
             functionClass.getSocketid(sender).then((socketidSender)=>{
                 io.in(socketidSender).emit('sender remove chat list', {receiver})
             })
-            next()
         })
+        res.end()
     }
-
 }
 
 module.exports = new homeController()
