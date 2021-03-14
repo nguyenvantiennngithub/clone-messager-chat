@@ -119,7 +119,8 @@ $(document).ready(()=>{
                 }else{
                     return;
                 }
-            });
+            })
+
             $('#list-total-user').html(html)
         })
         .catch((err)=>{
