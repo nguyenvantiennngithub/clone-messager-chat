@@ -1,7 +1,7 @@
 var socket = io();
 
 //code html render ra li ben phai
-function htmlItemTotalList(username, nickname){ //bên phải
+function htmlItemAllUser(username, nickname){ //bên phải
     return `
      <li class="list-group-item list-group-item-success d-flex">
          <span class="text-nickname" style="font-size: 24px">${nickname}</span>
@@ -17,9 +17,9 @@ function htmlItemTotalList(username, nickname){ //bên phải
 }
 
 //code html render ra li ben trai
-function htmlItemChatList(receiver, sender){ //bên trái
+function htmlItemListReceiver(receiver, id){ //bên trái
     return `
-         <li class="list-chat-user-item list-group-item list-group-item-info d-flex">
+         <li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-name=${receiver} data-id=${id}>
              <span class="text-nickname" style="font-size: 24px">${receiver}</span>
              <input class="text-username-left" value="${receiver}" hidden>
              <div class="dropdown ml-auto">
@@ -31,13 +31,51 @@ function htmlItemChatList(receiver, sender){ //bên trái
          </li>`
 }
 
+//render message
+function htmlItemListMessage(sender, message){
+    if ($('#username').text() === sender){
+        return `
+            <li class="list-group-item list-group-item-success list-group-message" style="margin-right: auto">${message}</li>
+        `
+    }else{
+        return `
+            <li class="list-group-item list-group-item-success list-group-message" style="margin-left: auto">${message}</li>
+        `
+    }
+    
+}
+
 $(document).ready(()=>{
-    //Lấy user hiện tại
-    function getCurrentUser(){
-        axios.get('/api/user') //[{nickname, username, socketid}]
+
+    //lay thong tin user hien tai
+    async function getDataCurrentUser(){
+        return await axios.get('/api/user')
         .then((response)=>{
+            return response.data[0]
+        })
+    }
+
+    //lay thong tin tat ca user
+    async function getDataAllUser(){
+        return await axios.get('/api/users')
+        .then((response)=>{
+            return response.data
+        })
+    }
+  
+    //lay thong tin nhung user nam trong chatl ist
+    async function getDataUsersInChatList(){
+        return await axios.get('/api/user-chat-list')
+        .then((response)=>{
+            return response.data
+        })
+    }
+    //Lấy user hiện tại
+    function emitSocketIdOfCurrentUserToServer(){
+        getDataCurrentUser() //[{nickname, username, socketid}]
+        .then((data)=>{
             //emit về server để add socketid
-            socket.id = response.data[0].socketid
+            socket.id = data.socketid
             socket.emit('change socket', socket.id)
         })
         .catch((err)=>{
@@ -47,11 +85,21 @@ $(document).ready(()=>{
     
 
     //call api get list user chat render html
-    async function getChatList(){
-        await axios.get('/api/user-chat-list')
-        .then((response)=>{
-            var html = response.data.map((user)=>{
-                return htmlItemChatList(user.receiver, user.sender)
+    async function renderChatList(){
+        await getDataUsersInChatList()
+        .then((data)=>{ //{sender, receiver, updatedAt, id}
+            //sort theo thoi gian
+            console.log(data)
+            var userSort = data.sort((a, b)=>{
+                var aValue = new Date(a.updatedAt).getTime()//chuyen thoi gian sang number de so sanh
+                var bValue = new Date(b.updatedAt).getTime()
+
+                return aValue - bValue 
+            })        
+
+            //render ra html            
+            var html = userSort.map((user)=>{ //{sender, receiver, updatedAt, id}
+                return htmlItemListReceiver(user.username, user.id)
             })
             $('#list-chat-user').html(html)      
         })  
@@ -61,13 +109,13 @@ $(document).ready(()=>{
     }
 
     //call api get all user render html
-    function getAllUser(){
-        axios.get('/api/users') // [{nickname, username, socketid}, ....]
-        .then((response)=>{
-            
-            var html = response.data.map((user) => {
+    function renderAllUser(){
+         // [{nickname, username, socketid}, ....]
+         getDataAllUser()
+         .then((data)=>{
+            var html = data.map((user) => {
                 if (user.username != $('#username').text()){
-                    return htmlItemTotalList(user.username, user.nickname)
+                    return htmlItemAllUser(user.username, user.nickname)
                 }else{
                     return;
                 }
@@ -121,6 +169,22 @@ $(document).ready(()=>{
         })
     }
     
+    function renderMessage(data){
+        return data.map((item) => {
+            return htmlItemListMessage(item.sender, item.message) 
+        })
+    }
+
+    function getDataMessages(idRoom){
+        $.ajax({
+            url: `/api/messages/${idRoom}`,
+            method: 'GET',
+            success: function(data){
+                var html = renderMessage(data)
+                $('#list-message').html(html)
+            }
+        })
+    }
     //hadle when hover and click to a user in chat list
     function chooseReceiver(){
         // console.log($('.list-chat-user-item'))
@@ -134,14 +198,15 @@ $(document).ready(()=>{
                 $(this).removeClass('list-group-item-primary').addClass('list-group-item-info')
             })
             $(this).click(function(){
-                
+                window.history.pushState("", "", `/chat/${$(this).data('id')}`)
+                getDataMessages($(this).data('id'))
             })
         })
     }
     async function main(){
-        await getCurrentUser()
-        await getAllUser()
-        await getChatList()
+        emitSocketIdOfCurrentUserToServer()
+        await renderAllUser()
+        await renderChatList()
         chooseReceiver()
         addChatList()
         hideChatList()
@@ -162,8 +227,14 @@ $(document).ready(()=>{
     })
 
     //lắng nghe event add 1 user vào chat list
-    socket.on('sender add chat list', (data)=>{ //{receiver}
-        var littleHtml = htmlItemChatList(data.receiver, data.sender)
+    socket.on('sender add chat list', (data)=>{ //{receiver, id}
+        $('.list-chat-user-item').each(function(){
+            if (data.receiver == $(this).data('name')){
+                $(this).remove()
+            }
+        })
+
+        var littleHtml = htmlItemListReceiver(data.receiver, data.id)
         var html = littleHtml.concat($('#list-chat-user').html())
         $('#list-chat-user').html(html)
         hideChatList()

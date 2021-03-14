@@ -1,6 +1,8 @@
 const db = require('../../db/connect.db')
 const functionClass = require('../../public/js/function')
+const { get } = require('../router/home.router')
 class homeController{
+    //[GET] /
     home(req, res){
         res.render('home', {
             messageError: '',
@@ -8,83 +10,103 @@ class homeController{
             password: '',
         })
     }
+    //[GET] /chat/:id
     chat(req, res){
+        console.log(req.params)
+        res.render("chat")
+    }
+
+    chat1(req, res){
         res.render("chat")
     }
 
     addChatList(req, res, next){
-
-        console.log('17 add chat list')
-        //hàm lấy socketid từ db để tránh trùng code gây mệt mỏi cho mắt
-        const io = req.app.get('socketio')
+        const io = req.app.get('socketio') //lay socket
         const {sender, receiver} = req.body
         console.log(req.body)
-        //đầu tiên là kiểm tra xem cái sender và receiver này đa được add chưa
-        var sqlCheckExists = `select * from list_receiver where sender='${sender}' AND receiver='${receiver}'`
-        db.query(sqlCheckExists, (err, result)=>{
-            if (err) throw err
-            //nếu chưa được add thì add còn add rồi thì thôi
-            //sau khi add thì phải emit về cho 2 người
-            //1 là sender 2 là receiver 
-            //mà bắt buộc khi emit về receiver thì phải có socketid của ngdo 
-            //chứ ko thể dùng username của receiver được nên là phải lấy 
-            //cái username của receiver vài db để lấy ra socketid
-            if (result.length == 0){
-                //insert vào db 
-                //insert 2 cái 1 là của sender receiver 2 là receiver sender
-                sqlCheckExists = `select * from list_receiver where sender='${sender}' AND receiver='${receiver}'`
-                db.query(sqlCheckExists, (err, result)=>{
-                    if (err) throw err
-                    if (result.length == 0){
-                        var insertSender = `insert into list_receiver (sender, receiver) values ('${sender}', '${receiver}')`
-                        db.query(insertSender, (err, result)=>{
-                            if (err) throw err
-                            else{
-                                // emit tới người gữi
-                                functionClass.getSocketid(sender).then((socketidSender)=>{
-                                    io.in(socketidSender).emit('sender add chat list', {receiver})
-                                })
-                            }
-                        })
-                    }
-                   
-                })
-               
-                //kiem tra ton tai roi moi insert vao
-                // sqlCheckExists = `select * from list_receiver where sender='${receiver}' AND receiver='${sender}'`
-                // db.query(sqlCheckExists, (err, result)=>{
-                //     if (err) throw err
-                //     if (result.length == 0){
-                //         var insertReceiver = `insert into list_receiver (sender, receiver) values ('${receiver}', '${sender}')`
-                //         db.query(insertReceiver, (err, result)=>{
-                //             if (err) throw err
-                //             else{
-                //                 //emit tới người nhận
-                //                 functionClass.getSocketid(receiver).then((socketidReceiver)=>{
-                //                     io.in(socketidReceiver).emit('receiver add chat list', {sender})
-                //                 })
-                //             }
-                //         })
-                //     }
+        
 
-                // })
+        //đầu tiên kiểm tra xem có trong db chưa
+        var getReceiverSql = `
+            select username, id from rooms 
+            where username='${receiver}' AND id in (select id from rooms where username='${sender}')`
+        db.query(getReceiverSql, (err, result)=>{
+            if (err) throw err
+            if (result.length === 0){//nếu chưa thì insert vào db
+                var idRoom //lưu giá trị id để insert vào db
+                
+                //vì ko để id tự tăng nên phải lấy ra id để tăng lên rồi insert vaof id
+                var getIdSql = `select max(id) as 'maxId' from rooms `
+                db.query(getIdSql, (err, result)=>{
+                    if (err) throw err
+                    idRoom = result[0].maxId + 1
+                    //rồi sau đó insert vào db
+                    // console.log(idRoom)
+
+                    var insertRoomsSql = `
+                        insert into rooms (id, username, is_show) 
+                        values (${idRoom}, '${sender}', 1), (${idRoom}, '${receiver}', 0)`
+                    db.query(insertRoomsSql, (err, result)=>{
+                        if (err) throw err
+                        //emit tới client để nó render html
+                        functionClass.getSocketid(sender).then((socketIdSender)=>{
+                            io.in(socketIdSender).emit('sender add chat list', {receiver, id: idRoom})
+                        })
+                    })
+            })
+
+                
+                
+            }else{//còn có rồi thì sửa cái is_show và cái updatedAt lại
+                var updateUpdatedAtSql = `
+                    update rooms 
+                    set is_show=1, updatedAt=CURRENT_TIMESTAMP() 
+                    where username='${sender}' AND id in (select id from rooms where username='${receiver}')
+                `
+                db.query(updateUpdatedAtSql, (err, result)=>{
+                    if (err) throw err
+                    var getIdRoom = `
+                        select id from rooms 
+                        where username='${sender}' AND id in (select id from rooms where username='${receiver}')`
+                    db.query(getIdRoom, (err, result)=>{
+                        if (err) throw err
+                        var idRoom = result[0].id
+                        functionClass.getSocketid(sender).then((socketIdSender)=>{
+                            io.in(socketIdSender).emit('sender add chat list', {receiver, id: idRoom})
+                        })
+                    })
+                })
             }
+            
         })
+
         res.end()
     }
-    hideChatList(req, res, next){
-        const io = req.app.get('socketio')
+    hideChatList(req, res, next){ //ham an chat list
+        const io = req.app.get('socketio') //lay socket
         const {sender, receiver} = req.body
-        var sqlDelete = `delete from list_receiver where sender='${sender}' AND receiver='${receiver}'`
-        db.query(sqlDelete, (err, result)=>{
+        console.log("hidechatlsit", req.body)
+        // khi ma an thi chi can sua cai is_show=0 thoi
+        var updateIsShowSql = `
+            update rooms set is_show=0 
+            where username='${sender}' AND id in (select id from rooms where username='${receiver}')`
+        db.query(updateIsShowSql, (err, result)=>{
             if (err) throw err
-            console.log("77 home", result)
-            functionClass.getSocketid(sender).then((socketidSender)=>{
-                io.in(socketidSender).emit('sender remove chat list', {receiver})
+                functionClass.getSocketid(sender).then((socketIdSender)=>{//xong thi emit len sever de render ra thang user do
+                io.in(socketIdSender).emit('sender remove chat list', {receiver})
             })
         })
+        // var sqlUpdate = `update list_receiver set is_show=0 where sender='${sender}' AND receiver='${receiver}'`
+        // db.query(sqlUpdate, (err, result)=>{
+        //     if (err) throw err
+        //     functionClass.getSocketid(sender).then((socketIdSender)=>{//xong thi emit len sever de render ra thang user do
+        //         io.in(socketIdSender).emit('sender remove chat list', {receiver})
+        //     })
+        // })
+
         res.end()
     }
 }
 
 module.exports = new homeController()
+
