@@ -92,7 +92,7 @@ class homeController{
             where username='${sender}' AND id in (select id from rooms where username='${receiver}')`
         db.query(updateIsShowSql, (err, result)=>{
             if (err) throw err
-                functionClass.getSocketid(sender).then((socketIdSender)=>{//xong thi emit len sever de render ra thang user do
+                functionClass.getSocketid(sender).then((socketIdSender)=>{//xong thi emit len sever de render ra thang user do ok
                 io.in(socketIdSender).emit('sender remove chat list', {receiver})
             })
         })
