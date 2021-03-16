@@ -96,13 +96,6 @@ class homeController{
                 io.in(socketIdSender).emit('sender remove chat list', {receiver})
             })
         })
-        // var sqlUpdate = `update list_receiver set is_show=0 where sender='${sender}' AND receiver='${receiver}'`
-        // db.query(sqlUpdate, (err, result)=>{
-        //     if (err) throw err
-        //     functionClass.getSocketid(sender).then((socketIdSender)=>{//xong thi emit len sever de render ra thang user do
-        //         io.in(socketIdSender).emit('sender remove chat list', {receiver})
-        //     })
-        // })
 
         res.end()
     }
