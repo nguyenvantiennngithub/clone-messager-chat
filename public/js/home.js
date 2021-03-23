@@ -1,5 +1,6 @@
 var socket = io();
 
+//---------------------------------------Function store html code-------------------------------------------------
 //code html render ra li ben phai
 function htmlItemAllUser(username, nickname){ //bên phải
     return `
@@ -33,19 +34,21 @@ function htmlItemListReceiver(receiver, id){ //bên trái
 
 //render message
 function htmlItemListMessage(sender, message){
-    if ($('#username').text() === sender){
+    
+    if ($('#username').text() !== sender){
         return `
-            <li class="list-group-item list-group-item-success list-group-message" style="margin-right: auto">${message}</li>
+            <li class="list-group-item list-group-item-secondary list-group-message message-item" style="margin-right: auto">${message}</li>
         `
     }else{
         return `
-            <li class="list-group-item list-group-item-success list-group-message" style="margin-left: auto">${message}</li>
+            <li class="list-group-item list-group-item-success list-group-message message-item" style="margin-left: auto">${message}</li>
         `
     }
     
 }
 
 $(document).ready(()=>{
+//---------------------------------------Function get data from api-------------------------------------------------
 
     //lay thong tin user hien tai
     async function getDataCurrentUser(){
@@ -70,7 +73,17 @@ $(document).ready(()=>{
             return response.data
         })
     }
-    //Lấy user hiện tại
+
+    //lay ra cac message cua 2 user or group chat
+    async function getDataMessages(idRoom){
+        return await axios.get(`/api/messages/${idRoom}`)
+        .then((response)=>{
+            return response.data
+        })
+        
+    }
+//---------------------------------------Function emit when user login to server-------------------------------------------------
+    //functuon emit to server socket id of new user login
     function emitSocketIdOfCurrentUserToServer(){
         getDataCurrentUser() //[{nickname, username, socketid}]
         .then((data)=>{
@@ -83,18 +96,18 @@ $(document).ready(()=>{
         })
     }
     
+//---------------------------------------Function render html-------------------------------------------------
 
-    //call api get list user chat render html
+//call api get list user chat render html
     async function renderChatList(){
         await getDataUsersInChatList()
         .then((data)=>{ //{sender, receiver, updatedAt, id}
             //sort theo thoi gian
-            console.log(data)
             var userSort = data.sort((a, b)=>{
                 var aValue = new Date(a.updatedAt).getTime()//chuyen thoi gian sang number de so sanh
                 var bValue = new Date(b.updatedAt).getTime()
 
-                return aValue - bValue 
+                return bValue - aValue 
             })        
 
             //render ra html            
@@ -127,6 +140,19 @@ $(document).ready(()=>{
             throw err
         })
     }
+    function renderMessage(idRoom){
+        getDataMessages(idRoom)
+        .then((data)=>{
+            var html = data.map((message)=>{
+                return htmlItemListMessage(message.sender, message.message)
+            })
+            $('#list-message').html(html)
+        })
+    }
+//---------------------------------------Function ajax -------------------------------------------------
+
+
+//---------------------------------------Function handle event -------------------------------------------------
 
     //add a user to chat list
     function addChatList(){
@@ -148,7 +174,6 @@ $(document).ready(()=>{
             }
         })
     }
-
     //remove a user to chat list
     function hideChatList(){
         var hideChatListElement = document.querySelectorAll('.hide-chat-list')
@@ -170,22 +195,7 @@ $(document).ready(()=>{
         })
     }
     
-    function renderMessage(data){
-        return data.map((item) => {
-            return htmlItemListMessage(item.sender, item.message) 
-        })
-    }
-
-    function getDataMessages(idRoom){
-        $.ajax({
-            url: `/api/messages/${idRoom}`,
-            method: 'GET',
-            success: function(data){
-                var html = renderMessage(data)
-                $('#list-message').html(html)
-            }
-        })
-    }
+    
     //hadle when hover and click to a user in chat list
     function chooseReceiver(){
         // console.log($('.list-chat-user-item'))
@@ -199,25 +209,74 @@ $(document).ready(()=>{
                 $(this).removeClass('list-group-item-primary').addClass('list-group-item-info')
             })
             $(this).click(function(){
+                //thay đổi url cho giống với thực tế để copy sẽ ra đúng trang đó
                 window.history.pushState("", "", `/chat/${$(this).data('id')}`)
-                getDataMessages($(this).data('id'))
+                //thay đổi attribuute data-idroom để mà sau này sẽ lấy cái data này 
+                //gữi về cho server 
+                $('#btn-send-message').attr('data-idroom', $(this).data('id'))
+                renderMessage($(this).data('id'))
             })
         })
     }
+
+    //functuon sử lý khi chat
+    function sendMessage(){
+        $('#btn-send-message').click(function(){
+            var sender
+            var text = $('#input-send-message').val()
+            var btnSendMessage = document.querySelector('#btn-send-message')
+            //lấy ra username của người nhận message
+            $('.list-chat-user-item').each(function(){
+                if ($(this).data('id') == btnSendMessage.getAttribute('data-idroom')){
+                    sender = $(this).data('name')
+                }
+            })
+
+            if (text){
+                //emit tới server data của message
+                $('#input-send-message').val('')
+                socket.emit('sender send message', {
+                    sender: $('#username').text(),
+                    idroom: $('#btn-send-message').data('idroom'),
+                    message: text
+                })
+
+                //còn phần này là hgọi ajax tới addChatList
+                //để người gữi
+                //tại cái này là add thằng gữi vào
+                //list chat của thằng nhận nên receiver và sender ngược nhau 
+                var data = {
+                    receiver: sender,
+                    sender: $('#username').text()
+                }
+                $.ajax({
+                    url: '/add-chat-list',
+                    method: 'POST',
+                    data: data,
+                    success: function(){
+                    }
+                })
+            }
+        })
+        
+    }
+
     async function main(){
+        var listMessageElement = document.querySelector('#list-message')
+        listMessageElement.scrollTop = 9999
         emitSocketIdOfCurrentUserToServer()
         await renderAllUser()
         await renderChatList()
         chooseReceiver()
         addChatList()
         hideChatList()
+        sendMessage()
+        
     }
     main()
     
-    //gọi api để lấy tất cả user để render ra HTML
-    //tránh lập code thì làm cái này 
-    //cái này là code html của thẻ li của thẻ list có id là list-user-name
-   
+    
+//--------------------------------------On event from server-------------------------------------------------
 
     socket.on('changed', (data)=>{ // undefined
             
@@ -229,6 +288,7 @@ $(document).ready(()=>{
 
     //lắng nghe event add 1 user vào chat list
     socket.on('sender add chat list', (data)=>{ //{receiver, id}
+        console.log('sender add chat list')
         $('.list-chat-user-item').each(function(){
             if (data.receiver == $(this).data('name')){
                 $(this).remove()
@@ -243,12 +303,6 @@ $(document).ready(()=>{
 
     })
 
-    //lắng nghe event có 1 user khác add mình vào chat list
-    // socket.on('receiver add chat list', (data)=>{ //{sender}
-    //     var html = `<li class="list-group-item list-group-item-success">${data.sender}</li>`
-    //     $('#list-chat-user').append(html)
-    // })
-
     //lắng nghe event ẩn 1 user cột bên trái
     socket.on('sender remove chat list', (data)=>{
         $('#list-chat-user li span').each(function(index){
@@ -258,26 +312,19 @@ $(document).ready(()=>{
             }    
         })
     })
-    // code bi loi
-    // function hideChatList(){
-    //     $('.hide-chat-list').each(function(index){
-    //         $(this).click(()=>{
-    //             console.log('click')
-    //             var data = {
-    //                 sender: $('#username').text(),
-    //                 receiver: $($('.text-username-left')[index]).val(),
-    //             }
-    //             console.log(data)
-    //             $.ajax({
-    //                 url: '/hide-chat-list',
-    //                 method: 'POST', 
-    //                 data: data,
-    //                 success: function(){
-    //                     hideChatList()
-    //                 }
-    //             })
-    //         })
-    //     })
-    // }
+    
+    socket.on('server send message to sender', ({message, sender, idroom})=>{
+        if ($("#btn-send-message").data('idroom') === idroom){
+            var html = htmlItemListMessage(sender, message)
+            $('#list-message').append(html)
+        }
+    })
+    socket.on('server send message to receiver', ({message, idroom})=>{
+        var btnSendMessage = document.querySelector("#btn-send-message")
+        if (btnSendMessage.getAttribute('data-idroom') == idroom){
+            var html = htmlItemListMessage($('#username'), message)
+            $('#list-message').append(html)
+        }
+    })
 
 })

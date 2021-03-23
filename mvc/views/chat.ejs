@@ -1,51 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link href="/css/all.min.css" rel="stylesheet">
-    <link href="/css/fontawesome.min.css" rel="stylesheet">
-
-    <title>VanTiennn</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link href="/css/all.min.css" rel="stylesheet">
+  <link href="/css/fontawesome.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <title>VanTiennn</title>
 </head>
 <body>
-    <div class="container mt-5 pt-5">
-        <div class="d-flex justify-content-between">
-            <h1 class="pb-5">Chat</h1>
-            <div class="d-flex">
-                <h3 id="username"><%- username%></h3>
-                <a href="/auth/logout" class="btn btn-primary ml-4 text-white" style="width: 76px; height: 38px">Logout</a>
-
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-3">
-                <ul id="list-chat-user" class="list-group">
-
-                </ul>
-            </div>
-            <div class="col-6">
-                <ul class="list-group" id="list-message" style="min-height: 300px; background-color: #ccc;">
-                
-                </ul>
-                <div class="input-group mb-3 mt-3">
-                    <input type="text" class="form-control" placeholder="Send some message ...">
-                    <button class="btn btn-outline-secondary" type="button" id="btn-send-message">Send</button>
-                </div>
-            </div>
-            <div class="col-3">
-                <ul class="list-group" id="list-total-user">
-                </ul>
-            </div>
-        </div>
+  <div class="container mt-5 pt-5">
+    <div class="d-flex justify-content-between">
+      <h1 class="pb-5">Chat</h1>
+      <div class="d-flex">
+        <h3 id="username"><%- username%></h3>
+        <a href="/auth/logout" class="btn btn-primary ml-4 text-white logo">Logout</a>
+      </div>
     </div>
-    <script src="/js/jquery.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <script src="/js/home.js"></script>
+
+    <div class="row">
+      <div class="col-3">
+        <ul id="list-chat-user" class="list-group">
+
+        </ul>
+      </div>
+      <div class="col-6">
+        <ul class="list-group bg-secondary" id="list-message">
+          <%for(var i = 0; i < messages.length; i++){%>
+            <%if (messages[i].sender === currentUser){%>
+              <li class="list-group-item list-group-item-success list-group-message message-item"
+              style="margin-left:auto"><%-messages[i].message%></li>
+            <%}else if (messages[i].sender === 'empty'){%>
+              <li class="list-group-item list-group-item-danger list-group-message message-item"
+              style="margin-left:auto; margin-right: auto"><%-messages[i].message%></li>
+
+            <%}else{%>
+              <li class="list-group-item list-group-item-secondary list-group-message message-item" 
+              style="margin-right: auto"><%-messages[i].message%></li>
+            <%}%>
+          <%}%>
+                    
+        </ul>
+          <div class="input-group mb-3 mt-3">
+              <input id="input-send-message"type="text" class="form-control" placeholder="Send some message ...">
+              <button class="btn btn-outline-secondary" type="button" id="btn-send-message" data-idroom=<%-idroom%>>Send</button>
+          </div>
+      </div>
+      <div class="col-3">
+        <ul class="list-group" id="list-total-user">
+        </ul>
+      </div>
+    </div>
+  </div>
+  <script src="/js/jquery.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="/js/home.js"></script>
 </body>
 </html>

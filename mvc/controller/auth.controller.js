@@ -4,6 +4,7 @@ class authController{
     //[POST] /auth/checkLogin
     checkLogin(req, res){
         const {username, password} = req.body
+        var messageError = 'Wrong username or password'
         var sql = `select password, socketid from users where username='${username}'`
         db.query(sql, (err, result)=>{
             if (err) console.log(err)
@@ -13,12 +14,12 @@ class authController{
                     // console.log("sessionid: ", req.session.id)
                     req.session.isAuth = isMatch
                     req.session.username = username
-                    
-                    return res.redirect('/chat')
+                    messageError = ''
+                    return res.redirect('back')
                 }
             }
             res.render('home', {
-                messageError: 'Wrong username or password',
+                messageError,
                 username: username,
                 password: password,
             })

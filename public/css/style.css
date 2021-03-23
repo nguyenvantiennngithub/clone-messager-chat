@@ -1,0 +1,14 @@
+.logo{
+    width: 76px; 
+    height: 38px;
+}
+
+#list-message{
+    height: 350px;
+    overflow-y: scroll;  
+    overflow-x: hidden;
+}
+
+.message-item{
+    max-width: 400px;
+}

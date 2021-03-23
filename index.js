@@ -10,6 +10,9 @@ const connect = require('./db/index.db')
 const router = require('./mvc/router/index.router');
 const api = require('./api/router/api.router')
 const middleware = require('./middleware/index.middleware')
+const db = require('./db/connect.db')
+const functionClass = require('./public/js/function')
+
 app.use(express.static('./public'))
 app.set('view engine', 'ejs')
 app.set('views', './mvc/views')
@@ -43,36 +46,47 @@ connect()
 api(app)
 router(app)
 
-// console.log("outtt", io.sockets.adapter.rooms)
 
+// console.log("outtt", io.sockets.adapter.rooms)
 io.on('connection', (socket) => {
     socket.on('change socket', (socketid)=>{ //socketid
         socket.join(socketid)
         io.emit('changed')
     })
+
     socket.on('disconnect', ()=>{
+        
     })
     
-});
+    socket.on('sender send message', ({sender, message, idroom})=>{ // {sender, message, idroom}
+        //lấy socketId của thằng nhận
+        var getReceiverSql = `
+            select socketid 
+            from users u1, 
+                (select username from rooms where username!='${sender}' AND id=${idroom}) as u2
+            where u1.username=u2.username  
+        `        
+        db.query(getReceiverSql, (err, result)=>{
+            if (err) throw err
 
+            //sau đó emit tới clinet để render ra html
+            var socketIdReceiver = result[0].socketid
+            io.in(socketIdReceiver).emit('server send message to receiver', {message, idroom, sender})
+
+            //emit toi sender
+            functionClass.getSocketid(sender).then((socketIdSender)=>{
+                io.in(socketIdSender).emit('server send message to sender', {message, idroom, sender})
+            })
+            //sau do insert vao db
+            var insertMessageSql = `insert into messages (idroom, sender, message) values (${idroom}, '${sender}', '${message}')`
+            db.query(insertMessageSql, (err, result)=>{
+                if (err) throw err
+            })
+        })
+    })
+});
 
 
 http.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 })
-
-
-/*
-    "axios": "^0.21.1",
-    "bcrypt": "^5.0.0",
-    "bcryptjs": "^2.4.3",
-    "body-parser": "^1.19.0",
-    "ejs": "^3.1.5",
-    "express": "^4.17.1",
-    "express-mysql-session": "^2.1.5",
-    "express-session": "^1.17.1",
-    "mysql": "^2.18.1",
-    "nodemon": "^2.0.7",
-    "socket.io": "^3.1.0",
-    "sql": "^0.78.0"
-*/

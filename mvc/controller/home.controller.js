@@ -12,8 +12,28 @@ class homeController{
     }
     //[GET] /chat/:id
     chat(req, res){
-        console.log(req.params)
-        res.render("chat")
+        const idroom = req.params.idroom
+        const currentUser = res.locals.username
+        console.log(idroom, currentUser)
+
+        //check xem currentUser co room nay hay khong
+        var checkRoomSql = `select * from rooms where username='${currentUser}' AND id='${idroom}'`
+        db.query(checkRoomSql, (err, result)=>{
+            if (err) throw err
+
+            if (result.length == 1){ // nếu có thì vào db lấy rồi render ra
+                var getMessagesSql = `select sender, message from messages where idroom='${idroom}'`
+                db.query(getMessagesSql, (err, result)=>{
+                    if (err) throw err
+                    var messages = result
+                    res.render("chat", {messages, currentUser, idroom})
+                })
+            }else{//cponf không thì trả về không tồn tại
+                res.render("chat", {messages: [{sender: 'empty', message: 'Người dùng không tồn tại'}], currentUser, idroom})
+            }
+        })        
+
+        
     }
 
     chat1(req, res){
@@ -23,8 +43,7 @@ class homeController{
     addChatList(req, res, next){
         const io = req.app.get('socketio') //lay socket
         const {sender, receiver} = req.body
-        console.log(req.body)
-        
+        console.log("addChatList", req.body)
 
         //đầu tiên kiểm tra xem có trong db chưa
         var getReceiverSql = `
@@ -32,6 +51,7 @@ class homeController{
             where username='${receiver}' AND id in (select id from rooms where username='${sender}')`
         db.query(getReceiverSql, (err, result)=>{
             if (err) throw err
+
             if (result.length === 0){//nếu chưa thì insert vào db
                 var idRoom //lưu giá trị id để insert vào db
                 
@@ -40,6 +60,7 @@ class homeController{
                 db.query(getIdSql, (err, result)=>{
                     if (err) throw err
                     idRoom = result[0].maxId + 1
+                    
                     //rồi sau đó insert vào db
                     // console.log(idRoom)
 
@@ -51,6 +72,11 @@ class homeController{
                         //emit tới client để nó render html
                         functionClass.getSocketid(sender).then((socketIdSender)=>{
                             io.in(socketIdSender).emit('sender add chat list', {receiver, id: idRoom})
+                        })
+                        
+                        //emit cho người nhận
+                        functionClass.getSocketid(receiver).then((socketIdReceiver)=>{
+                            io.in(socketIdReceiver).emit('sender add chat list', {receiver: sender, id: idRoom})
                         })
                     })
             })
@@ -74,6 +100,11 @@ class homeController{
                         functionClass.getSocketid(sender).then((socketIdSender)=>{
                             io.in(socketIdSender).emit('sender add chat list', {receiver, id: idRoom})
                         })
+
+                        //emit cho người nhận
+                        functionClass.getSocketid(receiver).then((socketIdReceiver)=>{
+                            io.in(socketIdReceiver).emit('sender add chat list', {receiver: sender, id: idRoom})
+                        })
                     })
                 })
             }
@@ -85,7 +116,6 @@ class homeController{
     hideChatList(req, res, next){ //ham an chat list
         const io = req.app.get('socketio') //lay socket
         const {sender, receiver} = req.body
-        console.log("hidechatlsit", req.body)
         // khi ma an thi chi can sua cai is_show=0 thoi
         var updateIsShowSql = `
             update rooms set is_show=0 
@@ -96,7 +126,6 @@ class homeController{
                 io.in(socketIdSender).emit('sender remove chat list', {receiver})
             })
         })
-        //test test test test
 
         res.end()
     }
