@@ -14,7 +14,7 @@ class apiController{
     async user(req, res, next){
         const username = res.locals.username
         const socketid = req.session.id
-        console.log('user', username)
+        console.log('api/user', username)
         var sql = `select nickname, username, socketid from users u, sessions s where s.session_id='${socketid}' AND u.username='${username}'`
         db.query(sql, (err, result)=>{
             if (err) throw err

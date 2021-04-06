@@ -5,6 +5,7 @@ class indexMiddleware{
         // console.log('isauth: ', req.session.isAuth)
         if (req.session.isAuth){
             res.locals.username = req.session.username
+            console.log("middle/idx/checkauth", req.session.username)
             next()
         }
         else{

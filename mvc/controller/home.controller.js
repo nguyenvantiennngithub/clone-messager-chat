@@ -14,7 +14,7 @@ class homeController{
     chat(req, res){
         const idroom = req.params.idroom
         const currentUser = res.locals.username
-        console.log(idroom, currentUser)
+        console.log("ctrl/home", idroom, currentUser)
 
         //check xem currentUser co room nay hay khong
         var checkRoomSql = `select * from rooms where username='${currentUser}' AND id='${idroom}'`
