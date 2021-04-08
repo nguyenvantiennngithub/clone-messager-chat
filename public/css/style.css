@@ -3,6 +3,12 @@
     height: 38px;
 }
 
+.list-group{
+    max-height: 400px;
+    overflow-y: scroll;
+    overflow-x: height;
+}
+
 #list-message, #list-message-hide{
     height: 350px;
     overflow-y: scroll;  

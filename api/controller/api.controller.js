@@ -31,12 +31,12 @@ class apiController{
         //     `select * from rooms 
         //     where id in (select id from rooms where username='${currentUser}' AND is_show=1) AND username != '${currentUser}'`
         var getUserInRoomsSql = `
-            select l.id, l.username, r.updatedAt
+            select l.id, l.username, r.updatedAt, u.nickname
             from rooms r, (
                 select * from rooms 
                 where id in (select id from rooms where username='${currentUser}' AND is_show=1) AND username != '${currentUser}')
-                as l
-            where r.id=l.id AND r.username='${currentUser}'
+                as l, users u
+            where r.id=l.id AND r.username='${currentUser}' AND u.username=l.username
         `
         db.query(getUserInRoomsSql, (err, result)=>{
             if (err) throw err

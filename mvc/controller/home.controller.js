@@ -32,8 +32,6 @@ class homeController{
                 res.render("chat", {messages: [{sender: 'empty', message: 'Người dùng không tồn tại'}], currentUser, idroom})
             }
         })        
-
-        
     }
 
     chat1(req, res){
@@ -42,8 +40,8 @@ class homeController{
 
     addChatList(req, res, next){
         const io = req.app.get('socketio') //lay socket
-        const {sender, receiver} = req.body
-        console.log("addChatList", req.body)
+        const {sender, receiver, nicknameSender, nicknameReceiver} = req.body
+        console.log("addChatList1", {sender, receiver, nicknameSender, nicknameReceiver})
 
         //đầu tiên kiểm tra xem có trong db chưa
         var getReceiverSql = `
@@ -71,17 +69,15 @@ class homeController{
                         if (err) throw err
                         //emit tới client để nó render html
                         functionClass.getSocketid(sender).then((socketIdSender)=>{
-                            io.in(socketIdSender).emit('sender add chat list', {receiver, id: idRoom})
+                            io.in(socketIdSender).emit('sender add chat list', {receiver, id: idRoom, nickname: nicknameReceiver})
                         })
                         
                         //emit cho người nhận
                         functionClass.getSocketid(receiver).then((socketIdReceiver)=>{
-                            io.in(socketIdReceiver).emit('sender add chat list', {receiver: sender, id: idRoom})
+                            io.in(socketIdReceiver).emit('sender add chat list', {receiver: sender, id: idRoom, nickname: nicknameSender})
                         })
                     })
             })
-
-                
                 
             }else{//còn có rồi thì sửa cái is_show và cái updatedAt lại
                 var updateUpdatedAtSql = `
@@ -98,12 +94,12 @@ class homeController{
                         if (err) throw err
                         var idRoom = result[0].id
                         functionClass.getSocketid(sender).then((socketIdSender)=>{
-                            io.in(socketIdSender).emit('sender add chat list', {receiver, id: idRoom})
+                            io.in(socketIdSender).emit('sender add chat list', {receiver, id: idRoom, nickname: nicknameReceiver})
                         })
 
                         //emit cho người nhận
                         functionClass.getSocketid(receiver).then((socketIdReceiver)=>{
-                            io.in(socketIdReceiver).emit('sender add chat list', {receiver: sender, id: idRoom})
+                            io.in(socketIdReceiver).emit('sender add chat list', {receiver: sender, id: idRoom, nickname: nicknameSender})
                         })
                     })
                 })
@@ -116,6 +112,7 @@ class homeController{
     hideChatList(req, res, next){ //ham an chat list
         const io = req.app.get('socketio') //lay socket
         const {sender, receiver} = req.body
+        console.log("home/hideChatList", req.body)
         // khi ma an thi chi can sua cai is_show=0 thoi
         var updateIsShowSql = `
             update rooms set is_show=0 

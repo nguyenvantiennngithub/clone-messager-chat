@@ -8,7 +8,7 @@ function htmlItemAllUser(username, nickname){ //bên phải
          <input class="text-username-right" value="${username}" hidden/>
          <div class="dropdown ml-auto">
              <button class="btn btn-secondary dropdown-toggle" type="button" id="right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
-             <div class="dropdown-menu" aria-labelledby="right" >
+             <div class="dropdown-menu" aria-labelledby="right" data-name="${username}" data-nickname="${nickname}">
                  <button class="add-chat-list dropdown-item" type="button">Thêm</button>
              </div>
          </div>
@@ -17,14 +17,14 @@ function htmlItemAllUser(username, nickname){ //bên phải
 }
 
 //code html render ra li ben trai
-function htmlItemListReceiver(receiver, id){ //bên trái
+function htmlItemListReceiver(receiver, nickname, id){ //bên trái
     return `
-         <li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-name=${receiver} data-id=${id}>
-             <span class="text-nickname" style="font-size: 24px">${receiver}</span>
+         <li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-name="${receiver}" data-id="${id}" data-nickname="${nickname}">
+             <span class="text-nickname" style="font-size: 24px">${nickname}</span>
              <input class="text-username-left" value="${receiver}" hidden>
              <div class="dropdown ml-auto">
                  <button class="btn btn-secondary dropdown-toggle" type="button" id="left" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
-                 <div class="dropdown-menu" aria-labelledby="left" data-name="${receiver}">
+                 <div class="dropdown-menu" aria-labelledby="left" data-name="${receiver}" data-nickname="${nickname}">
                      <button class="hide-chat-list dropdown-item" type="button">Ẩn</button>
                      <button class="create-group-chat dropdown-item" type="button">Tạo nhóm chat</button>
                  </div>
@@ -35,7 +35,7 @@ function htmlItemListReceiver(receiver, id){ //bên trái
 //render message
 function htmlItemListMessage(sender, message){
     
-    if ($('#username').text() !== sender){
+    if ($('#username').data('name') !== sender){
         return `
             <li class="list-group-item list-group-item-secondary list-group-message message-item" style="margin-right: auto">${message}</li>
         `
@@ -46,20 +46,20 @@ function htmlItemListMessage(sender, message){
     }
 }
 
-function htmlItemListReceiverDialog(name, isChecked){
+function htmlItemListReceiverDialog(name, nickname, isChecked){
     if (name != $('#username').text()){//khong render ra chin minh
         if (isChecked){
             return `
             <div class="dialog__choose-item">
-                <input type="checkbox" name="" id="${name}" class="dialog__choose-item-input" data-name="${name}" checked>
-                <label for="${name}" class="dialog__choose-item-label">${name}</label>
+                <input type="checkbox" name="" id="${name}" class="dialog__choose-item-input" data-name="${name}" data-nickname="${nickname}" checked>
+                <label for="${name}" class="dialog__choose-item-label">${nickname}</label>
             </div>
       `
         }
         return `
             <div class="dialog__choose-item">
-                <input type="checkbox" name="" id="${name}" class="dialog__choose-item-input" data-name="${name}">
-                <label for="${name}" class="dialog__choose-item-label">${name}</label>
+                <input type="checkbox" name="" class="dialog__choose-item-input" data-name="${name}" data-nickname="${nickname}">
+                <label for= class="dialog__choose-item-label">${nickname}</label>
             </div>
       `
     }
@@ -144,6 +144,7 @@ $(document).ready(()=>{
     async function renderReceivers(){
         await getDataReceiver()
         .then((data)=>{ //{sender, receiver, updatedAt, id}
+            console.log(data)
             //sort theo thoi gian
             var userSort = data.sort((a, b)=>{
                 var aValue = new Date(a.updatedAt).getTime()//chuyen thoi gian sang number de so sanh
@@ -154,7 +155,7 @@ $(document).ready(()=>{
 
             //render ra html            
             var html = userSort.map((user)=>{ //{sender, receiver, updatedAt, id}
-                return htmlItemListReceiver(user.username, user.id)
+                return htmlItemListReceiver(user.username, user.nickname, user.id)
             })
             $('#list-chat-user').html(html)      
         })  
@@ -203,7 +204,8 @@ $(document).ready(()=>{
             functionName = getDataReceiver
         }else{ //thang nay la lay nhung thang da chon
             $('.dialog__choose-item-input:checked').each(function(){//lay ra nhung thang da chon
-                html += htmlItemListReceiverDialog($(this).data('name'), true)//roi render, true la chon checked trong input
+                console.log($(this))
+                html += htmlItemListReceiverDialog($(this).data('name'), $(this).data('nickname'), true)//roi render, true la chon checked trong input
             })
             $('#list-receiver-dialog').html(html)
         }
@@ -213,11 +215,26 @@ $(document).ready(()=>{
                 //de ma khi chuyen tu option nay sang option khac 
                 //nhung thang da checked ko bi mat check 
                 $('.dialog__choose-item-input:checked').each(function(){
-                    checked.push($(this).data('name'))
+                    checked.push($(this).data('name'));
                 })
+                // console.log(checked, data)
+                
+                console.log(data, checked)
+
                 html = data.map((user)=>{
                     //tra ve xem user nay da checked hay chua
-                    return htmlItemListReceiverDialog(user.username, checked.includes(user.username))
+                    
+                    return htmlItemListReceiverDialog(user.username, user.nickname, function(){
+                        var isHas = false;
+                        checked.forEach((userChecked)=>{
+                            
+                            if (userChecked == user.username){
+                                isHas = true;
+                            }
+                        })
+                        return isHas;
+                    }())
+                        
                 })
         
                 $('#list-receiver-dialog').html(html)
@@ -282,6 +299,7 @@ $(document).ready(()=>{
                 if ($(item).is(':checked')){//neu ma tick
                     //neu ma tick thi append html
                     //cua thang duoc tick do len tren
+                    console.log($(item))
                     var html = htmlItemUserChecked($(item).data('name'))
                     $('#user-choose').append(html)//thi render ra o tren nhug user dc chon
                 }else{//con neu untick thi remove no
@@ -300,6 +318,7 @@ $(document).ready(()=>{
 
     function handleSwitchOptionDialog(){
         //su ly khi thay doi giua cac option
+        //lay nhung option
         $('.dialog__option-container').each(function(){
             $(this).click (function(){//khi cai nao dc click thi 
                 //goi api va render ra cai do
@@ -347,7 +366,7 @@ $(document).ready(()=>{
 
                 var parentBtn = $(this).parent() //lay cai nay de lay name
                 //2 thang dau tien la thang dc click va thang currentUser
-                var firstChooseUser = [$('#username').text(), parentBtn.data('name')]
+                var firstChooseUser = [$('#username').text(), parentBtn.data('nickname')]
                 renderUserChecked(firstChooseUser);
 
                 $('.dialog__choose-item-input').each(function(){//va thang duoc click se dc tick
@@ -402,14 +421,17 @@ $(document).ready(()=>{
 //add a user to chat list
     function addChatList(){
         console.log('add chat list function')
-        var addChatListElement = document.querySelectorAll('.add-chat-list')
-        addChatListElement.forEach((item, index)=>{
-            item.onclick = function(){
-                console.log('click')
+
+        $('.add-chat-list').off().each(function(){
+            $(this).click(function(){
+                console.log("click");
                 var data = {
-                    receiver: $($('.text-username-right')[index]).val(),
-                    sender: $('#username').text()
+                    receiver: $(this).parent().data('name'),
+                    sender: $('#username').data('name'),
+                    nicknameSender: $('#username').text(),
+                    nicknameReceiver: $(this).parent().data('nickname'),
                 }
+                console.log(data)
                 $.ajax({
                     url: '/add-chat-list',
                     method: 'POST',
@@ -417,18 +439,17 @@ $(document).ready(()=>{
                     success: function(){
                     }
                 })
-            }
+            })
         })
+
     }
     //remove a user to chat list
     function hideChatList(){
-        var hideChatListElement = document.querySelectorAll('.hide-chat-list')
-        hideChatListElement.forEach((item, index)=>{
-            item.onclick = function(){
-                console.log("hi")
+        $('.hide-chat-list').off().each(function(){
+            $(this).click(function(){
                 var data = {
-                    sender: $('#username').text(),
-                    receiver: $($('.text-username-left')[index]).val(),
+                    sender: $('#username').data('name'),
+                    receiver: $(this).parent().data('name'),
                 }
                 $.ajax({
                     url: '/hide-chat-list',
@@ -439,8 +460,7 @@ $(document).ready(()=>{
                         $('#list-message-hide').show();
                     }
                 })
-                
-            }
+            })
         })
     }
 
@@ -478,20 +498,21 @@ $(document).ready(()=>{
     function sendMessage(){
         $('#btn-send-message').click(function(){
             var sender
+            var senderNickname = "??"
             var text = $('#input-send-message').val()
             var btnSendMessage = document.querySelector('#btn-send-message')
             //lấy ra username của người nhận message
             $('.list-chat-user-item').each(function(){
                 if ($(this).data('id') == btnSendMessage.getAttribute('data-idroom')){
                     sender = $(this).data('name')
+                    senderNickname = $(this).data('nickname')
                 }
             })
-
             if (text){
                 //emit tới server data của message
                 $('#input-send-message').val('')
                 socket.emit('sender send message', {
-                    sender: $('#username').text(),
+                    sender: $('#username').data('name'),
                     idroom: $('#btn-send-message').data('idroom'),
                     message: text
                 })
@@ -500,11 +521,15 @@ $(document).ready(()=>{
                 //để người gữi
                 //tại cái này là add thằng gữi vào
                 //list chat của thằng nhận nên receiver và sender ngược nhau 
-                console.log('sende message')
+                console.log('send message')
                 var data = {
                     receiver: sender,
-                    sender: $('#username').text()
+                    nicknameReceiver: senderNickname,
+                    sender: $('#username').data("name"),
+                    nicknameSender: $("#username").text()
+
                 }
+                console.log(data);
                 $.ajax({
                     url: '/add-chat-list',
                     method: 'POST',
@@ -549,15 +574,16 @@ $(document).ready(()=>{
     })
 
     //lắng nghe event add 1 user vào chat list
-    socket.on('sender add chat list', (data)=>{ //{receiver, id}
-        console.log('sender add chat list')
+    socket.on('sender add chat list', (data)=>{ //{receiver, id, nickname}
+        console.log('sender add chat list 600')
+        console.log(data)
         $('.list-chat-user-item').each(function(){
             if (data.receiver == $(this).data('name')){
-                $(this).remove()
+                $(this).remove()//xoa den render cai moi
             }
         })
-
-        var littleHtml = htmlItemListReceiver(data.receiver, data.id)
+        console.log(data)
+        var littleHtml = htmlItemListReceiver(data.receiver, data.nickname, data.id)
         var html = littleHtml.concat($('#list-chat-user').html())
         $('#list-chat-user').html(html)
         hideChatList()
@@ -586,11 +612,12 @@ $(document).ready(()=>{
         }
     })
 
-    socket.on('server send message to receiver', ({message, idroom})=>{
+    socket.on('server send message to receiver', ({message, sender, idroom})=>{
         var btnSendMessage = document.querySelector("#btn-send-message")
         if (btnSendMessage.getAttribute('data-idroom') == idroom){
-            var html = htmlItemListMessage($('#username'), message)
+            var html = htmlItemListMessage(sender, message)
             $('#list-message').append(html)
+            scrollChatList()
         }
     })
 })
