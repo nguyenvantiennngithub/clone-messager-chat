@@ -1,3 +1,4 @@
+
 var socket = io();
 //---------------------------------------Function store html code-------------------------------------------------
 //code html render ra li ben phai
@@ -5,7 +6,6 @@ function htmlItemAllUser(username, nickname){ //bên phải
     return `
      <li class="list-group-item list-group-item-success d-flex">
          <span class="text-nickname" style="font-size: 24px">${nickname}</span>
-         <input class="text-username-right" value="${username}" hidden/>
          <div class="dropdown ml-auto">
              <button class="btn btn-secondary dropdown-toggle" type="button" id="right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
              <div class="dropdown-menu" aria-labelledby="right" data-name="${username}" data-nickname="${nickname}">
@@ -21,21 +21,36 @@ function htmlItemListReceiver(receiver, nickname, id){ //bên trái
     return `
          <li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-name="${receiver}" data-id="${id}" data-nickname="${nickname}">
              <span class="text-nickname" style="font-size: 24px">${nickname}</span>
-             <input class="text-username-left" value="${receiver}" hidden>
              <div class="dropdown ml-auto">
                  <button class="btn btn-secondary dropdown-toggle" type="button" id="left" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
                  <div class="dropdown-menu" aria-labelledby="left" data-name="${receiver}" data-nickname="${nickname}">
-                     <button class="hide-chat-list dropdown-item" type="button">Ẩn</button>
-                     <button class="create-group-chat dropdown-item" type="button">Tạo nhóm chat</button>
+                    <button class="hide-chat-list dropdown-item" type="button">Ẩn</button>
+                    <button class="create-group-chat dropdown-item" type="button">Tạo nhóm chat</button>
                  </div>
              </div>
          </li>`
 
 }
 
+//code html render nhung la cho group ra li ben trai
+function htmlItemListReceiverGroup(name, idRoom){ //bên trái
+    return `
+         <li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-id="${idRoom}" data-nickname="${name}">
+             <span class="text-nickname" style="font-size: 24px">${name}</span>
+             <div class="dropdown ml-auto">
+                 <button class="btn btn-secondary dropdown-toggle" type="button" id="left" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                 <div class="dropdown-menu" aria-labelledby="left" data-nickname="${name}">
+                    <button class="hide-chat-list dropdown-item" type="button">Ẩn</button>
+                 </div>
+             </div>
+         </li>
+    `
+}
+
 //render message
 function htmlItemListMessage(sender, message){
-    
+    //thay đổi style để dể nhìn người nhận người gữi
+    // console.log($('#username').data('name'), sender)
     if ($('#username').data('name') !== sender){
         return `
             <li class="list-group-item list-group-item-secondary list-group-message message-item" style="margin-right: auto">${message}</li>
@@ -47,25 +62,27 @@ function htmlItemListMessage(sender, message){
     }
 }
 
+//render ra danh sách để chọn ở dưới có checkbox
 function htmlItemListReceiverDialog(name, nickname, isChecked){
     if (name != $('#username').text()){//khong render ra chin minh
         if (isChecked){
             return `
             <div class="dialog__choose-item">
-                <input type="checkbox" name="" id="${name}" class="dialog__choose-item-input" data-name="${name}" checked>
-                <label for="${name}" class="dialog__choose-item-label">${nickname}</label>
+                <input type="checkbox" name="" id="" class="dialog__choose-item-input" data-name="${name}" checked>
+                <label class="dialog__choose-item-label">${nickname}</label>
             </div>
       `
         }
         return `
             <div class="dialog__choose-item">
-                <input type="checkbox" name="" id="${name}" class="dialog__choose-item-input" data-name="${name}">
-                <label for="${name}" class="dialog__choose-item-label">${nickname}</label>
+                <input type="checkbox" name="" id="" class="dialog__choose-item-input" data-name="${name}">
+                <label for="" class="dialog__choose-item-label">${nickname}</label>
             </div>
       `
     }
 }
 
+//render ra danh sách đã chọn ở trên ko có checkbox
 function htmlItemUserChecked(name, nickname){
     if (name === $('#username').data('name')){//khong render dau X
         return `
@@ -109,7 +126,7 @@ $(document).ready(()=>{
         })
     }
 
-    //lay thong tin nhung user nam trong chatl ist
+    //lay thong tin nhung user nam trong chat ist
     async function getDataReceiver(){
         return await axios.get('/api/receivers')
         .then((response)=>{
@@ -123,7 +140,14 @@ $(document).ready(()=>{
         .then((response)=>{
             return response.data
         })
-        
+    }
+
+    //lay thong tinh nhung cai group ma currentUser dang o
+    async function getDataGroup(){
+        return await axios.get('/api/groups')
+        .then((response)=>{
+            return response.data
+        })
     }
     //---------------------------------------Function emit when user login to server-------------------------------------------------
     //functuon emit to server socket id of new user login
@@ -142,36 +166,47 @@ $(document).ready(()=>{
     //---------------------------------------Function render html-------------------------------------------------
 
     //call api get list user chat render html
+    //ở bên trái 
+    //cai này bao gôm cả group và cá nhân
     async function renderReceivers(){
-        await getDataReceiver()
-        .then((data)=>{ //{sender, receiver, updatedAt, id}
-            console.log(data)
-            //sort theo thoi gian
-            var userSort = data.sort((a, b)=>{
-                var aValue = new Date(a.updatedAt).getTime()//chuyen thoi gian sang number de so sanh
-                var bValue = new Date(b.updatedAt).getTime()
+        //gọi api lấy danh sách những người đã add và có is_show = 1 ra
+        //gồm có receiver và group
+        var receivers = await getDataReceiver();
+        var groups = await getDataGroup();
+        //sau đó nối 2 cái này với nhau rồi sort theo thời gian 
+        //để cái nào tương tác trước sẽ lên trước
+        var result = receivers.concat(groups)
+        console.log(result)
+        //sort theo thoi gian tu gan nhat den xa nha
+        result = result.sort((a, b)=>{ //sau đó sắp xếp theo thời gian
+            //để người nào tương tác gần thì ở trên
+            var aValue = new Date(a.updatedAt).getTime()//chuyen thoi gian sang number de so sanh
+            var bValue = new Date(b.updatedAt).getTime()
 
-                return bValue - aValue 
-            })        
-
-            //render ra html            
-            var html = userSort.map((user)=>{ //{sender, receiver, updatedAt, id}
-                return htmlItemListReceiver(user.username, user.nickname, user.id)
-            })
-            $('#list-chat-user').html(html)      
-        })  
-        .catch((err)=>{
-            throw err
+            return bValue - aValue 
         })
+        //render ra html      
+        var html = result.map((user)=>{ //{sender, receiver, updatedAt, id}
+            if (user.is_personal){//kiểm tra nếu personal thì reder theo personal
+                return htmlItemListReceiver(user.username, user.nickname, user.id)
+            }else{//còn group thì render theo group
+                return htmlItemListReceiverGroup(user.name, user.id)
+            }
+        })
+        //sau đó thì inner vào thẻ li
+        $('#list-chat-user').html(html)      
+        console.log("run here")
     }
 
     //call api get all user render html
+    //ở bên phải
+    //render ra tất cả các user đang có trừ curentUser
     function renderAllUser(){
         // [{nickname, username, socketid}, ....]
         getDataAllUser()
         .then((data)=>{
             var html = data.map((user) => {
-                if (user.username != $('#username').text()){
+                if (user.username != $('#username').data('name')){
                     return htmlItemAllUser(user.username, user.nickname)
                 }else{
                     return;
@@ -180,10 +215,8 @@ $(document).ready(()=>{
 
             $('#list-total-user').html(html)
         })
-        .catch((err)=>{
-            throw err
-        })
     }
+    //render ra tinh nhắn
     function renderMessage(idRoom){
         getDataMessages(idRoom)
         .then((data)=>{
@@ -195,6 +228,9 @@ $(document).ready(()=>{
         })
     }
 
+    //render ra dạnh sách để chọn trong phần dialog
+    //ở dưới. tuỳ vào cái option mà sẽ render ra những user
+    //thỏa cái option đó
     async function renderReceiversDialog(option){//ham render ra dialog tro chuyen gan day
         var functionName = ""
         var html = ""
@@ -217,7 +253,7 @@ $(document).ready(()=>{
                 $('.dialog__choose-item-input:checked').each(function(){
                     checked.push($(this).data('name'));
                 })
-                console.log(data, checked)
+                // console.lo   g(data, checked)
                 html = data.map((user)=>{
                     //tra ve xem user nay da checked hay chua
                     return htmlItemListReceiverDialog(user.username, user.nickname, function(){
@@ -231,22 +267,49 @@ $(document).ready(()=>{
                         return isHas;
                     }())
                 })
-                console.log(html)
+                // console.log(html)
             })
         }
         $('#list-receiver-dialog').html(html)
     }
+
+    //render ra số lượng người đã đc check trong phần dialog
+
     function renderNumberUserChecked(){
         $('#count-user-checked').text(`Mời thêm bạn vào cuộc trò chuyện (${$('.dialog__choose-checked-item').length}) người`)
     }
 
+    //render ra người dùng đã được chọn ở trên trong phần dialog
     function renderUserChecked(array){
         var html = array.map((item)=>{
             return htmlItemUserChecked(item.name, item.nickname)
         })
         $('#user-choose').html(html);//inner html ra 
-        renderNumberUserChecked()
+        renderNumberUserChecked()//thay đổi số lượng nên là phải render lại số lượng người đã chọn
     }
+
+//---------------------------------------Function helper -------------------------------------------------
+
+    function showListMessage(){
+        $('#list-message').show();
+        $('#list-message-hide').hide();
+    }
+        
+    function hideListMessage(){
+        $('#list-message').hide();
+        $('#list-message-hide').show();
+    }
+
+    function showDialog(){
+        $('#dialog').removeAttr("hidden")
+        $('.overlay').removeAttr("hidden")
+    }
+
+    function hideDialog(){
+        $('#dialog').attr("hidden", "hidden")
+        $('.overlay').attr("hidden", "hidden")
+    }
+
 //---------------------------------------Function Handle Dialog -------------------------------------------------
     //sử lý khi mà muốn tắt cái dialog này
     function handleCloseDialog(){//Lay ra các chổ có thể tắt dialog 
@@ -267,8 +330,7 @@ $(document).ready(()=>{
                 })
                 .then((willDelete) => {//nếu click ok thì ẩn dialog đi
                     if (willDelete) {
-                        $('#dialog').attr("hidden", "hidden")
-                        $('.overlay').attr("hidden", "hidden")
+                        hideDialog()
                     } 
                 });
             })
@@ -370,59 +432,60 @@ $(document).ready(()=>{
         //và trong cái dilog sẽ có 3 kiểu chọn để render ra cái phần để chọn người để thêm vào group
         //render mac dinh la trong danh sach đang chat (danh sách bên trái ở ngoài)
         //lập qua cái element tạo group
-        $('.create-group-chat').each(function(index, btnCreateGroupItem){
-            //sau khi cái tạo group được click thì
-            $(btnCreateGroupItem).click(async function(){
-                await renderReceiversDialog("in_list");
-
-                //hiện dialog create group và cho thêm cái overlay bên ngoại hiện lên
-                $('#dialog').removeAttr("hidden")
-                $('.overlay').removeAttr("hidden")
-                var parentOfBtnCreateGroup = $(btnCreateGroupItem).parent()
-                //Sau đó sẽ có 2 thằng đầu tiên được auto chọn là
-                //thằng currentUser và thằng được click theo thứ tự ở dưới
-                var dataOfUserChecked = [
-                    {
-                        nickname: $('#username').text(),
-                        name: $('#username').data('name'),
-                    }, 
-                    {
-                        nickname: parentOfBtnCreateGroup.data('nickname'),
-                        name: parentOfBtnCreateGroup.data('name'),
-                    }
-                ]
-                // var dataOfUserChecked = [$('#username').text(), parentOfBtnCreateGroup.data('nickname')]
-                // và render ra 2 thằng này ở phần userChecked
-                $('.dialog__choose-item-input:checked').each(function(index, checkboxCheckedItem){
-                    var name = $(checkboxCheckedItem).data('name');
-                    var nickname = $(checkboxCheckedItem).siblings('label').text();
-                    dataOfUserChecked.push({name, nickname})
-                })
-                renderUserChecked(dataOfUserChecked);
-
-                //sau khi render ở tren thì cũng nên checked nó lun
-                //do là thằng currentUser chắc chắn phải được chọn nên 
-                //là ko render ra nó ở dưới nên cũng ko checked nó làm gì
-                $('.dialog__choose-item-input').each(function(index, checkboxItem){
-
-
-                    if ($(checkboxItem).data('name') == $(btnCreateGroupItem).parent().data('name')){
-                        $(checkboxItem).prop('checked', true);
-                    }
-                })
-                handleRemoveUserCheckedAbove()//ham de su ly viec them hoac xoa 1 user vao muc create group
-                
-                // // su ly khi click vao checkbox
-                handleClickCheckboxBelow()
-
-                //su ly khi chon option
-                handleSwitchOptionDialog()
+        renderReceiversDialog("in_list");
+        //sau khi cái tạo group được click thì
+        $('#list-chat-user').on('click', 'li div div button.create-group-chat', async function(){
+            var btnCreateGroupItem = $(this);
+            console.log($('.dialog__choose-item-input'))
+            $('.dialog__choose-item-input:checked').each(function(index, checkboxItem){
+                if ($(btnCreateGroupItem) != $(checkboxItem).data('name') || $(btnCreateGroupItem) != $('#username').data('name')){
+                    $(checkboxItem).prop('checked', false)
+                }
             })
-        })
-        
+            await renderReceiversDialog("in_list");
 
+            //hiện dialog create group và cho thêm cái overlay bên ngoại hiện lên
+            showDialog()
+            var parentOfBtnCreateGroup = $(btnCreateGroupItem).parent()
+            //Sau đó sẽ có 2 thằng đầu tiên được auto chọn là
+            //thằng currentUser và thằng được click theo thứ tự ở dưới
+            var dataOfUserChecked = [
+                {
+                    nickname: $('#username').text(),
+                    name: $('#username').data('name'),
+                }, 
+                {
+                    nickname: parentOfBtnCreateGroup.data('nickname'),
+                    name: parentOfBtnCreateGroup.data('name'),
+                }
+            ]
+            // var dataOfUserChecked = [$('#username').text(), parentOfBtnCreateGroup.data('nickname')]
+            // và render ra 2 thằng này ở phần userChecked
+            // $('.dialog__choose-item-input:checked').each(function(index, checkboxCheckedItem){
+            //     var name = $(checkboxCheckedItem).data('name');
+            //     var nickname = $(checkboxCheckedItem).siblings('label').text();
+            //     dataOfUserChecked.push({name, nickname})
+            // })
+            renderUserChecked(dataOfUserChecked);
+
+            //sau khi render ở tren thì cũng nên checked nó lun
+            //do là thằng currentUser chắc chắn phải được chọn nên 
+            //là ko render ra nó ở dưới nên cũng ko checked nó làm gì
+            $('.dialog__choose-item-input').each(function(index, checkboxItem){
+
+                if ($(checkboxItem).data('name') == $(btnCreateGroupItem).parent().data('name')){
+                    $(checkboxItem).prop('checked', true);
+                }
+            })
+            handleRemoveUserCheckedAbove()//ham de su ly viec them hoac xoa 1 user vao muc create group
+            
+            // // su ly khi click vao checkbox
+            handleClickCheckboxBelow()
+
+            //su ly khi chon option
+            handleSwitchOptionDialog()
+        })
         handleCloseDialog();
-        
     }
 
     function scrollChatList(){
@@ -434,125 +497,154 @@ $(document).ready(()=>{
 
 //---------------------------------------Function handle event -------------------------------------------------
 
-//add a user to chat list
+    function createGroupChat(){
+        $('#btn-create-group-chat').off().click(function(){
+            var listNameUserChecked = [];
+            $('.dialog__choose-checked-item').off().each(function(index, userCheckedItem){
+                listNameUserChecked.push($(userCheckedItem).data('name'));
+            })
+
+            $.ajax({
+                url: '/create-group-chat',
+                data: {
+                    usernames: listNameUserChecked,
+                    name: $('#name-group').val(),
+                    
+                },
+                method: 'POST',
+                success: function(){
+                    alert('create group chat successfully')
+                    hideDialog()
+                }
+            })
+            
+        })
+        
+    }
+
+    //add a user to chat list
     function addChatList(){
-        console.log('add chat list function')
-
-        $('.add-chat-list').off().each(function(){
-            $(this).click(function(){
-                console.log("click");
-                var data = {
-                    receiver: $(this).parent().data('name'),
-                    sender: $('#username').data('name'),
-                    nicknameSender: $('#username').text(),
-                    nicknameReceiver: $(this).parent().data('nickname'),
+        $('#list-total-user').on('click', 'li div div button.add-chat-list', function(){
+            var data = {//username của receiver và sender 
+                receiver: $(this).parent().data('name'),
+                sender: $('#username').data('name'),
+            }
+            console.log(data)
+            //gọi ajax sau khi gọi ajax thì
+            //server sẽ emit lên để mà render ra html
+            //"sender add chat list" ở dưới cùng
+            $.ajax({
+                url: '/add-chat-list',
+                method: 'POST',
+                data: data,
+                success: function(){
                 }
-                console.log(data)
-                $.ajax({
-                    url: '/add-chat-list',
-                    method: 'POST',
-                    data: data,
-                    success: function(){
-                    }
-                })
             })
         })
-
     }
-    //remove a user to chat list
+    //remove a user chat list
     function hideChatList(){
-        $('.hide-chat-list').off().each(function(){
-            $(this).click(function(){
-                var data = {
-                    sender: $('#username').data('name'),
-                    receiver: $(this).parent().data('name'),
+        //lập qua những btn để ẩn chat list
+        //khi click thì lấy gữi xuống server
+        //data gồm useruser của sender và receiver 
+        $('#list-chat-user').on('click', 'li div div button.hide-chat-list', function(){
+            var data = {
+                idRoom: $('#btn-send-message').data('idroom'),
+            }
+            //gọi ajax tới controller để sử lý 
+            //sa khi sử lý xong thì server sẽ emit về
+            //client "sender hide chat list"
+            $.ajax({
+                url: '/hide-chat-list',
+                method: 'POST', 
+                data: data,
+                success: function(){
+                    hideListMessage()
+                    //để xóa đi phần message đang hiện
                 }
-                $.ajax({
-                    url: '/hide-chat-list',
-                    method: 'POST', 
-                    data: data,
-                    success: function(){
-                        $('#list-message').hide();
-                        $('#list-message-hide').show();
-                    }
-                })
             })
         })
     }
-
-    
     
     //hadle when hover and click to a user in chat list
     async function handleClickReceiver(){
         var listChatUserItem = document.querySelectorAll('.list-chat-user-item')
-
-        listChatUserItem.forEach((item)=>{
-            item.onclick = function(){
-                //thay đổi url cho giống với thực tế để copy sẽ ra đúng trang đó
-                window.history.pushState("", "", `/chat/${$(this).data('id')}`)
-                //thay đổi attribuute data-idroom để mà sau này sẽ lấy cái data này 
-                //gữi về cho server 
-                $('#btn-send-message').attr('data-idroom', $(this).data('id'))
-                renderMessage($(this).data('id'));
-                $('#list-message').show();
-                $('#list-message-hide').hide();
-            }
+        $('#list-chat-user').on('click', 'li', function(){
+            //thay đổi url cho giống với thực tế để copy sẽ ra đúng trang đó
+            window.history.pushState("", "", `/chat/${$(this).data('id')}`)
+            //thay đổi attribuute data-idroom để mà sau này sẽ lấy cái data này 
+            //gữi về cho server 
+            console.log("idRoom", $(this).data('id'))
+            $('#btn-send-message').data('idroom', $(this).data('id'))
+            // $('#btn-send-message').attr('data-idroom', $(this).data('id'))
+            renderMessage($(this).data('id'));
+            showListMessage()
         })
     }
 
+    //thay đổi style màu bg cho thằng vừa tương tác
     function activeCurrentReceiver(){
-        var btnSendMessage = document.querySelector('#btn-send-message')
-        $('.list-chat-user-item').each(function(){
-
-            if ($(this).data('id') == btnSendMessage.getAttribute('data-idroom')){
-                $(this).addClass("active")
-            }
-        })
+        var $currentIdRoom = $('#btn-send-message').data('idroom')
+        $('.list-chat-user-item.active').removeClass('active')//xóa hết mấy thằng có class active
+        renderMessage($('#btn-send-message').data('idroom'))//render message của idRoom đó
+        //cái thằng có data-id bằng với cái idRoom hiện tại 
+        var $itemActive =  $(`.list-chat-user-item[data-id=${$currentIdRoom}]`)
+        $itemActive.addClass('active')
+        window.history.pushState("", "", `/chat/${$currentIdRoom}`)
     }
 
     //functuon sử lý khi chat
     function sendMessage(){
-        $('#btn-send-message').click(function(){
+        $('#btn-send-message').on('click', function(){
             var sender
-            var senderNickname = "??"
             var text = $('#input-send-message').val()
-            var btnSendMessage = document.querySelector('#btn-send-message')
             //lấy ra username của người nhận message
-            $('.list-chat-user-item').each(function(){
-                if ($(this).data('id') == btnSendMessage.getAttribute('data-idroom')){
-                    sender = $(this).data('name')
-                    senderNickname = $(this).data('nickname')
-                }
-            })
+            //lấy thằng có class đó và có data-id == idRoom hiện tại rồi lấy ra name của nó
+            sender = $(`.list-chat-user-item[data-id=${$('#btn-send-message').data('idroom')}]`).data('name')
+           
+            console.log(sender)
             if (text){
                 //emit tới server data của message
-                $('#input-send-message').val('')
-                socket.emit('sender send message', {
+                var dataMessage = {
                     sender: $('#username').data('name'),
-                    idroom: $('#btn-send-message').data('idroom'),
+                    idRoom: $('#btn-send-message').data('idroom'),
                     message: text
-                })
-
-                //còn phần này là hgọi ajax tới addChatList
-                //để người gữi
-                //tại cái này là add thằng gữi vào
-                //list chat của thằng nhận nên receiver và sender ngược nhau 
-                console.log('send message')
-                var data = {
-                    receiver: sender,
-                    nicknameReceiver: senderNickname,
-                    sender: $('#username').data("name"),
-                    nicknameSender: $("#username").text()
-
                 }
-                console.log(data);
-                $.ajax({
-                    url: '/add-chat-list',
-                    method: 'POST',
-                    data: data,
-                    success: function(){
+                $('#input-send-message').val('')
+                socket.emit('sender send message', dataMessage)
+
+                //nếu là personal
+                if (sender){
+                    // còn phần này là hgọi ajax tới addChatList
+                    // để người gữi
+                    // tại cái này là add thằng gữi vào
+                    // list chat của thằng nhận nên receiver và sender ngược nhau 
+                    var data = {
+                        receiver: sender,
+                        sender: $('#username').data("name"),
+                        
                     }
-                })
+                    $.ajax({
+                        url: '/add-chat-list',
+                        method: 'POST',
+                        data: data,
+                        success: function(){
+                        }
+                    })
+                    //cái này là group
+                }else if (!sender){
+                    var data = {
+                        idRoom: $('#btn-send-message').data('idroom'),
+                    }
+                    $.ajax({
+                        url: '/set-updatedAt-group-chat', 
+                        method: 'POST',
+                        data: data,
+                        success: function(){
+                        }
+                    })
+                }
+                
             }
         })
     }
@@ -568,12 +660,13 @@ $(document).ready(()=>{
             $(receiverItem).mouseout(function(){
                 $(receiverItem).removeClass('list-group-item-primary').addClass('list-group-item-info')
             })
+
             $(receiverItem).click(function(){
                 //them active cho chinh thang do khi click vo no
                 $('.list-chat-user-item').each(function(){
                     $(this).removeClass('active')
-                })
-                $(receiverItem).addClass('active')
+                })  
+                $(this).addClass('active')
                 //thêm nữa là hiện cái container chat lên
                 //đôi khi vừa ẩn xong nhấn qua cái khác
                 $('.container-send-message').show()
@@ -582,7 +675,7 @@ $(document).ready(()=>{
     }
 
     
-
+    //hàm chính để sử lý
     async function main(){
         scrollChatList() //scroll thanh chat xuong
         emitSocketIdOfCurrentUserToServer() 
@@ -595,8 +688,9 @@ $(document).ready(()=>{
         addChatList() //su ly khi nhan vao them
         sendMessage() //sy ly khi gui tinh nhan
         handleDialog() //su ly khi nhan vao
-
+        createGroupChat()
         //
+
         $('#list-message-hide').hide() //
         $('#list-message-hide').removeAttr("hidden")
     }
@@ -614,37 +708,40 @@ $(document).ready(()=>{
     })
 
     //lắng nghe event add 1 user vào chat list
-    socket.on('sender add chat list', (data)=>{ //{receiver, id, nickname}
-        console.log('sender add chat list 600')
-        console.log(data)
-        $('.list-chat-user-item').each(function(){
-            if (data.receiver == $(this).data('name')){
-                $(this).remove()//xoa den render cai moi
-            }
-        })
-        console.log(data)
-        var littleHtml = htmlItemListReceiver(data.receiver, data.nickname, data.id)
+    socket.on('add chat list personal', function ({receiver, id, nickname, isActive}){ //{receiver, id, nickname, isActive}
+        console.log('sender add chat list', {receiver, id, nickname, isActive})
+        //remove thang receiver sau do render lai
+        $(`.list-chat-user-item[data-id=${id}]`).remove();
+        if (isActive){
+            console.log('change idRoom')
+            $('#btn-send-message').data('idroom', id)
+            // renderMessage(id);
+            showListMessage()
+            // $('.list-chat-user-item.active').removeClass('active')
+        }
+       
+
+        var littleHtml = htmlItemListReceiver(receiver, nickname, id)
         var html = littleHtml.concat($('#list-chat-user').html())
         $('#list-chat-user').html(html)
-        hideChatList()
-        handleClickReceiver()
+        
+        // $(`.list-chat-user-item[data-name="${data.receiver}"]`).addClass('active');
+        
         handleHoverListReceiver()
         activeCurrentReceiver()
+        
     })
 
     //lắng nghe event ẩn 1 user cột bên trái
-    socket.on('sender remove chat list', (data)=>{
-        $('#list-chat-user li span').each(function(index){
-            if ($(this).text() === data.receiver){
-                $(this).parent().remove()
-                hideChatList()
-                $('.container-send-message').hide()
-                $('#list-message').html("");
-            }    
-        })
+    socket.on('hide chat list', ({idRoom})=>{
+        $(`.list-chat-user-item[data-id=${idRoom}]`).remove();
+        $('.container-send-message').hide()
+        $('#list-message').html("");
+        
     })
-    
-    socket.on('server send message to sender', ({message, sender, idroom})=>{
+    //khi mà sender send message thì sẽ hiện lên trên màng hình của sender
+    socket.on('server send message', ({message, sender, idroom})=>{
+        console.log("socket/sendMessage",sender, $('#username').data('name'))
         if ($("#btn-send-message").data('idroom') === idroom){
             var html = htmlItemListMessage(sender, message)
             $('#list-message').append(html)
@@ -652,12 +749,29 @@ $(document).ready(()=>{
         }
     })
 
+    //khi mà sender gữi tin nhắn cho receiver thì bên
+    //web của receiver nếu đang online thì sẽ hiển thị ra
+    //sender và chat ở đầu
     socket.on('server send message to receiver', ({message, sender, idroom})=>{
-        var btnSendMessage = document.querySelector("#btn-send-message")
-        if (btnSendMessage.getAttribute('data-idroom') == idroom){
+        console.log(sender, $('#username').data('name'))
+        
+        if ($('#btn-send-message').data('idroom') == idroom){
             var html = htmlItemListMessage(sender, message)
             $('#list-message').append(html)
             scrollChatList()
         }
     })
+
+    socket.on('add chat list group', ({groupName, idRoom, isActive})=>{
+        $(`.list-chat-user-item[data-id=${idRoom}]`).remove();
+        console.log('senderCreateGroup/home', {groupName, idRoom})
+        var html = htmlItemListReceiverGroup(groupName, idRoom);
+        html += $('#list-chat-user').html()        
+        $('#list-chat-user').html(html);
+        handleHoverListReceiver()
+        if (isActive){
+            activeCurrentReceiver()
+        }
+    })
 })
+

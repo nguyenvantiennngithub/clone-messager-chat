@@ -24,7 +24,7 @@
       <div class="col-sm-12" style="background-color:#ccc;"></div>
       <div class="dialog__name">
         <span class="dialog-title">Tên nhóm</span>
-        <input type="text" class="dialog__name-input" placeholder="Nhập tên nhóm">        
+        <input type="text" id="name-group" class="dialog__name-input" placeholder="Nhập tên nhóm">        
       </div>
 
       <div class="dialog__group">
@@ -74,7 +74,7 @@
       <div class="dialog__footer">
         <div class="dialog__footer-container">
           <button class="dialog__footer-btn cancel" id="btn-cancel">Hủy</button>
-          <button class="dialog__footer-btn create">Tạo nhóm</button>
+          <button class="dialog__footer-btn create" id="btn-create-group-chat">Tạo nhóm</button>
         </div>
       </div>
     </div>
@@ -119,7 +119,7 @@
 
           <div class="input-group container-send-message mb-3 mt-3">
               <input id="input-send-message"type="text" class="form-control" placeholder="Send some message ...">
-              <button class="btn btn-outline-secondary" type="button" id="btn-send-message" data-idroom=<%-idroom%>>Send</button>
+              <button class="btn btn-outline-secondary" type="button" id="btn-send-message" data-idroom=<%-idRoom%>>Send</button>
           </div>
       </div>
       <div class="col-3">

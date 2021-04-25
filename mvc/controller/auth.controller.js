@@ -3,11 +3,14 @@ const bcrypt = require('bcryptjs')
 class authController{
     //[POST] /auth/checkLogin
     checkLogin(req, res){
+        console.log("run here")
         const {username, password} = req.body
         var messageError = 'Wrong username or password'
+        console.log({username, password})
         var sql = `select password, socketid from users where username='${username}'`
         db.query(sql, (err, result)=>{
-            if (err) console.log(err)
+            if (err) throw err
+            console.log(result)
             if (result.length == 1){
                 var isMatch = bcrypt.compareSync(password, result[0].password)
                 if (isMatch){
@@ -15,7 +18,7 @@ class authController{
                     req.session.isAuth = isMatch
                     req.session.username = username
                     messageError = ''
-                    return res.redirect('back')
+                    return res.redirect('/chat')
                 }
             }
             res.render('home', {

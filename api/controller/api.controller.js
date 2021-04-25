@@ -23,7 +23,7 @@ class apiController{
     }
 
     //[GET] /api/user-chat-list
-    userChatList(req, res, next){
+    receiverChatList(req, res, next){
         const currentUser = res.locals.username
         
         //sql này dùng dể lấy những username có cùng rooms với currentUser và ko lấy currentUser     
@@ -31,18 +31,31 @@ class apiController{
         //     `select * from rooms 
         //     where id in (select id from rooms where username='${currentUser}' AND is_show=1) AND username != '${currentUser}'`
         var getUserInRoomsSql = `
-            select l.id, l.username, r.updatedAt, u.nickname
+            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.is_personal 
             from rooms r, (
                 select * from rooms 
                 where id in (select id from rooms where username='${currentUser}' AND is_show=1) AND username != '${currentUser}')
-                as l, users u
-            where r.id=l.id AND r.username='${currentUser}' AND u.username=l.username
+                as receiver, users user
+            where r.id=receiver.id AND r.username='${currentUser}' AND user.username= receiver.username AND r.is_personal = 1
         `
+
         db.query(getUserInRoomsSql, (err, result)=>{
             if (err) throw err
             res.json(result)
         })
     }
+
+    groupChatList(req, res){
+        const currentUser = res.locals.username;
+        var getGroupSql = `
+            select name, updatedAt, id, is_personal from rooms where username='${currentUser}' AND is_show=1 AND is_personal=0 
+        `
+        db.query(getGroupSql, (err, result)=>{
+            if (err) throw err
+            res.json(result)
+        })
+    }
+
     
     //[GET] /api/message
     message(req, res, next){

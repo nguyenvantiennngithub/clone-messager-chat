@@ -11,119 +11,148 @@ class homeController{
         })
     }
     //[GET] /chat/:id
-    chat(req, res){
-        const idroom = req.params.idroom
+    async chat(req, res){
+        const io = req.app.get('socketio') //lay socket
         const currentUser = res.locals.username
-        console.log("ctrl/home", idroom, currentUser)
+        var idRoom = req.params.idroom || await functionClass.getIdRoomNearest(currentUser)
+        console.log("ctrl/home", idRoom, currentUser)
 
         //check xem currentUser co room nay hay khong
-        var checkRoomSql = `select * from rooms where username='${currentUser}' AND id='${idroom}'`
-        db.query(checkRoomSql, (err, result)=>{
+        var checkRoomSql = `select * from rooms where username='${currentUser}' AND id='${idRoom}'`
+        db.query(checkRoomSql, async function(err, result){
             if (err) throw err
-
             if (result.length == 1){ // nếu có thì vào db lấy rồi render ra
-                var getMessagesSql = `select sender, message from messages where idroom='${idroom}'`
+                var getMessagesSql = `select sender, message from messages where idroom='${idRoom}'`
                 db.query(getMessagesSql, (err, result)=>{
                     if (err) throw err
                     var messages = result
-                    res.render("chat", {messages, currentUser, idroom})
+                    res.render("chat", {messages, currentUser, idRoom})
+                    
                 })
             }else{//cponf không thì trả về không tồn tại
-                res.render("chat", {messages: [{sender: 'empty', message: 'Người dùng không tồn tại'}], currentUser, idroom})
+                res.render("chat", {messages: [{sender: 'empty', message: 'Người dùng không tồn tại'}], currentUser, idRoom})
             }
         })        
+        
     }
+    /**
+     * Send Message
+     * -Emit toi server {idRoom, sender, message} => insert vào db và emit lại cho client để render html
+     * -Gọi ajax để cập nhật updatedAt 
+     *      +Personal, Group: gọi functionClass.setUpdated(username, idRoom) để set updatedAt
+     *      sau đó sẽ emit tới client để render ra html
+     * Add Chat List
+     * -Kiểm tra xem nó là Personal hay Group
+     *      +Personal: Kiểm tra xem đã có Room chưa
+     *          +Có thì gọi functionClass.setUpdated(username, idRoom) để set updatedAt
+     *          +Chưa thì insert vào db
+     *               Final: sau đó sẽ emit tới client để render ra html
+     *      
+     *      +Group: gọi functionClass.setUpdated(username, idRoom) để set updatedAt
+     *              sau đó sẽ emit tới client để render ra html
+     *      
+     */
 
-    chat1(req, res){
-        res.render("chat")
-    }
-
-    addChatList(req, res, next){
+    async addChatList(req, res, next){
         const io = req.app.get('socketio') //lay socket
-        const {sender, receiver, nicknameSender, nicknameReceiver} = req.body
-        console.log("addChatList1", {sender, receiver, nicknameSender, nicknameReceiver})
+        const {receiver} = req.body 
+        const currentUser = res.locals.username
+        console.log("addChatList", {currentUser, receiver})
+        //get thông tin của sender và receier 
+        var infoSender = await functionClass.getInfoUser(currentUser);
+        var infoReceiver = await functionClass.getInfoUser(receiver);
 
-        //đầu tiên kiểm tra xem có trong db chưa
-        var getReceiverSql = `
-            select username, id from rooms 
-            where username='${receiver}' AND id in (select id from rooms where username='${sender}')`
-        db.query(getReceiverSql, (err, result)=>{
-            if (err) throw err
+        if (!infoSender || !infoReceiver){
+            return res.end("Error:: du lieu co van de")
+        }
+        //get room của 2 người này 
+        //nếu lớn hơn 0 tức là đã có room thì update
+        //nếu có rồi thì cập nhật updateAt và set cho is_show = 1 để hiển thị
+        var getIdRoom = await functionClass.getIdRoom(currentUser, receiver);
+        var maxIdRoom = await functionClass.getMaxIdRoom() + 1;//để insert vào db
 
-            if (result.length === 0){//nếu chưa thì insert vào db
-                var idRoom //lưu giá trị id để insert vào db
-                
-                //vì ko để id tự tăng nên phải lấy ra id để tăng lên rồi insert vaof id
-                var getIdSql = `select max(id) as 'maxId' from rooms `
-                db.query(getIdSql, (err, result)=>{
-                    if (err) throw err
-                    idRoom = result[0].maxId + 1
-                    
-                    //rồi sau đó insert vào db
-                    // console.log(idRoom)
+        //nếu có room rồi thì lấy idRoom đó để set updatedAt và is_show
+        //còn chưa thì phải insert vào db với cái idRôom mới là cái cao nhất + 1
+        var idRoom = (getIdRoom > 0) ? getIdRoom : maxIdRoom;
 
-                    var insertRoomsSql = `
-                        insert into rooms (id, username, is_show) 
-                        values (${idRoom}, '${sender}', 1), (${idRoom}, '${receiver}', 0)`
-                    db.query(insertRoomsSql, (err, result)=>{
-                        if (err) throw err
-                        //emit tới client để nó render html
-                        functionClass.getSocketid(sender).then((socketIdSender)=>{
-                            io.in(socketIdSender).emit('sender add chat list', {receiver, id: idRoom, nickname: nicknameReceiver})
-                        })
-                        
-                        //emit cho người nhận
-                        functionClass.getSocketid(receiver).then((socketIdReceiver)=>{
-                            io.in(socketIdReceiver).emit('sender add chat list', {receiver: sender, id: idRoom, nickname: nicknameSender})
-                        })
-                    })
-            })
-                
-            }else{//còn có rồi thì sửa cái is_show và cái updatedAt lại
-                var updateUpdatedAtSql = `
-                    update rooms 
-                    set is_show=1, updatedAt=CURRENT_TIMESTAMP() 
-                    where username='${sender}' AND id in (select id from rooms where username='${receiver}')
-                `
-                db.query(updateUpdatedAtSql, (err, result)=>{
-                    if (err) throw err
-                    var getIdRoom = `
-                        select id from rooms 
-                        where username='${sender}' AND id in (select id from rooms where username='${receiver}')`
-                    db.query(getIdRoom, (err, result)=>{
-                        if (err) throw err
-                        var idRoom = result[0].id
-                        functionClass.getSocketid(sender).then((socketIdSender)=>{
-                            io.in(socketIdSender).emit('sender add chat list', {receiver, id: idRoom, nickname: nicknameReceiver})
-                        })
+        if (getIdRoom > 0){
+            //set updatedAt của sender 
+            functionClass.setUpdatedAt(currentUser, idRoom)
+        }else{//conf ko thì là chưa có room
+            //insert vào db cho sender và receiver 
+            functionClass.insertAddChatListPersonal(currentUser, idRoom, 1);//insert cho sender
+            functionClass.insertAddChatListPersonal(receiver, idRoom, 0);//insert cho receiver 
+        }
 
-                        //emit cho người nhận
-                        functionClass.getSocketid(receiver).then((socketIdReceiver)=>{
-                            io.in(socketIdReceiver).emit('sender add chat list', {receiver: sender, id: idRoom, nickname: nicknameSender})
-                        })
-                    })
-                })
+        //receiver là user name của người nhận, nickname là nick name của người nhân
+        //isActive là khi bên client bắt đc sk thì nó add class active vào cho nó để nó nổi bật lên ko
+        //cái isActive này chỉ để cho sender vì là người chủ động 
+        functionClass.emit(receiver, 'add chat list personal', {receiver: currentUser, id: idRoom, nickname: infoSender.nickname, isActive: false}, io)
+        functionClass.emit(currentUser, 'add chat list personal', {receiver, id: idRoom, nickname: infoReceiver.nickname, isActive: true}, io)
+        res.end()
+    }
+    
+
+    async createGroupChat(req, res){
+        const io = req.app.get('socketio')
+        const usernames = req.body['usernames[]']//danh sách các user được 
+        const name = req.body.name;//ten cua group
+        const currentUser = res.locals.username//user hien tai
+
+        //idRoom de insert vao db tang dan
+        const idRoom = await functionClass.getMaxIdRoom() + 1;
+        console.log("createGroupChat", {usernames, name})
+        //lặp qua các user được chọn để tạo group
+        usernames.forEach(async (user)=>{
+            if (user == currentUser){//nếu là currentUser thì active nó và cho nó là host
+                functionClass.insertAddChatListGroup(currentUser, idRoom, 1, name, 1)
+                functionClass.emit(user, 'add chat list group', {groupName: name, idRoom: idRoom, isActive: true}, io)
+            }else{//cái này là mấy thằng còn lại
+                functionClass.insertAddChatListGroup(user, idRoom, 1, name, 0)
+                functionClass.emit(user, 'add chat list group', {groupName: name, idRoom: idRoom, isActive: false}, io)
             }
             
         })
 
         res.end()
     }
-    hideChatList(req, res, next){ //ham an chat list
-        const io = req.app.get('socketio') //lay socket
-        const {sender, receiver} = req.body
-        console.log("home/hideChatList", req.body)
-        // khi ma an thi chi can sua cai is_show=0 thoi
-        var updateIsShowSql = `
-            update rooms set is_show=0 
-            where username='${sender}' AND id in (select id from rooms where username='${receiver}')`
-        db.query(updateIsShowSql, (err, result)=>{
-            if (err) throw err
-                functionClass.getSocketid(sender).then((socketIdSender)=>{//xong thi emit len sever de render ra thang user do ok
-                io.in(socketIdSender).emit('sender remove chat list', {receiver})
-            })
+    //khi mà có tinh nhắn
+    async setUpdatedGroupChat(req, res, next){
+        const io = req.app.get('socketio')
+        // const {username, idRoom} = req.body;
+        const idRoom = req.body.idRoom;//room cần set lại
+        const currentUser = res.locals.username//người dùng hiện tại
+        const usernames = await functionClass.getUserInRoom(idRoom)//những user có trong room đó
+        const groupName = await functionClass.getGroupName(currentUser, idRoom);//tên group đó
+
+        console.log("setUpdatedAtGroupChat", usernames);
+
+        usernames.forEach((user)=>{
+            console.log(user)//lặp qua
+            if (user == currentUser){//nếu là currentUser thì active nó lên
+                functionClass.setUpdatedAt(user, idRoom);//set lại cái updatedAt là now và is_show là 1
+                //emit tới client
+                functionClass.emit(user, 'add chat list group', {groupName: groupName, idRoom: idRoom, isActive: true}, io)
+            }else{
+                functionClass.setUpdatedAt(user, idRoom);//set lại cái updatedAt là now và is_show là 1
+                functionClass.emit(user, 'add chat list group', {groupName: groupName, idRoom: idRoom, isActive: false}, io)
+            }
         })
 
+
+        res.end()
+    }
+
+    hideChatList(req, res, next){ //ham an chat list
+        const io = req.app.get('socketio') //lay socket
+        const {idRoom} = req.body
+        const currentUser = res.locals.username
+
+        console.log("home/hideChatList", {sender, receiver})
+        // khi ma an thi chi can sua cai is_show=0 thoi
+        functionClass.setIsShow(currentUser, idRoom);
+        functionClass.emit(currentUser, 'hide chat list', {idRoom}, io)
+        
         res.end()
     }
 }

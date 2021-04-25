@@ -41,7 +41,9 @@ app.use(session({
         maxAge: 1000*60*60*24, //1 ngày
     }
 }));
-
+app.use('/test', function(req, res){
+    res.end("HIHI")
+})
 connect()
 api(app)
 router(app)
@@ -58,31 +60,16 @@ io.on('connection', (socket) => {
         
     })
     
-    socket.on('sender send message', ({sender, message, idroom})=>{ // {sender, message, idroom}
-        //lấy socketId của thằng nhận
-        var getReceiverSql = `
-            select socketid 
-            from users u1, 
-                (select username from rooms where username!='${sender}' AND id=${idroom}) as u2
-            where u1.username=u2.username  
-        `        
-        db.query(getReceiverSql, (err, result)=>{
-            if (err) throw err
-
-            //sau đó emit tới clinet để render ra html
-            var socketIdReceiver = result[0].socketid
-            io.in(socketIdReceiver).emit('server send message to receiver', {message, idroom, sender})
-
-            //emit toi sender
-            functionClass.getSocketid(sender).then((socketIdSender)=>{
-                io.in(socketIdSender).emit('server send message to sender', {message, idroom, sender})
-            })
-            //sau do insert vao db
-            var insertMessageSql = `insert into messages (idroom, sender, message) values (${idroom}, '${sender}', '${message}')`
-            db.query(insertMessageSql, (err, result)=>{
-                if (err) throw err
-            })
+    socket.on('sender send message', async ({sender, message, idRoom})=>{ // {sender, message, idRoom}
+        // var is_personal = await functionClass.getIsPersonal(sender, idRoom)
+        console.log('index/senderSendMessage', {sender, message, idRoom})
+        var usernames = await functionClass.getUserInRoom(idRoom)
+        usernames.forEach((user)=>{
+            functionClass.emit(user, 'server send message', {message, idRoom, sender}, io)
         })
+
+        functionClass.insertMessage(sender, idRoom, message)
+        
     })
 });
 
