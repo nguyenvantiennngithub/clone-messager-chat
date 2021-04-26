@@ -10,6 +10,15 @@ class apiController{
         })
     }
 
+    async groups(req, res, next){
+        const username = res.locals.username
+        var getGroupSql = `select * from rooms where username='${username}' AND is_personal=0`
+        db.query(getGroupSql, (err, result)=>{
+            if (err) throw err
+            res.json(result)
+        })
+    }
+
     //[GET] /api/users
     async user(req, res, next){
         const username = res.locals.username

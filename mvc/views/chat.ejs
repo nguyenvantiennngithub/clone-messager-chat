@@ -33,17 +33,17 @@
       </div>
 
       <div class="dialog__option">
-        <div class="dialog__option-container" data-option="all">
+        <div class="dialog__option-container" name="filter-user-dialog" data-option="all">
           <div class="fake-padding">
             <span class="dialog__option-text">Tất cả</span>
           </div>
         </div>
-        <div class="dialog__option-container active" data-option="in_list">
+        <div class="dialog__option-container active" name="filter-user-dialog" data-option="in_list">
           <div class="fake-padding">
             <span class="dialog__option-text">Đang trò chuyện</span>
           </div>
         </div>
-        <div class="dialog__option-container" data-option="checked">
+        <div class="dialog__option-container" name="filter-user-dialog" data-option="checked">
           <div class="fake-padding">
             <span class="dialog__option-text">Đã chọn</span>
           </div>
@@ -123,6 +123,18 @@
           </div>
       </div>
       <div class="col-3">
+        <div class="dialog__option">
+          <div class="dialog__option-container active" name="filter-list-total-user" data-option="personal">
+            <div class="fake-padding">
+              <span class="dialog__option-text">Cá nhân</span>
+            </div>
+          </div>
+          <div class="dialog__option-container" name="filter-list-total-user" data-option="group">
+            <div class="fake-padding">
+              <span class="dialog__option-text">Nhóm</span>
+            </div>
+          </div>
+        </div>
         <ul class="list-group" id="list-total-user">
         </ul>
       </div>
