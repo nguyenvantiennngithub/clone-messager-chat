@@ -1,6 +1,5 @@
 const db = require('../../db/connect.db')
 const functionClass = require('../../public/js/function')
-const { get } = require('../router/home.router')
 class homeController{
     //[GET] /
     home(req, res){
@@ -113,6 +112,25 @@ class homeController{
             }
             
         })
+        res.end();
+    }
+
+
+    async addGroupChat(req, res, next){
+        const io = req.app.get('socketio')
+        const {userAdd} = req.body;
+        var idRooms = req.body['idRooms[]']
+        const currentUser = res.locals.username
+        console.log('addGroupChat', {idRooms, userAdd})
+        if (!Array.isArray(idRooms)){
+            idRooms = [idRooms]
+        }
+        idRooms.forEach(async (idRoom)=>{
+            var groupName = await functionClass.getGroupName(currentUser, idRoom)
+            console.log(userAdd, idRoom, 1, groupName)
+            functionClass.insertAddChatListGroup(userAdd, idRoom, 1, groupName, 0)
+            functionClass.emit(userAdd, 'add chat list group', {groupName: groupName, idRoom: idRoom, isActive: false}, io)
+        })
 
         res.end()
     }
@@ -140,7 +158,7 @@ class homeController{
         })
 
 
-        res.end()
+        res.end();
     }
 
     hideChatList(req, res, next){ //ham an chat list
@@ -148,7 +166,7 @@ class homeController{
         const {idRoom} = req.body
         const currentUser = res.locals.username
 
-        console.log("home/hideChatList", {sender, receiver})
+        console.log("home/hideChatList", {idRoom: idRoom})
         // khi ma an thi chi can sua cai is_show=0 thoi
         functionClass.setIsShow(currentUser, idRoom);
         functionClass.emit(currentUser, 'hide chat list', {idRoom}, io)

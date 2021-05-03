@@ -147,6 +147,11 @@
     overflow-x: hidden;
 }
 
+.dialog__choose-checked#groupSelected{
+    max-height: 150px;
+    min-height: 150px;
+}
+
 .dialog__choose-checked-item{
     max-width: 150px;
     min-width: 100px;

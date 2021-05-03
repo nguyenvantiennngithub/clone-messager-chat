@@ -11,5 +11,6 @@ router.get('/chat/:idroom', middleware.checkAuth, homeController.chat)
 router.post('/add-chat-list', middleware.checkAuth, homeController.addChatList)
 router.post('/hide-chat-list', middleware.checkAuth, homeController.hideChatList)
 router.post('/create-group-chat', middleware.checkAuth, homeController.createGroupChat)
+router.post('/add-group-chat', middleware.checkAuth, homeController.addGroupChat)
 router.post('/set-updatedAt-group-chat', middleware.checkAuth, homeController.setUpdatedGroupChat)
 module.exports = router

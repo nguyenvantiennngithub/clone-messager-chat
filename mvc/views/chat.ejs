@@ -13,12 +13,15 @@
   
   <div class="container mt-5 pd-5">
     <div class="overlay" hidden></div>
-    <div class="dialog" id="dialog" hidden>
+
+    <!-- create grouppppppppppppppppppppppppppppp -->
+
+    <div class="dialog" id="dialogCreateGroup" hidden>
       <!-- <i class="fas fa-check-circle"></i> checked -->
       <!-- <i class="far fa-check-circle"></i> uncheck -->
       <div class="dialog__header">
         <span class="dialog__header-title">Tạo nhóm</span>
-        <div class="dialog__header-close"><i class="fas fa-times"></i></div>
+        <div class="dialog__header-close" id="headerIconCloseCreateGroup"><i class="fas fa-times"></i></div>
       </div>
 
       <div class="col-sm-12" style="background-color:#ccc;"></div>
@@ -33,17 +36,17 @@
       </div>
 
       <div class="dialog__option">
-        <div class="dialog__option-container" name="filter-user-dialog" data-option="all">
+        <div class="dialog__option-container filter-user-dialog" data-option="all">
           <div class="fake-padding">
             <span class="dialog__option-text">Tất cả</span>
           </div>
         </div>
-        <div class="dialog__option-container active" name="filter-user-dialog" data-option="in_list">
+        <div class="dialog__option-container filter-user-dialog active" data-option="in_list">
           <div class="fake-padding">
             <span class="dialog__option-text">Đang trò chuyện</span>
           </div>
         </div>
-        <div class="dialog__option-container" name="filter-user-dialog" data-option="checked">
+        <div class="dialog__option-container filter-user-dialog" data-option="checked">
           <div class="fake-padding">
             <span class="dialog__option-text">Đã chọn</span>
           </div>
@@ -73,11 +76,58 @@
       <div class="col-sm-12" style="background-color:#ccc;"></div>
       <div class="dialog__footer">
         <div class="dialog__footer-container">
-          <button class="dialog__footer-btn cancel" id="btn-cancel">Hủy</button>
+          <button class="dialog__footer-btn cancel" id="btnCloseCreateGroup">Hủy</button>
           <button class="dialog__footer-btn create" id="btn-create-group-chat">Tạo nhóm</button>
         </div>
       </div>
     </div>
+
+    <!-- add grouppppppppppppppppppppppppppppp -->
+    <div class="dialog" id="dialogAddGroup" hidden>
+      <!-- <i class="fas fa-check-circle"></i> checked -->
+      <!-- <i class="far fa-check-circle"></i> uncheck -->
+      <div class="dialog__header">
+        <span class="dialog__header-title">Mời tham gia nhóm</span>
+        <div class="dialog__header-close" id="headerIconCloseAddGroup"><i class="fas fa-times"></i></div>
+      </div>
+
+      <div class="col-sm-12" style="background-color:#ccc;"></div>
+      <div class="dialog__group">
+        <span class="dialog-title" id="count-group-selected">Thêm vào nhóm (2)</span>
+        <input type="text" class="dialog__group-input" placeholder="Nhập tên muốn tìm">        
+      </div>
+
+      <div class="dialog__choose">
+        <span class="dialog-title">Đã chọn</span>
+
+        <div class="dialog__choose-checked" id="groupSelected">
+          <!-- <div class="dialog__choose-checked-item">
+            <div class="fake-padding">
+              <span class="dialog__choose-checked-item-name">Tien</span>
+              <div class="container-close">
+                <i class="fas fa-times"></i>
+              </div>
+            </div>
+          </div> -->
+        </div>
+        <span class="dialog-title">Nhóm</span>
+        <div class="dialog__choose-list" id="listGroupAddGroup">
+          <!-- <div class="dialog__choose-item">
+            <input type="checkbox" name="" id="" class="dialog__choose-item-input" data-name="Tien">
+            <label for="" class="dialog__choose-item-label">Tien</label>
+          </div> -->
+        </div>
+      </div>
+      <div class="col-sm-12" style="background-color:#ccc;"></div>
+      <div class="dialog__footer">
+        <div class="dialog__footer-container">
+          <button class="dialog__footer-btn cancel" id="btnCloseAddGroup">Hủy</button>
+          <button class="dialog__footer-btn create" id="btnAddGroup">Tạo nhóm</button>
+        </div>
+      </div>
+    </div>
+
+    
 
     
 
@@ -99,6 +149,8 @@
       </div>
       
       <div class="col-6 container-chat">
+        
+
         <ul class="list-group bg-secondary" id="list-message">
           <%for(var i = 0; i < messages.length; i++){%>
             <%if (messages[i].sender === currentUser){%>
@@ -124,12 +176,12 @@
       </div>
       <div class="col-3">
         <div class="dialog__option">
-          <div class="dialog__option-container active" name="filter-list-total-user" data-option="personal">
+          <div class="dialog__option-container filter-list-total-user active"  data-option="personal">
             <div class="fake-padding">
               <span class="dialog__option-text">Cá nhân</span>
             </div>
           </div>
-          <div class="dialog__option-container" name="filter-list-total-user" data-option="group">
+          <div class="dialog__option-container filter-list-total-user" data-option="group">
             <div class="fake-padding">
               <span class="dialog__option-text">Nhóm</span>
             </div>
