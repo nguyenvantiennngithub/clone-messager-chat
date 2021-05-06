@@ -1,3 +1,4 @@
+const { createPool } = require('mysql')
 const db = require('../../db/connect.db')
 
 class apiController{
@@ -89,6 +90,16 @@ class apiController{
             res.json(result)
         })
         
+    }
+
+    getLengthGroupByIdRoom(req, res, next){
+        const idRoom = req.params.id;
+        console.log(idRoom)
+        var getLengthGroup = `select count(*) as length from rooms where id=${idRoom}`
+        db.query(getLengthGroup, (err, result)=>{
+            if (err) throw err
+            res.json(result[0].length)
+        })
     }
 }
 

@@ -35,7 +35,7 @@
         <input type="text" class="dialog__group-input" placeholder="Nhập tên muốn tìm">        
       </div>
 
-      <div class="dialog__option">
+      <div class="dialog__option" id="filter-user-create-group">
         <div class="dialog__option-container filter-user-dialog" data-option="all">
           <div class="fake-padding">
             <span class="dialog__option-text">Tất cả</span>
@@ -149,8 +149,10 @@
       </div>
       
       <div class="col-6 container-chat">
-        
-
+        <div id="thread-chat">
+          <h3 id="name-room">Alo alo</h3>
+          <span>hihi</span>
+        </div>
         <ul class="list-group bg-secondary" id="list-message">
           <%for(var i = 0; i < messages.length; i++){%>
             <%if (messages[i].sender === currentUser){%>
@@ -167,15 +169,13 @@
           <%}%>
                     
         </ul>
-        <ul class="list-group bg-secondary" id="list-message-hide" hidden="hidden"></ul>
-
-          <div class="input-group container-send-message mb-3 mt-3">
-              <input id="input-send-message"type="text" class="form-control" placeholder="Send some message ...">
-              <button class="btn btn-outline-secondary" type="button" id="btn-send-message" data-idroom=<%-idRoom%>>Send</button>
-          </div>
+        <div class="input-group container-send-message mb-3 mt-3">
+          <input id="input-send-message"type="text" class="form-control" placeholder="Send some message ...">
+          <button class="btn btn-outline-secondary" type="button" id="btn-send-message" data-idroom=<%-idRoom%>>Send</button>
+        </div>
       </div>
       <div class="col-3">
-        <div class="dialog__option">
+        <div class="dialog__option" id="filter-total-list">
           <div class="dialog__option-container filter-list-total-user active"  data-option="personal">
             <div class="fake-padding">
               <span class="dialog__option-text">Cá nhân</span>
