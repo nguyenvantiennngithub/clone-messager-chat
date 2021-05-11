@@ -127,7 +127,53 @@
       </div>
     </div>
 
-    
+
+    <div class="dialog" id="dialogAddUser" hidden>
+      <!-- <i class="fas fa-check-circle"></i> checked -->
+      <!-- <i class="far fa-check-circle"></i> uncheck -->
+      <div class="dialog__header">
+        <span class="dialog__header-title">Chọn người để chat</span>
+        <!-- <div class="dialog__header-close" id="headerIconCloseAddUser"><i class="fas fa-times"></i></div> -->
+      </div>
+
+      <div class="col-sm-12" style="background-color:#ccc;"></div>
+      <div class="dialog__name">
+        <span class="dialog-title">Tên người dùng</span>
+        <input type="text" id="" class="dialog__name-input" placeholder="Nhập tên nhóm">        
+      </div>
+
+      <div class="dialog__group">
+        <span class="dialog-title" id="count-user-add">Chọn thêm người bạn muốn trò chuyện (2) người</span>
+        <input type="text" class="dialog__group-input" placeholder="Nhập tên muốn tìm">        
+      </div>
+
+      <div class="dialog__choose">
+        <div class="dialog__choose-checked" id="user-add-checked">
+          <!-- <div class="dialog__choose-checked-item">
+            <div class="fake-padding">
+              <span class="dialog__choose-checked-item-name">Tien</span>
+              <div class="container-close">
+                <i class="fas fa-times"></i>
+              </div>
+            </div>
+          </div> -->
+        </div>
+        <span class="dialog-title">Trò chuyện gần đây</span>
+        <div class="dialog__choose-list" id="list-user-add">
+          <!-- <div class="dialog__choose-item">
+            <input type="checkbox" name="" id="" class="dialog__choose-item-input" data-name="Tien">
+            <label for="" class="dialog__choose-item-label">Tien</label>
+          </div> -->
+        </div>
+      </div>
+      <div class="col-sm-12" style="background-color:#ccc;"></div>
+      <div class="dialog__footer">
+        <div class="dialog__footer-container">
+          <!-- <button class="dialog__footer-btn cancel" id="btnCloseAddUser">Hủy</button> -->
+          <button class="dialog__footer-btn create" id="btnCreateAdduser">Thêm</button>
+        </div>
+      </div>
+    </div>
 
     
 
@@ -154,19 +200,7 @@
           <span>hihi</span>
         </div>
         <ul class="list-group bg-secondary" id="list-message">
-          <%for(var i = 0; i < messages.length; i++){%>
-            <%if (messages[i].sender === currentUser){%>
-              <li class="list-group-item list-group-item-success list-group-message message-item"
-              style="margin-left:auto"><%-messages[i].message%></li>
-            <%}else if (messages[i].sender === 'empty'){%>
-              <li class="list-group-item list-group-item-danger list-group-message message-item"
-              style="margin-left:auto; margin-right: auto"><%-messages[i].message%></li>
-
-            <%}else{%>
-              <li class="list-group-item list-group-item-secondary list-group-message message-item" 
-              style="margin-right: auto"><%-messages[i].message%></li>
-            <%}%>
-          <%}%>
+        
                     
         </ul>
         <div class="input-group container-send-message mb-3 mt-3">

@@ -5,7 +5,7 @@ const middleware = require('../../middleware/index.middleware')
 
 const router = express.Router()
 
-router.get('/', homeController.home)
+router.get('/', middleware.checkAuth, homeController.home)
 router.get('/chat', middleware.checkAuth, homeController.chat)
 router.get('/chat/:idroom', middleware.checkAuth, homeController.chat)
 router.post('/add-chat-list', middleware.checkAuth, homeController.addChatList)

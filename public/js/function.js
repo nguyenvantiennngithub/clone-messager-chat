@@ -67,12 +67,17 @@ class functionClass{
                 var getRoomSql = `
                     select id
                     from rooms 
-                    where username='${username}'
+                    where username='${username}' AND is_show=1
                     order by updatedAt desc
                 `
                 db.query(getRoomSql, (err, result)=>{
                     if (err) return reject(err)
-                    resolve(result[0].id);
+                    console.log('getIdRoomNearest', result)
+                    if (result.length > 0){
+                        console.log("run here")
+                        resolve(result[0].id);
+                    }
+                    resolve(0)
                 })
             }
         )
@@ -142,9 +147,9 @@ class functionClass{
     }
     
 
-    insertAddChatListPersonal(username, idRoom, is_show){
-        var insertRoomsSql = `insert into rooms (id, username, is_show) 
-            values (${idRoom}, '${username}', ${is_show})`
+    insertAddChatListPersonal(username, idRoom, is_show, nicknameReceiver){
+        var insertRoomsSql = `insert into rooms (id, username, is_show, name) 
+            values (${idRoom}, '${username}', ${is_show}, '${nicknameReceiver}')`
         db.query(insertRoomsSql, (err, result) => {
             if (err) throw err
         })

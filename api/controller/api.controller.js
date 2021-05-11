@@ -4,7 +4,7 @@ const db = require('../../db/connect.db')
 class apiController{
     //[GET] /api/users
     //lấy tất cả user
-    async users(req, res, next){
+    async totalUser(req, res, next){
         var sql = `select nickname, username, socketid from users`
         await db.query(sql, (err, result)=>{
             if (err) throw err
@@ -13,7 +13,7 @@ class apiController{
     }
     //[GET] /api/groups
     //lấy tất cả group của curentUser
-    async groups(req, res, next){
+    async totalGroup(req, res, next){
         const username = res.locals.username
         var getGroupSql = `select * from rooms where username='${username}' AND is_personal=0`
         db.query(getGroupSql, (err, result)=>{
@@ -24,10 +24,9 @@ class apiController{
 
     //[GET] /api/users
     //lấy current user
-    async user(req, res, next){
+    async currentUser(req, res, next){
         const username = res.locals.username
         const socketid = req.session.id
-        console.log('api/user', username)
         var sql = `select nickname, username, socketid from users u, sessions s where s.session_id='${socketid}' AND u.username='${username}'`
         db.query(sql, (err, result)=>{
             if (err) throw err
@@ -37,7 +36,7 @@ class apiController{
 
     //[GET] /api/user-chat-list
     //lấy user được add
-    receiverChatList(req, res, next){
+    checkedUser(req, res, next){
         const currentUser = res.locals.username
         
         //sql này dùng dể lấy những username có cùng rooms với currentUser và ko lấy currentUser     
@@ -58,7 +57,7 @@ class apiController{
 
     //lấy group được add
     //[GET] /api/group-chat-list
-    groupChatList(req, res){
+    checkedGroup(req, res){
         const currentUser = res.locals.username;
         var getGroupSql = `
             select name, updatedAt, id, is_personal from rooms where username='${currentUser}' AND is_show=1 AND is_personal=0 
@@ -73,8 +72,11 @@ class apiController{
     //[GET] /api/message
     message(req, res, next){
         const idRoom = req.params.id
+        const currentUser = res.locals.username
         var getMessageSql = `
-            select * from messages where idroom='${idRoom}'
+            select * from messages mess, rooms room 
+            where mess.idroom='${idRoom}' AND room.username='${currentUser}' AND
+                mess.idroom=room.id 
         `
         db.query(getMessageSql, (err, result)=>{
             if (err) throw err
@@ -82,7 +84,7 @@ class apiController{
         })
     }
 
-    groupReceiver(req, res, next){
+    totalGroupByUsername(req, res, next){
         const {receiver} = req.params
         var getRoomSql = `select id from rooms where username='${receiver}' AND is_personal=0`
         db.query(getRoomSql, (err, result)=>{
@@ -94,11 +96,28 @@ class apiController{
 
     getLengthGroupByIdRoom(req, res, next){
         const idRoom = req.params.id;
-        console.log(idRoom)
+        console.log('getLengthGroupByIdRoom', idRoom)
+        if (idRoom === 'undefined'){
+            res.json(0);
+            return;
+        }
+       
+        console.log("hihi")
         var getLengthGroup = `select count(*) as length from rooms where id=${idRoom}`
         db.query(getLengthGroup, (err, result)=>{
             if (err) throw err
             res.json(result[0].length)
+        })
+    }
+
+    groupCurrentUserByIdRoom(req, res, next){
+        const currentUser = res.locals.username;
+        const idRoom = req.params.id;
+        console.log('groupCurrentUserByIdRoom', {currentUser, idRoom})
+        var getInfoRoom = `select * from rooms where username='${currentUser}' AND id=${idRoom}`
+        db.query(getInfoRoom, (err, result)=>{
+            if (err) throw err
+            res.json(result[0]);
         })
     }
 }

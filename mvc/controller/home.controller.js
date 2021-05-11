@@ -2,7 +2,15 @@ const db = require('../../db/connect.db')
 const functionClass = require('../../public/js/function')
 class homeController{
     //[GET] /
-    home(req, res){
+    async home(req, res){
+        if (res.locals.isAuth){
+            var currentUser = res.locals.username;
+            const messages = []
+            var idRoom = await functionClass.getIdRoomNearest(currentUser)
+            return res.render('chat',{messages, currentUser, idRoom})
+
+        }
+
         res.render('home', {
             messageError: '',
             username: '',
@@ -13,8 +21,16 @@ class homeController{
     async chat(req, res){
         const io = req.app.get('socketio') //lay socket
         const currentUser = res.locals.username
-        var idRoom = req.params.idroom || await functionClass.getIdRoomNearest(currentUser)
+        var idRoom = req.params.idroom
+        console.log({idRoom})
+        if (!idRoom){
+            idRoom = await functionClass.getIdRoomNearest(currentUser)
+            console.log({idRoom})
+           res.render("chat", {currentUser, idRoom})
+           return;
+        }
         console.log("ctrl/home", idRoom, currentUser)
+
 
         //check xem currentUser co room nay hay khong
         var checkRoomSql = `select * from rooms where username='${currentUser}' AND id='${idRoom}'`
@@ -25,6 +41,7 @@ class homeController{
                 db.query(getMessagesSql, (err, result)=>{
                     if (err) throw err
                     var messages = result
+                    console.log({messages, currentUser, idRoom})
                     res.render("chat", {messages, currentUser, idRoom})
                     
                 })
@@ -54,40 +71,44 @@ class homeController{
 
     async addChatList(req, res, next){
         const io = req.app.get('socketio') //lay socket
-        const {receiver} = req.body 
+        console.log('startttttttttttttttttttttttttttt')
+        //nhận data tùy vào add 1 user hoặc add nhiều user
+        var receiver = req.body.receiver || req.body['receivers[]']
+        if (!Array.isArray(receiver)){
+            receiver = [receiver]
+        }
+        console.log(receiver)
         const currentUser = res.locals.username
         console.log("addChatList", {currentUser, receiver})
-        //get thông tin của sender và receier 
-        var infoSender = await functionClass.getInfoUser(currentUser);
-        var infoReceiver = await functionClass.getInfoUser(receiver);
 
-        if (!infoSender || !infoReceiver){
-            return res.end("Error:: du lieu co van de")
+        for (const user of receiver){
+
+            console.log("console 1", user)
+            // get thông tin của sender và receier 
+            var infoSender = await functionClass.getInfoUser(currentUser);
+            var infoReceiver = await functionClass.getInfoUser(user);
+
+            var getIdRoom = await functionClass.getIdRoom(currentUser, user);
+            var maxIdRoom = await functionClass.getMaxIdRoom() + 1;//để insert vào db
+
+            var idRoom = (getIdRoom > 0) ? getIdRoom : maxIdRoom;
+
+            console.log('console 2', idRoom)
+            //get room của 2 người này 
+            //nếu lớn hơn 0 tức là đã có room thì update
+            if (getIdRoom > 0){
+                //set updatedAt của sender 
+                functionClass.setUpdatedAt(currentUser, idRoom)
+            }else{//conf ko thì là chưa có room
+                // insert vào db cho sender và receiver 
+                functionClass.insertAddChatListPersonal(currentUser, idRoom, 1, infoReceiver.nickname);//insert cho sender
+                functionClass.insertAddChatListPersonal(user, idRoom, 0, infoSender.nickname);//insert cho receiver 
+            }
+            // receiver là user name của người nhận, nickname là nick name của người nhân
+            // isActive là khi bên client bắt đc sk thì nó add class active vào cho nó để nó nổi bật lên ko
+            functionClass.emit(user, 'add chat list personal', {receiver: currentUser, id: idRoom, nickname: infoSender.nickname, isActive: false}, io)
+            functionClass.emit(currentUser, 'add chat list personal', {receiver, id: idRoom, nickname: infoReceiver.nickname, isActive: true}, io)
         }
-        //get room của 2 người này 
-        //nếu lớn hơn 0 tức là đã có room thì update
-        //nếu có rồi thì cập nhật updateAt và set cho is_show = 1 để hiển thị
-        var getIdRoom = await functionClass.getIdRoom(currentUser, receiver);
-        var maxIdRoom = await functionClass.getMaxIdRoom() + 1;//để insert vào db
-
-        //nếu có room rồi thì lấy idRoom đó để set updatedAt và is_show
-        //còn chưa thì phải insert vào db với cái idRôom mới là cái cao nhất + 1
-        var idRoom = (getIdRoom > 0) ? getIdRoom : maxIdRoom;
-
-        if (getIdRoom > 0){
-            //set updatedAt của sender 
-            functionClass.setUpdatedAt(currentUser, idRoom)
-        }else{//conf ko thì là chưa có room
-            //insert vào db cho sender và receiver 
-            functionClass.insertAddChatListPersonal(currentUser, idRoom, 1);//insert cho sender
-            functionClass.insertAddChatListPersonal(receiver, idRoom, 0);//insert cho receiver 
-        }
-
-        //receiver là user name của người nhận, nickname là nick name của người nhân
-        //isActive là khi bên client bắt đc sk thì nó add class active vào cho nó để nó nổi bật lên ko
-        //cái isActive này chỉ để cho sender vì là người chủ động 
-        functionClass.emit(receiver, 'add chat list personal', {receiver: currentUser, id: idRoom, nickname: infoSender.nickname, isActive: false}, io)
-        functionClass.emit(currentUser, 'add chat list personal', {receiver, id: idRoom, nickname: infoReceiver.nickname, isActive: true}, io)
         res.end()
     }
     
@@ -139,6 +160,7 @@ class homeController{
         const io = req.app.get('socketio')
         // const {username, idRoom} = req.body;
         const idRoom = req.body.idRoom;//room cần set lại
+        
         const currentUser = res.locals.username//người dùng hiện tại
         const usernames = await functionClass.getUserInRoom(idRoom)//những user có trong room đó
         const groupName = await functionClass.getGroupName(currentUser, idRoom);//tên group đó
