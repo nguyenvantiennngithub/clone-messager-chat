@@ -15,8 +15,7 @@ class indexMiddleware{
             })
             // console.log("middle/idx/checkauth", req.session.username)
             next()
-        }
-        else{
+        }else{
             return res.render('home', {
                 username: '',
                 password: '',
@@ -25,6 +24,21 @@ class indexMiddleware{
         }
     }
 
+    isLogin(req, res, next){
+        if (req.session.isAuth){
+            res.locals.username = req.session.username
+            res.locals.isAuth = req.session.isAuth
+            
+            const username = req.session.username
+            var getNickNameCurrentUserSql = `select nickname from users where username='${username}'`
+            db.query(getNickNameCurrentUserSql, (err, result)=>{
+                if (err) throw err
+                res.locals.nickname = result[0].nickname
+            })
+            // console.log("middle/idx/checkauth", req.session.username)
+        }
+        next()
+    }
     //dùng để redirect tới trang chat khi 
     //mà customer đã login nhưng lại ở trang home
     homeRedirect(req, res, next){

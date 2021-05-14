@@ -82,7 +82,6 @@ class functionClass{
             }
         )
     }
-    
 
     getInfoUser(username){
         return new Promise(

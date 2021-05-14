@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs')
 class authController{
     //[POST] /auth/checkLogin
     checkLogin(req, res){
-        console.log("run here")
         const {username, password} = req.body
         var messageError = 'Wrong username or password'
         console.log({username, password})

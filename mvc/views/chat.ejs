@@ -189,6 +189,23 @@
 
     <div class="row">
       <div class="col-3">
+        <div class="dialog__option" id="filter-checked-list">
+          <div class="dialog__option-container filter-list-total-user active"  data-option="all">
+            <div class="fake-padding">
+              <span class="dialog__option-text">Tất cả</span>
+            </div>
+          </div>
+          <div class="dialog__option-container filter-list-total-user"  data-option="personal">
+            <div class="fake-padding">
+              <span class="dialog__option-text">Cá nhân</span>
+            </div>
+          </div>
+          <div class="dialog__option-container filter-list-total-user" data-option="group">
+            <div class="fake-padding">
+              <span class="dialog__option-text">Nhóm</span>
+            </div>
+          </div>
+        </div>
         <ul id="list-chat-user" class="list-group">
 
         </ul>
@@ -196,18 +213,20 @@
       
       <div class="col-6 container-chat">
         <div id="thread-chat">
-          <h3 id="name-room">Alo alo</h3>
-          <span>hihi</span>
+          <!-- <h3 id="name-room">Alo alo</h3> -->
+          <!-- <span>hihi</span> -->
+          
         </div>
         <ul class="list-group bg-secondary" id="list-message">
         
-                    
+
         </ul>
         <div class="input-group container-send-message mb-3 mt-3">
           <input id="input-send-message"type="text" class="form-control" placeholder="Send some message ...">
           <button class="btn btn-outline-secondary" type="button" id="btn-send-message" data-idroom=<%-idRoom%>>Send</button>
         </div>
       </div>
+
       <div class="col-3">
         <div class="dialog__option" id="filter-total-list">
           <div class="dialog__option-container filter-list-total-user active"  data-option="personal">

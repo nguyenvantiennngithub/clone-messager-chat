@@ -110,6 +110,24 @@ class apiController{
         })
     }
 
+    getIdRoomNearest(req, res){
+        const currentUser = res.locals.username
+        var getRoomSql = `
+            select id
+            from rooms 
+            where username='${currentUser}' AND is_show=1
+            order by updatedAt desc
+        `
+        db.query(getRoomSql, (err, result)=>{
+            if (err) throw(err)
+            // console.log('getIdRoomNearest', result)
+            if (result.length > 0){
+                return res.json(result[0].id);
+            }
+            res.json(0)
+        })
+    }
+
     groupCurrentUserByIdRoom(req, res, next){
         const currentUser = res.locals.username;
         const idRoom = req.params.id;

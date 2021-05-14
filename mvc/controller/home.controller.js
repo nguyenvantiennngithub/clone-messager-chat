@@ -8,7 +8,6 @@ class homeController{
             const messages = []
             var idRoom = await functionClass.getIdRoomNearest(currentUser)
             return res.render('chat',{messages, currentUser, idRoom})
-
         }
 
         res.render('home', {
@@ -46,7 +45,7 @@ class homeController{
                     
                 })
             }else{//cponf không thì trả về không tồn tại
-                res.render("chat", {messages: [{sender: 'empty', message: 'Người dùng không tồn tại'}], currentUser, idRoom})
+                res.render("chat", {messages: [{sender: undefined, message: 'Người dùng không tồn tại'}], currentUser, idRoom})
             }
         })        
         
@@ -125,6 +124,7 @@ class homeController{
         //lặp qua các user được chọn để tạo group
         usernames.forEach(async (user)=>{
             if (user == currentUser){//nếu là currentUser thì active nó và cho nó là host
+                //username, idRoom, is_show, name, is_host
                 functionClass.insertAddChatListGroup(currentUser, idRoom, 1, name, 1)
                 functionClass.emit(user, 'add chat list group', {groupName: name, idRoom: idRoom, isActive: true}, io)
             }else{//cái này là mấy thằng còn lại
@@ -193,6 +193,25 @@ class homeController{
         functionClass.setIsShow(currentUser, idRoom);
         functionClass.emit(currentUser, 'hide chat list', {idRoom}, io)
         
+        res.end()
+    }
+    async changeName(req, res){
+        const {text, idRoom} = req.body;
+        console.log({text, idRoom})
+        const currentUser = res.locals.username
+        var isPersonal = await functionClass.getIsPersonal(currentUser, idRoom);
+        var sql;
+        if (isPersonal){
+            sql = `update rooms set name='${text}' 
+                where username='${currentUser}' AND id='${idRoom}'`
+        }else{
+            sql = `update rooms set name='${text}' 
+                where id='${idRoom}'`
+        }
+        console.log("sql", sql)
+        db.query(sql, (err, result)=>{
+            if (err) throw err;;
+        })
         res.end()
     }
 }
