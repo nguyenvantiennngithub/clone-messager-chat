@@ -20,7 +20,7 @@ class authController{
                     messageError = ''
                     var data = {messages: [], currentUser: username, idRoom: 0}
                     console.log("run before render")
-                    res.render('test')
+                    res.render('chat', data)
                 }
             }
             res.render('home', {
