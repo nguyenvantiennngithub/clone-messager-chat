@@ -23,11 +23,11 @@ app.use(bodyParser.json())
 
 // run local
 var options = {
-	host: 'localhost',
-	port: 3306,
-	user: 'root',
-	password: '',
-	database: 'messagers'
+	host: process.env.HOST || 'localhost',
+	port: process.env.PORT ||3306,
+	user: process.env.USER ||'root',
+	password: process.env.PASSWORD ||'',
+	database: process.env.DATABASE ||'messagers'
 };
 
 //run cpanel

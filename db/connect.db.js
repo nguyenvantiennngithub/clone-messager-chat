@@ -2,10 +2,10 @@ const mysql = require('mysql');
 
 //run local
 var db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "messagers"
+  host: process.env.HOST || "localhost",
+  user: process.env.USER || "root",
+  password: process.env.PASSWORD || "",
+  database: process.env.DATABASE || "messagers"
 });
 
 //run cpanel
