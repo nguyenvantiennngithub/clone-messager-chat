@@ -18,9 +18,8 @@ class authController{
                     req.session.isAuth = isMatch
                     req.session.username = username
                     messageError = ''
-                    var data = {messages: [], currentUser: username, idRoom: 0}
                     console.log("run before render")
-                    res.render('chat', data)
+                    res.redirect('/chat')
                 }
             }
             res.render('home', {
@@ -29,6 +28,8 @@ class authController{
                 password: password,
             })
         })
+        res.end()
+
     }
 
     //[GET] /auth/register
