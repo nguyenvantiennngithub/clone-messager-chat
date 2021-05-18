@@ -181,7 +181,7 @@ class functionClass{
         })
     }
 
-    checkUser(username){
+    checkUser(username, password){
         return new Promise(
             function (resolve, reject){
                 var sql = `select password, socketid from users where username='${username}'`

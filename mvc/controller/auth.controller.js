@@ -8,16 +8,19 @@ class authController{
         var messageError = 'Wrong username or password'
         console.log({username, password})
         
-        var flag = await functionClass.checkUser(username);
+        var flag = await functionClass.checkUser(username, password);
         
         if (flag){
+            console.log("falg")
             req.session.isAuth = isMatch
             req.session.username = username
             messageError = ''
             res.redirect('/chat')
         }else{
+            console.log("!falg")
 
         }
+        console.log("dasdsadsadsadsadsads")
         
         // res.render('home', {
         //     messageError,
