@@ -19,7 +19,7 @@ class authController{
                     req.session.username = username
                     messageError = ''
                     console.log("run before render")
-                    return res.redirect('/chat')
+                    return res.redirect('/fhdajhjasdhks')
                 }
             }
             res.render('home', {
