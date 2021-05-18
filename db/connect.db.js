@@ -6,10 +6,6 @@ var db = mysql.createConnection({
   user: process.env.USER || "root",
   password: process.env.PASSWORD || "",
   database: process.env.DATABASE || "messagers",
-  connectionLimit : 1000,
-  connectTimeout  : 60 * 60 * 1000,
-  acquireTimeout  : 60 * 60 * 1000,
-  timeout         : 60 * 60 * 1000,
 });
 
 //run cpanel
