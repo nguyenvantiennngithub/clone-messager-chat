@@ -20,6 +20,7 @@ class authController{
                     messageError = ''
                     console.log("run before render")
                     res.redirect('/chat')
+                    res.end()
                 }
             }
             res.render('home', {
