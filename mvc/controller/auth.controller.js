@@ -13,12 +13,14 @@ class authController{
             if (result.length == 1){
                 var isMatch = bcrypt.compareSync(password, result[0].password)
                 if (isMatch){
+                    console.log('run is match')
                     // console.log("sessionid: ", req.session.id)
                     req.session.isAuth = isMatch
                     req.session.username = username
                     messageError = ''
                     var data = {messages: [], currentUser: username, idRoom: 0}
-                    return res.render('/test')
+                    console.log("run before render")
+                    res.render('test')
                 }
             }
             res.render('home', {
