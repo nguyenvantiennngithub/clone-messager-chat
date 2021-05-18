@@ -178,6 +178,28 @@ class functionClass{
             io.in(socketId).emit(event, data)
         })
     }
+
+    checkUser(username){
+        return new Promise(
+            function (resolve, reject){
+                var sql = `select password, socketid from users where username='${username}'`
+                db.query(sql, (err, result)=>{
+                    if (err) throw err
+                    console.log(result)
+                    if (result.length == 1){
+                        var isMatch = bcrypt.compareSync(password, result[0].password)
+                        if (isMatch){
+                            resolve(true);
+                            console.log("run before render")
+                        }else{
+                            resolve(false);
+                        }
+                    }
+                    resolve(false);
+                })
+            }
+        )
+    }
 }
 
 

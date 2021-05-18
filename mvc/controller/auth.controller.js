@@ -1,33 +1,29 @@
 const db = require('../../db/connect.db')
 const bcrypt = require('bcryptjs')
+const functionClass = require('../../public/js/function')
 class authController{
     //[POST] /auth/checkLogin
-    checkLogin(req, res){
+    async checkLogin(req, res){
         const {username, password} = req.body
         var messageError = 'Wrong username or password'
         console.log({username, password})
-        var sql = `select password, socketid from users where username='${username}'`
-        db.query(sql, (err, result)=>{
-            if (err) throw err
-            console.log(result)
-            if (result.length == 1){
-                var isMatch = bcrypt.compareSync(password, result[0].password)
-                if (isMatch){
-                    console.log('run is match')
-                    // console.log("sessionid: ", req.session.id)
-                    req.session.isAuth = isMatch
-                    req.session.username = username
-                    messageError = ''
-                    console.log("run before render")
-                    res.send('/chat')
-                }
-            }
-            // res.render('home', {
-            //     messageError,
-            //     username: username,
-            //     password: password,
-            // })
-        })
+        
+        var flag = await functionClass.checkUser(username);
+        
+        if (flag){
+            req.session.isAuth = isMatch
+            req.session.username = username
+            messageError = ''
+            res.redirect('/chat')
+        }else{
+
+        }
+        
+        // res.render('home', {
+        //     messageError,
+        //     username: username,
+        //     password: password,
+        // })
     }
 
     //[GET] /auth/register
