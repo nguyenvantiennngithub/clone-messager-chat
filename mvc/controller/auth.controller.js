@@ -17,7 +17,8 @@ class authController{
                     req.session.isAuth = isMatch
                     req.session.username = username
                     messageError = ''
-                    return res.redirect('/chat')
+                    var data = {messages: [], currentUser: username, idRoom: 0}
+                    return res.render('/test')
                 }
             }
             res.render('home', {
