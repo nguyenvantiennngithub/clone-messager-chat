@@ -21,6 +21,7 @@ app.set('socketio', io) //export socket io to a global
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
+// run local
 var options = {
 	host: 'localhost',
 	port: 3306,
@@ -28,6 +29,15 @@ var options = {
 	password: '',
 	database: 'messagers'
 };
+
+//run cpanel
+// var options = {
+//     host: 'localhost',
+//     port: 3306,
+//     user: 'nveysqehosting_vantiennn',
+//     password: '1Ew^^)D_B7_g',
+//     database: 'nveysqehosting_messager'
+// };
 
 var sessionStore = new MySQLStore(options);
 
