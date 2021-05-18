@@ -1,4 +1,6 @@
 const db = require('../../db/connect.db')
+const bcrypt = require('bcryptjs')
+
 class functionClass{
     //ham nay nhan vao 1 cai username 
     async getSocketId(username){
