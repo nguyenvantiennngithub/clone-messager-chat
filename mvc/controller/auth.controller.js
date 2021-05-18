@@ -28,8 +28,6 @@ class authController{
                 password: password,
             })
         })
-        res.end()
-
     }
 
     //[GET] /auth/register
