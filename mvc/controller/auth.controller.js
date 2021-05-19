@@ -19,20 +19,21 @@ class authController{
 
             console.log("2", req.session.isAuth)
             req.session.save(function(err){
-                res.redirect('/test')
+                res.redirect('/chat')
 
             });
         }else{
             console.log("!falg")
+            res.render('home', {
+                messageError,
+                username: username,
+                password: password,
+            })
 
         }
         console.log("dasdsadsadsadsadsads")
         
-        // res.render('home', {
-        //     messageError,
-        //     username: username,
-        //     password: password,
-        // })
+        
     }
 
     //[GET] /auth/register
