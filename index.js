@@ -56,12 +56,21 @@ var sess = {
 app.use(session(sess));
 
 
-app.use('/test', function(req, res){
+app.use('/session', function(req, res){
     req.session.test = true
-    res.redirect("/test2")
+    res.redirect("/session1")
 })
 
-app.use('/test2', function(req, res){
+app.use('/session1', function(req, res){
+    console.log("test session: ", req.session);
+    res.json(req.session)
+})
+
+app.use('/nosession', function(req, res){
+    res.redirect("/nosession1")
+})
+
+app.use('/nosession1', function(req, res){
     console.log("test session: ", req.session);
     res.json(req.session)
 })
