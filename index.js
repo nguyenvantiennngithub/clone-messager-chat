@@ -39,7 +39,7 @@ var options = {
 //     password: '1Ew^^)D_B7_g',
 //     database: 'nveysqehosting_messager'
 // };
-
+app.set('trust proxy', 1)
 var sessionStore = new MySQLStore(options);
 var sess = {
     secret: 'this is secret',
@@ -48,14 +48,10 @@ var sess = {
     saveUninitialized: false,
     
     cookie:{
-        httpOnly: false, secure: false, maxAge: 1000 * 60 * 60 * 48,
+        httpOnly: false, secure: true, maxAge: 1000 * 60 * 60 * 48,
         // secure: process.env.NODE_ENV == "production" ? true : false ,
         // maxAge: 1000*60*60*24, //1 ngày
     },
-}
-if (app.get('env') === 'production') {
-    app.set('trust proxy', 1) // trust first proxy
-    sessionStore.cookie.secure = true // serve secure cookies
 }
 app.use(session(sess));
 
