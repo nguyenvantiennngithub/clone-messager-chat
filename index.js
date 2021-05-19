@@ -57,7 +57,6 @@ app.use(session(sess));
 
 
 app.use('/test', function(req, res){
-    req.session.test = 'test';
     res.redirect("/test2")
 })
 
