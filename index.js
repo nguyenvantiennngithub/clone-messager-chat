@@ -57,8 +57,13 @@ app.use(session(sess));
 
 
 app.use('/test', function(req, res){
+    req.session.test = 'test';
+    res.redirect("/test2")
+})
+
+app.use('/test2', function(req, res){
     console.log("test session: ", req.session);
-    res.redirect("/")
+    res.json(req.session)
 })
 connect()
 api(app)
