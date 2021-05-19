@@ -42,14 +42,15 @@ var options = {
 var sessionStore = new MySQLStore(options);
 app.set('trustproxy', true)
 app.use(session({
-	secret: 'this is secrdsadsaet',
+	secret: 'this is secret',
 	store: sessionStore,
 	resave: false,
     saveUninitialized: true,
     
     cookie:{
-        secure: process.env.NODE_ENV == "production" ? true : false ,
-        maxAge: 1000*60*60*24, //1 ngày
+        httpOnly: true, secure: true, maxAge: 1000 * 60 * 60 * 48, sameSite: 'none'
+        // secure: process.env.NODE_ENV == "production" ? true : false ,
+        // maxAge: 1000*60*60*24, //1 ngày
     }
 }));
 
