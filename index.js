@@ -40,11 +40,11 @@ var options = {
 // };
 
 var sessionStore = new MySQLStore(options);
-// app.set('trustproxy', true)
+app.set('trustproxy', true)
 app.use(session({
 	secret: 'this is secrdsadsaet',
 	store: sessionStore,
-	resave: true,
+	resave: false,
     saveUninitialized: true,
     
     cookie:{
