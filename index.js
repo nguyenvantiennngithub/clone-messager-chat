@@ -52,6 +52,7 @@ app.use(session({
         maxAge: 1000*60*60*24, //1 ngày
     }
 }));
+
 app.use('/test', function(req, res){
     res.redirect("/")
 })
