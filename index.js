@@ -44,8 +44,8 @@ var sessionStore = new MySQLStore(options);
 app.use(session({
 	secret: 'this is secrdsadsaet',
 	store: sessionStore,
-	resave: false,
-    saveUninitialized: false,
+	resave: true,
+    saveUninitialized: true,
     
     cookie:{
         secure: process.env.NODE_ENV == "production" ? true : false ,
