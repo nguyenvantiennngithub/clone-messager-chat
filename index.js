@@ -40,7 +40,7 @@ var options = {
 // };
 
 var sessionStore = new MySQLStore(options);
-
+app.set('trustproxy', true)
 app.use(session({
 	secret: 'this is secrdsadsaet',
 	store: sessionStore,
@@ -48,6 +48,7 @@ app.use(session({
     saveUninitialized: false,
     
     cookie:{
+        secure: process.env.NODE_ENV == "production" ? true : false ,
         maxAge: 1000*60*60*24, //1 ngày
     }
 }));
