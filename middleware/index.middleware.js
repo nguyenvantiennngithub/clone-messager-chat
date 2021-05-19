@@ -2,7 +2,7 @@ const db = require('../db/connect.db')
 
 class indexMiddleware{
     checkAuth(req, res, next){
-        // console.log('isauth: ', req.session.isAuth)
+        console.log('isauth: ', req.session.isAuth)
         if (req.session.isAuth){
             res.locals.username = req.session.username
             res.locals.isAuth = req.session.isAuth
