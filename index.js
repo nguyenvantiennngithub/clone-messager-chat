@@ -1,6 +1,7 @@
 const express = require('express')
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
+var cookieParser = require('cookie-parser')
 const app = express()
 const port = process.env.PORT || 8080
 const http = require('http').createServer(app);
@@ -20,7 +21,7 @@ app.set('socketio', io) //export socket io to a global
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
-
+app.use(cookieParser())
 // run local
 var options = {
 	host: process.env.HOST || 'localhost',
@@ -40,19 +41,24 @@ var options = {
 // };
 
 var sessionStore = new MySQLStore(options);
-app.set('trustproxy', true)
-app.use(session({
-	secret: 'this is secret',
+var sess = {
+    secret: 'this is secret',
 	store: sessionStore,
 	resave: false,
     saveUninitialized: false,
     
     cookie:{
-        httpOnly: true, secure: true, maxAge: 1000 * 60 * 60 * 48, sameSite: 'none'
+        httpOnly: false, secure: false, maxAge: 1000 * 60 * 60 * 48,
         // secure: process.env.NODE_ENV == "production" ? true : false ,
         // maxAge: 1000*60*60*24, //1 ngày
-    }
-}));
+    },
+}
+if (app.get('env') === 'production') {
+    app.set('trust proxy', 1) // trust first proxy
+    sessionStore.cookie.secure = true // serve secure cookies
+}
+app.use(session(sess));
+
 
 app.use('/test', function(req, res){
     console.log("test session: ", req.session);

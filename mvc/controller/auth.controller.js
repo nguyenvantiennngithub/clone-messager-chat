@@ -15,10 +15,13 @@ class authController{
             console.log("1", req.session)
             req.session.isAuth = true
             req.session.username = username
-            req.session.save();
-            console.log("2", req.session.isAuth)
             messageError = ''
-            res.redirect('/test')
+
+            console.log("2", req.session.isAuth)
+            req.session.save(function(err){
+                res.redirect('/test')
+
+            });
         }else{
             console.log("!falg")
 
