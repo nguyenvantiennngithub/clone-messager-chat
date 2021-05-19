@@ -186,7 +186,7 @@ class functionClass{
             function (resolve, reject){
                 var sql = `select password, socketid from users where username='${username}'`
                 db.query(sql, (err, result)=>{
-                    if (err) throw err
+                    if (err) return reject(err) 
                     console.log(result)
                     if (result.length == 1){
                         var isMatch = bcrypt.compareSync(password, result[0].password)

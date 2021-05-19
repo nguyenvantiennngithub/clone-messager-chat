@@ -2,12 +2,17 @@ const mysql = require('mysql');
 
 //run local
 var db = mysql.createConnection({
-  host: process.env.HOST || "localhost",
-  user: process.env.USER || "root",
-  password: process.env.PASSWORD || "",
-  database: process.env.DATABASE || "messagers",
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_DATABASE || "messagers",
 });
-
+console.log({
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_DATABASE || "messagers",
+})
 //run cpanel
 // var db = mysql.createConnection({
 //   host: "localhost",
