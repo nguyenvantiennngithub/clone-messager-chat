@@ -55,6 +55,7 @@ app.use(session({
 }));
 
 app.use('/test', function(req, res){
+    console.log("test session: ", req.session);
     res.redirect("/")
 })
 connect()
