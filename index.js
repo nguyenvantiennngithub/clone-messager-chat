@@ -52,7 +52,7 @@ app.use(session({
     }
 }));
 app.use('/test', function(req, res){
-    res.end("HIHI")
+    res.redirect("/")
 })
 connect()
 api(app)
