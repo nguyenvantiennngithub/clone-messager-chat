@@ -12,8 +12,8 @@ class authController{
         
         if (flag){
             console.log("falg")
-            req.session.isAuth = true
-            req.session.username = username
+            // req.session.isAuth = true
+            // req.session.username = username
             messageError = ''
             res.redirect('/chat')
             return;
