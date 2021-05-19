@@ -45,7 +45,7 @@ app.use(session({
 	secret: 'this is secret',
 	store: sessionStore,
 	resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     
     cookie:{
         httpOnly: true, secure: true, maxAge: 1000 * 60 * 60 * 48, sameSite: 'none'
