@@ -76,7 +76,6 @@ class functionClass{
                     if (err) return reject(err)
                     console.log('getIdRoomNearest', result)
                     if (result.length > 0){
-                        console.log("run here")
                         resolve(result[0].id);
                     }
                     resolve(0)
@@ -187,12 +186,10 @@ class functionClass{
                 var sql = `select password, socketid from users where username='${username}'`
                 db.query(sql, (err, result)=>{
                     if (err) return reject(err) 
-                    console.log(result)
                     if (result.length == 1){
                         var isMatch = bcrypt.compareSync(password, result[0].password)
                         if (isMatch){
                             resolve(true);
-                            console.log("run before render")
                         }else{
                             resolve(false);
                         }

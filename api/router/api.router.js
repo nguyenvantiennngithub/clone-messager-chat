@@ -4,11 +4,14 @@ function api(app){
     app.get('/api/current-user', middlewareController.checkAuth, apiController.currentUser)
     app.get('/api/total-user', apiController.totalUser)
     app.get('/api/total-group', middlewareController.checkAuth, apiController.totalGroup)
+
     app.get('/api/room-nearest', middlewareController.checkAuth, apiController.getIdRoomNearest)
 
     app.get('/api/checked-user', middlewareController.checkAuth, apiController.checkedUser)
     app.get('/api/checked-group', middlewareController.checkAuth, apiController.checkedGroup)
 
+    app.get('/api/user-host-room/:id', middlewareController.checkAuth, apiController.hostUserInRoom)
+    app.get('/api/user-in-group/:id', middlewareController.checkAuth, apiController.userInRoom);
     app.get('/api/total-group/:receiver', middlewareController.checkAuth, apiController.totalGroupByUsername)
     app.get('/api/messages/:id', middlewareController.checkAuth, apiController.message)
     app.get('/api/group/:id', middlewareController.checkAuth, apiController.groupCurrentUserByIdRoom)

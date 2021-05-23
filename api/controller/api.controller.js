@@ -41,7 +41,7 @@ class apiController{
         
         //sql này dùng dể lấy những username có cùng rooms với currentUser và ko lấy currentUser     
         var getUserInRoomsSql = `
-            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.is_personal 
+            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.is_personal, receiver.name
             from rooms r, (
                 select * from rooms 
                 where id in (select id from rooms where username='${currentUser}' AND is_show=1) AND username != '${currentUser}')
@@ -74,12 +74,15 @@ class apiController{
         const idRoom = req.params.id
         const currentUser = res.locals.username
         var getMessageSql = `
-            select * from messages mess, rooms room 
+            select room.id, mess.sender, mess.updatedAt, mess.message
+            from messages mess, rooms room 
             where mess.idroom='${idRoom}' AND room.username='${currentUser}' AND
                 mess.idroom=room.id 
+            order by mess.updatedAt DESC
         `
         db.query(getMessageSql, (err, result)=>{
             if (err) throw err
+            console.log("message", result)
             res.json(result)
         })
     }
@@ -128,13 +131,36 @@ class apiController{
         })
     }
 
+    userInRoom(req, res){
+        const currentUser = res.locals.username;
+        const idRoom = req.params.id;
+        console.log(idRoom)
+        var getUserInRoomsSql = `
+            select username, is_host from rooms where username!='${currentUser}' AND id=${idRoom};
+        `
+        db.query(getUserInRoomsSql, (err, result)=>{
+            if (err) throw err;
+            return res.json(result);
+        })
+    }
+
     groupCurrentUserByIdRoom(req, res, next){
         const currentUser = res.locals.username;
         const idRoom = req.params.id;
         console.log('groupCurrentUserByIdRoom', {currentUser, idRoom})
-        var getInfoRoom = `select * from rooms where username='${currentUser}' AND id=${idRoom}`
+        var getInfoRoom = `select * from rooms where username!='${currentUser}' AND id=${idRoom}`
         db.query(getInfoRoom, (err, result)=>{
             if (err) throw err
+            console.log('groupCurrentUserByIdRoom', result);
+            res.json(result[0]);
+        })
+    }
+
+    hostUserInRoom(req, res){
+        var id = req.params.id;
+        var getUserHostSql = `select username from rooms where id=${id} AND is_host=1`
+        db.query(getUserHostSql, (err, result)=>{
+            if (err) throw err;
             res.json(result[0]);
         })
     }

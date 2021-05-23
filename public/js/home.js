@@ -1,5 +1,7 @@
 
 var socket = io();
+var page = 1;
+
 //============================================================================================================
 //---------------------------------------Function store html code-------------------------------------------------
 //============================================================================================================
@@ -54,12 +56,13 @@ function htmlCheckedUser(receiver, nickname, id){ //bên trái
 function htmlCheckedGroup(name, idRoom){ //bên trái
     return `
          <li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-id="${idRoom}" data-nickname="${name}">
-             <span class="text-nickname" style="font-size: 24px">${name}</span>
-             <div class="dropdown ml-auto">
-                 <button class="btn btn-secondary dropdown-toggle" type="button" id="left" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
-                 <div class="dropdown-menu" aria-labelledby="left" data-nickname="${name}">
-                    <button class="hide-chat-list dropdown-item" type="button">Ẩn</button>
-                 </div>
+            <span class="text-nickname" style="font-size: 24px">${name}</span> 
+
+            <div class="dropdown ml-auto">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="left" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                <div class="dropdown-menu" aria-labelledby="left" data-nickname="${name}">
+                <button class="hide-chat-list dropdown-item" type="button">Ẩn</button>
+                </div>
              </div>
          </li>
     `
@@ -180,10 +183,17 @@ function htmlThreadChatPersonal(name){
 function htmlThreadChatGroup(name, count){
     return `
         <h3 id="name-room">
-            <span>${name}</span>
-            <span id="edit-name" class="edit-name">
-                <i class="fas fa-user-edit"></i>
-            </span>
+            <div class="d-flex justify-content-between">
+                <div>
+                    <span>${name}</span>
+                    <span id="edit-name" class="edit-name click">
+                        <i class="fas fa-user-edit"></i>
+                    </span>
+                </div>
+                <div class="click" id="icon-setting">
+                    <i class="fas fa-cog "></i>
+                </div>
+            </div>
         </h3>
         <div id="container-change-name" hidden>
             <input type="text" id="input-change-name" class="input-change-text">
@@ -205,7 +215,33 @@ function htmlInputChangeName(){
             </span>
         </div>  
     `
+}
 
+function htmlUserInRoom(username, isHost){
+    if (isHost){
+        return `
+            <div class="list-user-item">
+                <div>
+                    <span class="dialog-name">${username}</span>
+                </div>
+                <div>
+                    <button class="dialog__footer-btn kick-dialog-list-user create click">Đá</button>
+                    <button class="dialog__footer-btn inbox-dialog-list-user create click">Nhắn tinh</button>
+                </div>
+            </div>
+        `
+    }
+    return `
+        <div class="list-user-item">
+            <div>
+                <span class="dialog-name">${username}</span>
+            </div>
+            <div>
+                <button class="dialog__footer-btn inbox-dialog-list-user create click" id="btnAddChatList">Nhắn tinh</button>
+            </div>
+        </div>
+    `
+    
 }
 
 //render message
@@ -234,7 +270,7 @@ async function renderCheckedUserAndGroup(){
     //render ra html 
     var html = result.map((user)=>{ //{sender, receiver, updatedAt, id}
         if (user.is_personal){//kiểm tra nếu personal thì reder theo personal
-            return htmlCheckedUser(user.username, user.nickname, user.id)
+            return htmlCheckedUser(user.username, user.name, user.id)
         }else{//còn group thì render theo group
             return htmlCheckedGroup(user.name, user.id)
         }
@@ -272,9 +308,11 @@ async function renderTotalGroup(){
 
 //render ra tinh nhắn
 async function renderMessage(idRoom){
-    var messages = await getMessage(idRoom)
+    page = 1;
+    console.log('set page', page)
+    var messages = await getMessage(idRoom, 1)
     // console.log("start")
-    var promises = messages.map((message)=>{
+    var promises = messages.reverse().map((message)=>{
         return htmlMessage(message.sender, message.message)
     })
     var html = await Promise.all(promises)
@@ -282,6 +320,16 @@ async function renderMessage(idRoom){
     scrollChatList()
 }
 
+async function renderMessageAppend(idRoom, page){
+    var messages = await getMessage(idRoom, page)
+    // console.log("start")
+    var promises = messages.reverse().map((message)=>{
+        return htmlMessage(message.sender, message.message)
+    })
+    var html = await Promise.all(promises)
+    $('#list-message').prepend(html)
+    return;
+}
 
 //render list ở dưới của dialog create group
 async function renderReceiversCreateGroupByOption(option){
@@ -360,7 +408,6 @@ async function renderThreadChat(idRoom, name, isPersonal){
         console.log(length)
         html = htmlThreadChatGroup(name, length)
     }else{
-        console.log('run here', name)
         html = htmlThreadChatPersonal(name)
     }
     $('#thread-chat').html(html)
@@ -422,6 +469,16 @@ async function renderContainerChat(){
 }
 
 
+async function renderUserInRoom(isHost){
+    var idRoom = getCurrentIdRoom();
+    var users = await getUserInRoom(idRoom);
+    console.log(users)
+    var html = users.map((user)=>{
+        return htmlUserInRoom(user.username, isHost);
+    })
+    $('#list-user').html(html);
+}
+
 // function renderInputChangeName(){
 //     var html = htmlInputChangeName();
 //     console.log(html)
@@ -464,10 +521,15 @@ async function getCheckedUser(){
 }
 
 //lay ra cac message cua 2 user or group chat
-async function getMessage(idRoom){
+async function getMessage(idRoom, page){
     return await axios.get(`/api/messages/${idRoom}`)
     .then((response)=>{
-        return response.data
+        var lengthPerPage = 10;
+        var begin = (page - 1) * lengthPerPage;
+        var end = (page - 1) * lengthPerPage + lengthPerPage;
+        console.log(response.data, response.data.slice(begin, end));
+        return response.data.slice(begin, end)
+
     })
 }
 
@@ -511,6 +573,21 @@ async function getIdRoomNearest(){
         return response.data
     })
 }
+
+async function getUserInRoom(idRoom){
+    return await axios.get(`/api/user-in-group/${idRoom}`)
+        .then((response)=>{
+            return response.data;
+        })
+}
+
+
+async function getUserHostInRoom(idRoom){
+    return await axios.get(`/api/user-host-room/${idRoom}`)
+        .then((response)=>{
+            return response.data;
+        })
+}
 //============================================================================================================
 //---------------------------------------Function show hide dialog -------------------------------------------------
 //============================================================================================================
@@ -550,22 +627,45 @@ function showDialogAddUser(){
     $('.overlay').removeAttr("hidden")
 }
 
+function showDialogListUser(){
+    $('#dialogListUser').removeAttr('hidden')
+    $('.overlay').removeAttr("hidden")
+}
+
 function hideDialogAddUser(){
     // console.log($('#dialogAddUser'))
     $('#dialogAddUser').attr("hidden", "hidden")
     $('.overlay').attr("hidden", "hidden")
 }
 
+function hideDialogListUser(){
+    $('#dialogListUser').attr('hidden', 'hidden');
+    $('.overlay').attr('hidden', 'hidden');
+}
+
 function hideAllDialog(){
     $('#dialogAddGroup').attr("hidden", "hidden")
     // $('#dialogAddUser').attr("hidden", "hidden")
     $('#dialogCreateGroup').attr("hidden", "hidden")
+    $('#dialogAddUser').attr("hidden", "hidden")
     $('.overlay').attr("hidden", "hidden")
 }
 //============================================================================================================
 //------------------------------------------------Hàm dùng lại nhiều lần--------------------------------------
 //============================================================================================================
+//thay đổi style màu bg cho thằng vừa tương tác 
+function activeCurrentReceiver(){
+    var currentIdRoom = getCurrentIdRoom() || $('#btn-send-message').data('idroom')
+    console.log(currentIdRoom)
 
+    $('.list-chat-user-item.active').removeClass('active')//xóa hết mấy thằng có class active
+    window.history.pushState("", "", `/chat/${currentIdRoom}`)
+    renderContainerChat()
+    //cái thằng có data-id bằng với cái idRoom hiện tại 
+    var $itemActive =  $(`.list-chat-user-item[data-id=${currentIdRoom}]`)
+    $itemActive.addClass('active')
+    console.log('activeCurrentReceiver', page)
+}
 function sortByUpdatedAt(array){
     array = array.sort((a, b)=>{ //sau đó sắp xếp theo thời gian
         //để người nào tương tác gần thì ở trên
@@ -655,7 +755,7 @@ async function renderCheckedListByOption(option){
     var result = await getCheckedListByOption(option);
     var html = result.map((user)=>{ //{sender, receiver, updatedAt, id}
         if (user.is_personal){//kiểm tra nếu personal thì reder theo personal
-            return htmlCheckedUser(user.username, user.nickname, user.id)
+            return htmlCheckedUser(user.username, user.name, user.id)
         }else{//còn group thì render theo group
             return htmlCheckedGroup(user.name, user.id)
         }
@@ -686,18 +786,6 @@ function getCurrentIdRoom(){
 }
 
 
-//thay đổi style màu bg cho thằng vừa tương tác 
-function activeCurrentReceiver(){
-    var currentIdRoom = getCurrentIdRoom() || $('#btn-send-message').data('idroom')
-    console.log(currentIdRoom)
-
-    $('.list-chat-user-item.active').removeClass('active')//xóa hết mấy thằng có class active
-    window.history.pushState("", "", `/chat/${currentIdRoom}`)
-    renderContainerChat()
-    //cái thằng có data-id bằng với cái idRoom hiện tại 
-    var $itemActive =  $(`.list-chat-user-item[data-id=${currentIdRoom}]`)
-    $itemActive.addClass('active')
-}
 //============================================================================================================
 //---------------------------------------Hàm hổ trợ dialog Create Group---------------------------------------
 //============================================================================================================
@@ -806,7 +894,6 @@ function submitDialogCreateGroup(){
     })
 }
 
-
 async function getUserCheckedCreateGroup(ele){
     var container = $(ele).closest('.list-chat-user-item')
     var currentUser = await getCurrentUser();
@@ -846,6 +933,10 @@ function closeDialogAddGroup(){
     handleCloseDialog(array, hideDialogAddGroup)
 }
 
+function closeDialogListUser(){
+    var array = ['#headerIconCloseListUser']
+    handleCloseDialog(array, hideDialogListUser);
+}
 //khi mà click vào checkbox trong dialog add group
 function handleChangeCheckboxAddGroup(){
     $('#listGroupAddGroup').on('change', 'div input.checkbox-select-group', function(){
@@ -1053,6 +1144,7 @@ function submitChangeName(){
 
 
 $(document).ready(()=>{
+    
 //==============================================================================================================
 //---------------------------------------Function handle event -------------------------------------------------
 //==============================================================================================================
@@ -1069,15 +1161,13 @@ $(document).ready(()=>{
             throw err
         })
     }
-
+    
     //add a user to chat list
     function addChatListUser(){
         $('#list-total-user').on('click', 'button.add-chat-list',async function(){
-            var currentUser = await getCurrentUser();
             var container = $(this).closest('.list-group-item');
             var data = {//username của receiver và sender 
                 receiver: container.data('name'),
-                sender: currentUser.username,
             }
             console.log('addChatListUser', data)
             //gọi ajax sau khi gọi ajax thì
@@ -1253,11 +1343,96 @@ $(document).ready(()=>{
         handleClickRemoveAddUser();
         submitDialogAddUser()
     }
+    async function addChatListInDialogListUser(){
+        
+        $('#list-user').on('click', '.inbox-dialog-list-user', function(){
+            var idRoom = getCurrentIdRoom();
+            var container = $(this).closest('.list-user-item');
+            var receiver = container.find('span.dialog-name').text();
+            
+            var data = {idRoom, receiver}
+            $.ajax({
+                url: '/add-chat-list',
+                method: 'POST',
+                data: data,
+                success: function(){
+                    hideDialogListUser();
+                }
+            })
+        })
+    }
 
+    function alertKichOutDialogListUser(){
+        return swal({
+            title: "Are you sure?",
+            text: "Once deleted, you will not be able to recover this imaginary file!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+          })
+        .then((willDelete) => {
+            return willDelete
+        });
+    }
+    async function kickUserDialogListUser(){
+        $('#list-user').on('click', '.kick-dialog-list-user',async function(){
+            var isDelete =  await alertKichOutDialogListUser();
+            console.log(isDelete)
+            if (!isDelete){
+                return;
+            }
+            console.log('run here')
+            var idRoom = getCurrentIdRoom();
+            var container = $(this).closest('.list-user-item');
+            var receiver = container.find('span.dialog-name').text();
+            var data = {receiver, idRoom};
+            $.ajax({
+                url: '/kick-out-group',
+                method: 'POST',
+                data: data,
+                success: function(){
+                    container.remove();
+                }
+            })
+        })
+    }
 
+    async function handleDialogListUser(){
+        var idRoom = getCurrentIdRoom();
+        var userHost = await getUserHostInRoom(idRoom);
+        var currentUser = await getCurrentUser();
+        var isHost = userHost.username === currentUser.username;
+
+        closeDialogListUser()
+        addChatListInDialogListUser()
+        kickUserDialogListUser()
+        $(document).on('click', '#icon-setting', function(){
+            showDialogListUser();
+            renderUserInRoom(isHost);
+        })
+    }
+
+    function appendChatListRoll(){
+        var scrollTop;
+        var heightContainer = $('#list-message').height();
+        $('#list-message').on('scroll', async function(){
+            scrollTop = $('#list-message').scrollTop()
+            console.log(scrollTop)
+            if (scrollTop === 0){
+                var idRoom = getCurrentIdRoom();
+
+                console.log("hieghtContainer", heightContainer)
+                page++;
+                await renderMessageAppend(idRoom, page);
+                $('#list-message').scrollTop(-heightContainer)
+                console.log("page", page)
+            }
+        })
+    }
     
     
     //hàm chính để sử lý
+    
     async function main(){
         scrollChatList() //scroll thanh chat xuong
         emitSocketIdOfCurrentUserToServer()
@@ -1275,6 +1450,8 @@ $(document).ready(()=>{
         addChatListGroup()
         handleDialogCreateGroup() //su ly khi nhan vao
         handleDialogAddGroup()
+        handleDialogListUser()
+
         handleClickReceiver() //
         handleHoverListReceiver()
         addChatListUser() //su ly khi nhan vao them
@@ -1282,6 +1459,7 @@ $(document).ready(()=>{
         filterCheckedList()
         changeName()
         showListMessage()
+        appendChatListRoll()
     }
     main()
     

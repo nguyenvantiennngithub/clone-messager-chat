@@ -6,24 +6,15 @@ class authController{
     async checkLogin(req, res){
         const {username, password} = req.body
         var messageError = 'Wrong username or password'
-        console.log({username, password})
         
         var flag = await functionClass.checkUser(username, password);
         
         if (flag){
-            console.log("falg")
-            console.log("1", req.session)
             req.session.isAuth = true
             req.session.username = username
             messageError = ''
-
-            console.log("2", req.session.isAuth)
-            req.session.save(function(err){
-                res.redirect('/chat')
-
-            });
+            res.redirect('/chat')
         }else{
-            console.log("!falg")
             res.render('home', {
                 messageError,
                 username: username,
@@ -31,9 +22,6 @@ class authController{
             })
 
         }
-        console.log("dasdsadsadsadsadsads")
-        
-        
     }
 
     //[GET] /auth/register

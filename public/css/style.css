@@ -44,13 +44,13 @@
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    padding-left: 24px;
+    padding: 0 24px 0 24px;
     background-color: #fff;
 }
 
 .dialog__header{
     display: flex;
-    padding: 8px 16px 8px 0px;
+    padding: 8px 0px 8px 0px;
     justify-content: space-between;
 }
 
@@ -67,11 +67,11 @@
     cursor: pointer;
 }
 .dialog__name, .dialog__group{
-    padding: 8px 16px 8px 0px;
+    padding: 8px 0px 8px 0px;
 }
 
 .dialog__choose{
-    padding: 2px 16px 14px 0px;
+    padding: 2px 0px 14px 0px;
     margin-top: 12px;
 }
 .dialog-title{
@@ -79,7 +79,7 @@
     font-weight: 600;
 }
 .dialog__option{
-    padding: 8px 16px 8px 0px;
+    padding: 8px 0px 8px 0px;
     display: flex;
 }
 .dialog__name-input, .dialog__group-input{
@@ -120,10 +120,6 @@
     font-size: 14px;
     font-weight: 600;
 }
-
-
-
-
 
 .container-close{
     display: inline-block;
@@ -221,7 +217,28 @@
 }
 
 #edit-name{
-    font-size: 16px; 
     margin-left: 16px;
+}
+#icon-setting{
+    margin-top: 16px;  
+}
+
+.click{
+    font-size: 16px; 
     cursor: pointer;    
+}
+
+.list-user-item{
+    justify-content: space-between;
+    display: flex;
+    padding-top: 8px;
+}
+
+
+.dialog__user-container{
+    padding: 8px 0px 8px 0px;
+}
+
+.dialog-name{
+    font-size: 20px;
 }

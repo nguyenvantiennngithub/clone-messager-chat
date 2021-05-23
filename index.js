@@ -30,7 +30,6 @@ var options = {
 	password: process.env.DB_PASSWORD ||'',
 	database: process.env.DB_DATABASE ||'messagers'
 };
-console.log("option", options)
 //run cpanel
 // var options = {
 //     host: 'localhost',
@@ -55,24 +54,6 @@ var sess = {
 app.use(session(sess));
 
 
-app.use('/session', function(req, res){
-    req.session.test = true
-    res.redirect("/session1")
-})
-
-app.use('/session1', function(req, res){
-    console.log("test session: ", req.session);
-    res.json(req.session)
-})
-
-app.use('/nosession', function(req, res){
-    res.redirect("/nosession1")
-})
-
-app.use('/nosession1', function(req, res){
-    console.log("test session: ", req.session);
-    res.json(req.session)
-})
 connect()
 api(app)
 router(app)
@@ -91,7 +72,7 @@ io.on('connection', (socket) => {
     
     socket.on('sender send message', async ({sender, message, idRoom})=>{ // {sender, message, idRoom}
         // var is_personal = await functionClass.getIsPersonal(sender, idRoom)
-        console.log('index/senderSendMessage', {sender, message, idRoom})
+        // console.log('index/senderSendMessage', {sender, message, idRoom})
         var usernames = await functionClass.getUserInRoom(idRoom)
         usernames.forEach((user)=>{
             functionClass.emit(user, 'server send message', {message, idRoom, sender}, io)

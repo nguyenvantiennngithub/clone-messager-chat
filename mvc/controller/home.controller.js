@@ -21,10 +21,8 @@ class homeController{
         const io = req.app.get('socketio') //lay socket
         const currentUser = res.locals.username
         var idRoom = req.params.idroom
-        console.log({idRoom})
         if (!idRoom){
             idRoom = await functionClass.getIdRoomNearest(currentUser)
-            console.log({idRoom})
            res.render("chat", {currentUser, idRoom})
            return;
         }
@@ -40,7 +38,6 @@ class homeController{
                 db.query(getMessagesSql, (err, result)=>{
                     if (err) throw err
                     var messages = result
-                    console.log({messages, currentUser, idRoom})
                     res.render("chat", {messages, currentUser, idRoom})
                     
                 })
@@ -70,19 +67,16 @@ class homeController{
 
     async addChatList(req, res, next){
         const io = req.app.get('socketio') //lay socket
-        console.log('startttttttttttttttttttttttttttt')
         //nhận data tùy vào add 1 user hoặc add nhiều user
         var receiver = req.body.receiver || req.body['receivers[]']
         if (!Array.isArray(receiver)){
             receiver = [receiver]
         }
-        console.log(receiver)
         const currentUser = res.locals.username
         console.log("addChatList", {currentUser, receiver})
 
         for (const user of receiver){
 
-            console.log("console 1", user)
             // get thông tin của sender và receier 
             var infoSender = await functionClass.getInfoUser(currentUser);
             var infoReceiver = await functionClass.getInfoUser(user);
@@ -92,7 +86,6 @@ class homeController{
 
             var idRoom = (getIdRoom > 0) ? getIdRoom : maxIdRoom;
 
-            console.log('console 2', idRoom)
             //get room của 2 người này 
             //nếu lớn hơn 0 tức là đã có room thì update
             if (getIdRoom > 0){
@@ -100,8 +93,8 @@ class homeController{
                 functionClass.setUpdatedAt(currentUser, idRoom)
             }else{//conf ko thì là chưa có room
                 // insert vào db cho sender và receiver 
-                functionClass.insertAddChatListPersonal(currentUser, idRoom, 1, infoReceiver.nickname);//insert cho sender
-                functionClass.insertAddChatListPersonal(user, idRoom, 0, infoSender.nickname);//insert cho receiver 
+                functionClass.insertAddChatListPersonal(currentUser, idRoom, 1, infoSender.nickname);//insert cho sender
+                functionClass.insertAddChatListPersonal(user, idRoom, 0, infoReceiver.nickname);//insert cho receiver 
             }
             // receiver là user name của người nhận, nickname là nick name của người nhân
             // isActive là khi bên client bắt đc sk thì nó add class active vào cho nó để nó nổi bật lên ko
@@ -148,7 +141,6 @@ class homeController{
         }
         idRooms.forEach(async (idRoom)=>{
             var groupName = await functionClass.getGroupName(currentUser, idRoom)
-            console.log(userAdd, idRoom, 1, groupName)
             functionClass.insertAddChatListGroup(userAdd, idRoom, 1, groupName, 0)
             functionClass.emit(userAdd, 'add chat list group', {groupName: groupName, idRoom: idRoom, isActive: false}, io)
         })
@@ -168,7 +160,6 @@ class homeController{
         console.log("setUpdatedAtGroupChat", usernames);
 
         usernames.forEach((user)=>{
-            console.log(user)//lặp qua
             if (user == currentUser){//nếu là currentUser thì active nó lên
                 functionClass.setUpdatedAt(user, idRoom);//set lại cái updatedAt là now và is_show là 1
                 //emit tới client
@@ -203,16 +194,25 @@ class homeController{
         var sql;
         if (isPersonal){
             sql = `update rooms set name='${text}' 
-                where username='${currentUser}' AND id='${idRoom}'`
+                where username!='${currentUser}' AND id='${idRoom}'`
         }else{
             sql = `update rooms set name='${text}' 
                 where id='${idRoom}'`
         }
-        console.log("sql", sql)
         db.query(sql, (err, result)=>{
             if (err) throw err;;
         })
         res.end()
+    }
+
+    kickOutGroup(req, res){
+        const {idRoom, receiver} = req.body;
+        console.log({idRoom, receiver})
+        var deleteUserSql = `delete from rooms where id=${idRoom} AND username='${receiver}'`;
+        db.query(deleteUserSql, (err, result)=>{
+            if (err) throw err;
+            res.end();
+        })
     }
 }
 
