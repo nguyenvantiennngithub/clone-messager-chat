@@ -1,4 +1,4 @@
-const db = require('../../db/connect.db')
+const db = require('../db/connect.db')
 const bcrypt = require('bcryptjs')
 
 class functionClass{
@@ -15,7 +15,7 @@ class functionClass{
     }
 
     async getGroupName(username, idRoom){
-        console.log("function/getGroupName", {username, idRoom})
+        // console.log("function/getGroupName", {username, idRoom})
         return new Promise((res, rej)=>{
             //tim trong db lay ra cai usrename do roi resolve
             var sqlGetGroupName = `select name from rooms where username='${username}' AND id=${idRoom}`
@@ -35,7 +35,7 @@ class functionClass{
             db.query(getIdSql, function (err, result){
                 if (err) return reject(err);
                 resolve(result[0].maxId)
-                console.log("Function/getMaxIdRoom", result[0].maxId);
+                // console.log("Function/getMaxIdRoom", result[0].maxId);
 
             })
         })
@@ -52,7 +52,7 @@ class functionClass{
                 where username='${receiver}' AND is_personal=1 AND id in (select id from rooms where username='${sender}' AND is_personal=1)`
                 db.query(getReceiverSql, (err, result)=>{
                     if (err) return reject(err);
-                    console.log("function/getIdRoom",result)
+                    // console.log("function/getIdRoom",result)
                     if (result.length > 0){
                         resolve(result[0].id);
                     }else{
@@ -74,7 +74,7 @@ class functionClass{
                 `
                 db.query(getRoomSql, (err, result)=>{
                     if (err) return reject(err)
-                    console.log('getIdRoomNearest', result)
+                    // console.log('getIdRoomNearest', result)
                     if (result.length > 0){
                         resolve(result[0].id);
                     }
@@ -120,6 +120,41 @@ class functionClass{
                 db.query(getUserInRoom, (err, result)=>{
                     if (err) return reject(err) 
                     resolve(result[0].is_personal)
+                })
+            }
+        )
+
+    }
+
+    getInfoBySocketId(socketId){
+        return new Promise(
+            function (resolve, reject){
+                // console.log("function/getInfoBySocketId", socketId);
+                var sql = `select username, nickname, socketid from users
+                    where socketid='${socketId}'`
+                db.query(sql, (err, result)=>{
+                    if (err) return reject(err)
+                    resolve(result[0]);
+                })
+            }
+        )
+    }
+
+    getRoomOnlineBySocket(sockets, currentUser){
+        return new Promise(
+            function (res, rej){
+                sockets = sockets.filter((socket)=>{
+                    return socket != currentUser.socketid;
+                })
+                var joinSockets = sockets.join(', ');
+                var sql = `select user.id 
+                    from rooms user, rooms roomReceiver, users receiver
+                    where user.username='${currentUser.username}' AND user.id=roomReceiver.id AND 
+                        receiver.username = roomReceiver.username AND receiver.socketid in ('${joinSockets}') 
+                    `
+                db.query(sql, (err, result)=>{
+                    if (err) return rej(err);
+                    res(result);
                 })
             }
         )
@@ -199,6 +234,8 @@ class functionClass{
             }
         )
     }
+
+    
 }
 
 

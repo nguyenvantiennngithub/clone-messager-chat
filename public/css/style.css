@@ -242,3 +242,24 @@
 .dialog-name{
     font-size: 20px;
 }
+
+.kick-dialog-list-user{
+    margin-right: 8px;
+}
+
+.circle{
+    font-size: 12px;
+    display: inline-flex;
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-right: 4px;
+    color: rgb(37, 35, 35);
+}
+.circle.online{
+    color: blue;
+}
+
+.text-nickname{
+    display: block;
+    align-items: center;
+}

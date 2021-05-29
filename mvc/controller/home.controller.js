@@ -1,12 +1,12 @@
 const db = require('../../db/connect.db')
-const functionClass = require('../../public/js/function')
+const sqlHelper = require('../../helpers/sqlHelper')
 class homeController{
     //[GET] /
     async home(req, res){
         if (res.locals.isAuth){
             var currentUser = res.locals.username;
             const messages = []
-            var idRoom = await functionClass.getIdRoomNearest(currentUser)
+            var idRoom = await sqlHelper.getIdRoomNearest(currentUser)
             return res.render('chat',{messages, currentUser, idRoom})
         }
 
@@ -22,7 +22,7 @@ class homeController{
         const currentUser = res.locals.username
         var idRoom = req.params.idroom
         if (!idRoom){
-            idRoom = await functionClass.getIdRoomNearest(currentUser)
+            idRoom = await sqlHelper.getIdRoomNearest(currentUser)
            res.render("chat", {currentUser, idRoom})
            return;
         }
@@ -47,23 +47,6 @@ class homeController{
         })        
         
     }
-    /**
-     * Send Message
-     * -Emit toi server {idRoom, sender, message} => insert vào db và emit lại cho client để render html
-     * -Gọi ajax để cập nhật updatedAt 
-     *      +Personal, Group: gọi functionClass.setUpdated(username, idRoom) để set updatedAt
-     *      sau đó sẽ emit tới client để render ra html
-     * Add Chat List
-     * -Kiểm tra xem nó là Personal hay Group
-     *      +Personal: Kiểm tra xem đã có Room chưa
-     *          +Có thì gọi functionClass.setUpdated(username, idRoom) để set updatedAt
-     *          +Chưa thì insert vào db
-     *               Final: sau đó sẽ emit tới client để render ra html
-     *      
-     *      +Group: gọi functionClass.setUpdated(username, idRoom) để set updatedAt
-     *              sau đó sẽ emit tới client để render ra html
-     *      
-     */
 
     async addChatList(req, res, next){
         const io = req.app.get('socketio') //lay socket
@@ -78,11 +61,11 @@ class homeController{
         for (const user of receiver){
 
             // get thông tin của sender và receier 
-            var infoSender = await functionClass.getInfoUser(currentUser);
-            var infoReceiver = await functionClass.getInfoUser(user);
+            var infoSender = await sqlHelper.getInfoUser(currentUser);
+            var infoReceiver = await sqlHelper.getInfoUser(user);
 
-            var getIdRoom = await functionClass.getIdRoom(currentUser, user);
-            var maxIdRoom = await functionClass.getMaxIdRoom() + 1;//để insert vào db
+            var getIdRoom = await sqlHelper.getIdRoom(currentUser, user);
+            var maxIdRoom = await sqlHelper.getMaxIdRoom() + 1;//để insert vào db
 
             var idRoom = (getIdRoom > 0) ? getIdRoom : maxIdRoom;
 
@@ -90,16 +73,16 @@ class homeController{
             //nếu lớn hơn 0 tức là đã có room thì update
             if (getIdRoom > 0){
                 //set updatedAt của sender 
-                functionClass.setUpdatedAt(currentUser, idRoom)
+                sqlHelper.setUpdatedAt(currentUser, idRoom)
             }else{//conf ko thì là chưa có room
                 // insert vào db cho sender và receiver 
-                functionClass.insertAddChatListPersonal(currentUser, idRoom, 1, infoSender.nickname);//insert cho sender
-                functionClass.insertAddChatListPersonal(user, idRoom, 0, infoReceiver.nickname);//insert cho receiver 
+                sqlHelper.insertAddChatListPersonal(currentUser, idRoom, 1, infoSender.nickname);//insert cho sender
+                sqlHelper.insertAddChatListPersonal(user, idRoom, 0, infoReceiver.nickname);//insert cho receiver 
             }
             // receiver là user name của người nhận, nickname là nick name của người nhân
             // isActive là khi bên client bắt đc sk thì nó add class active vào cho nó để nó nổi bật lên ko
-            functionClass.emit(user, 'add chat list personal', {receiver: currentUser, id: idRoom, nickname: infoSender.nickname, isActive: false}, io)
-            functionClass.emit(currentUser, 'add chat list personal', {receiver, id: idRoom, nickname: infoReceiver.nickname, isActive: true}, io)
+            sqlHelper.emit(user, 'add chat list',     {receiver: currentUser, idRoom: idRoom, nickname: infoSender.nickname, isActive: false, isPersonal: true}, io)
+            sqlHelper.emit(currentUser, 'add chat list', {receiver: receiver, idRoom: idRoom, nickname: infoReceiver.nickname, isActive: true, isPersonal: true}, io)
         }
         res.end()
     }
@@ -112,17 +95,17 @@ class homeController{
         const currentUser = res.locals.username//user hien tai
 
         //idRoom de insert vao db tang dan
-        const idRoom = await functionClass.getMaxIdRoom() + 1;
+        const idRoom = await sqlHelper.getMaxIdRoom() + 1;
         console.log("createGroupChat", {usernames, name})
         //lặp qua các user được chọn để tạo group
         usernames.forEach(async (user)=>{
             if (user == currentUser){//nếu là currentUser thì active nó và cho nó là host
                 //username, idRoom, is_show, name, is_host
-                functionClass.insertAddChatListGroup(currentUser, idRoom, 1, name, 1)
-                functionClass.emit(user, 'add chat list group', {groupName: name, idRoom: idRoom, isActive: true}, io)
+                sqlHelper.insertAddChatListGroup(currentUser, idRoom, 1, name, 1)
+                sqlHelper.emit(user, 'add chat list', {groupName: name, idRoom: idRoom, isActive: true, isPersonal: false}, io)
             }else{//cái này là mấy thằng còn lại
-                functionClass.insertAddChatListGroup(user, idRoom, 1, name, 0)
-                functionClass.emit(user, 'add chat list group', {groupName: name, idRoom: idRoom, isActive: false}, io)
+                sqlHelper.insertAddChatListGroup(user, idRoom, 1, name, 0)
+                sqlHelper.emit(user, 'add chat list', {groupName: name, idRoom: idRoom, isActive: false, isPersonal: false}, io)
             }
             
         })
@@ -140,9 +123,9 @@ class homeController{
             idRooms = [idRooms]
         }
         idRooms.forEach(async (idRoom)=>{
-            var groupName = await functionClass.getGroupName(currentUser, idRoom)
-            functionClass.insertAddChatListGroup(userAdd, idRoom, 1, groupName, 0)
-            functionClass.emit(userAdd, 'add chat list group', {groupName: groupName, idRoom: idRoom, isActive: false}, io)
+            var groupName = await sqlHelper.getGroupName(currentUser, idRoom)
+            sqlHelper.insertAddChatListGroup(userAdd, idRoom, 1, groupName, 0)
+            sqlHelper.emit(userAdd, 'add chat list', {groupName: groupName, idRoom: idRoom, isActive: false, isPersonal: false}, io)
         })
 
         res.end()
@@ -154,19 +137,18 @@ class homeController{
         const idRoom = req.body.idRoom;//room cần set lại
         
         const currentUser = res.locals.username//người dùng hiện tại
-        const usernames = await functionClass.getUserInRoom(idRoom)//những user có trong room đó
-        const groupName = await functionClass.getGroupName(currentUser, idRoom);//tên group đó
+        const usernames = await sqlHelper.getUserInRoom(idRoom)//những user có trong room đó
+        const groupName = await sqlHelper.getGroupName(currentUser, idRoom);//tên group đó
 
         console.log("setUpdatedAtGroupChat", usernames);
 
         usernames.forEach((user)=>{
             if (user == currentUser){//nếu là currentUser thì active nó lên
-                functionClass.setUpdatedAt(user, idRoom);//set lại cái updatedAt là now và is_show là 1
+                sqlHelper.setUpdatedAt(user, idRoom);//set lại cái updatedAt là now và is_show là 1
                 //emit tới client
-                functionClass.emit(user, 'add chat list group', {groupName: groupName, idRoom: idRoom, isActive: true}, io)
+                sqlHelper.emit(user, 'add chat list', {groupName: groupName, idRoom: idRoom, isActive: true, isPersonal: false}, io)
             }else{
-                functionClass.setUpdatedAt(user, idRoom);//set lại cái updatedAt là now và is_show là 1
-                functionClass.emit(user, 'add chat list group', {groupName: groupName, idRoom: idRoom, isActive: false}, io)
+                sqlHelper.setUpdatedAt(user, idRoom);//set lại cái updatedAt là now và is_show là 1
             }
         })
 
@@ -181,8 +163,8 @@ class homeController{
 
         console.log("home/hideChatList", {idRoom: idRoom})
         // khi ma an thi chi can sua cai is_show=0 thoi
-        functionClass.setIsShow(currentUser, idRoom);
-        functionClass.emit(currentUser, 'hide chat list', {idRoom}, io)
+        sqlHelper.setIsShow(currentUser, idRoom);
+        sqlHelper.emit(currentUser, 'hide chat list', {idRoom}, io)
         
         res.end()
     }
@@ -190,7 +172,8 @@ class homeController{
         const {text, idRoom} = req.body;
         console.log({text, idRoom})
         const currentUser = res.locals.username
-        var isPersonal = await functionClass.getIsPersonal(currentUser, idRoom);
+        var isPersonal = await sqlHelper.getIsPersonal(currentUser, idRoom);
+        console.log("isPersonal", isPersonal)
         var sql;
         if (isPersonal){
             sql = `update rooms set name='${text}' 

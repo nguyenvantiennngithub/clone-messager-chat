@@ -1,6 +1,6 @@
-const { createPool } = require('mysql')
-const db = require('../../db/connect.db')
 
+const db = require('../../db/connect.db')
+const sqlHelper = require('../../helpers/sqlHelper');
 class apiController{
     //[GET] /api/users
     //lấy tất cả user
@@ -82,7 +82,7 @@ class apiController{
         `
         db.query(getMessageSql, (err, result)=>{
             if (err) throw err
-            console.log("message", result)
+            // console.log("message", result)
             res.json(result)
         })
     }
@@ -136,7 +136,7 @@ class apiController{
         const idRoom = req.params.id;
         console.log(idRoom)
         var getUserInRoomsSql = `
-            select username, is_host from rooms where username!='${currentUser}' AND id=${idRoom};
+            select username, is_host from rooms where id=${idRoom};
         `
         db.query(getUserInRoomsSql, (err, result)=>{
             if (err) throw err;
@@ -147,11 +147,11 @@ class apiController{
     groupCurrentUserByIdRoom(req, res, next){
         const currentUser = res.locals.username;
         const idRoom = req.params.id;
-        console.log('groupCurrentUserByIdRoom', {currentUser, idRoom})
+        // console.log('groupCurrentUserByIdRoom', {currentUser, idRoom})
         var getInfoRoom = `select * from rooms where username!='${currentUser}' AND id=${idRoom}`
         db.query(getInfoRoom, (err, result)=>{
             if (err) throw err
-            console.log('groupCurrentUserByIdRoom', result);
+            // console.log('groupCurrentUserByIdRoom', result);
             res.json(result[0]);
         })
     }
@@ -164,6 +164,16 @@ class apiController{
             res.json(result[0]);
         })
     }
+
+    async idRoomOnline(req, res){
+        const io = req.app.get('socketio');
+        const currentUser = await sqlHelper.getInfoUser(res.locals.username)
+        var roomOnline = await sqlHelper.filterAndGetRoomOnline(io.sockets.adapter.rooms, currentUser);
+        res.json(roomOnline);
+
+    }
+
+
 }
 
 module.exports = new apiController()

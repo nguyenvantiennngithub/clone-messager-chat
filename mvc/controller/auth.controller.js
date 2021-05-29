@@ -1,13 +1,13 @@
 const db = require('../../db/connect.db')
 const bcrypt = require('bcryptjs')
-const functionClass = require('../../public/js/function')
+const sqlHelper = require('../../helpers/sqlHelper')
 class authController{
     //[POST] /auth/checkLogin
     async checkLogin(req, res){
         const {username, password} = req.body
         var messageError = 'Wrong username or password'
         
-        var flag = await functionClass.checkUser(username, password);
+        var flag = await sqlHelper.checkUser(username, password);
         
         if (flag){
             req.session.isAuth = true

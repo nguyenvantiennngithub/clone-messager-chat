@@ -1,18 +1,21 @@
 const express = require('express')
-const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
-var cookieParser = require('cookie-parser')
 const app = express()
-const port = process.env.PORT || 8080
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
+
+const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
+const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
+
 const connect = require('./db/index.db')
 const router = require('./mvc/router/index.router');
 const api = require('./api/router/api.router')
 const middleware = require('./middleware/index.middleware')
 const db = require('./db/connect.db')
-const functionClass = require('./public/js/function')
+const sqlHelper = require('./helpers/sqlHelper')
+const socket = require('./public/js/socket')
+const port = process.env.PORT || 8080
 
 app.use(express.static('./public'))
 app.set('view engine', 'ejs')
@@ -53,35 +56,11 @@ var sess = {
 }
 app.use(session(sess));
 
-
+socket(io)
 connect()
 api(app)
 router(app)
 
-
-// console.log("outtt", io.sockets.adapter.rooms)
-io.on('connection', (socket) => {
-    socket.on('change socket', (socketid)=>{ //socketid
-        socket.join(socketid)
-        io.emit('changed')
-    })
-
-    socket.on('disconnect', ()=>{
-        
-    })
-    
-    socket.on('sender send message', async ({sender, message, idRoom})=>{ // {sender, message, idRoom}
-        // var is_personal = await functionClass.getIsPersonal(sender, idRoom)
-        // console.log('index/senderSendMessage', {sender, message, idRoom})
-        var usernames = await functionClass.getUserInRoom(idRoom)
-        usernames.forEach((user)=>{
-            functionClass.emit(user, 'server send message', {message, idRoom, sender}, io)
-        })
-
-        functionClass.insertMessage(sender, idRoom, message)
-        
-    })
-});
 
 
 http.listen(port, () => {
