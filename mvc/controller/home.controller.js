@@ -63,7 +63,7 @@ class homeController{
             // get thông tin của sender và receier 
             var infoSender = await sqlHelper.getInfoUser(currentUser);
             var infoReceiver = await sqlHelper.getInfoUser(user);
-
+            console.log(infoReceiver, user);
             var getIdRoom = await sqlHelper.getIdRoom(currentUser, user);
             var maxIdRoom = await sqlHelper.getMaxIdRoom() + 1;//để insert vào db
 
@@ -196,6 +196,14 @@ class homeController{
             if (err) throw err;
             res.end();
         })
+    }
+
+    appointAdmin(req, res){
+        const {username, idRoom} = req.body;
+        const currentUser = res.locals.username;
+        sqlHelper.setIsHost(username, idRoom, 1);
+        sqlHelper.setIsHost(currentUser, idRoom, 0);
+        res.end();
     }
 }
 

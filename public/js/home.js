@@ -226,20 +226,27 @@ function htmlInputChangeName(){
     `
 }
 
-async function htmlUserInRoom(username, isHost){
+async function htmlUserInRoom(username, nickname, isHost){
     var currentUser = await getCurrentUser()
     var html = `
-        <div class="list-user-item">
+        <div class="list-user-item" data-name="${username}">
             <div>
-                <span class="dialog-name">${username}</span>
+                <span class="dialog-name">${nickname}</span>
             </div>
             <div>
     `
-    if (username != currentUser.username){
-        if (isHost) 
-            html += `<button class="dialog__footer-btn kick-dialog-list-user create click">Đá</button>`;
-        html += `<button class="dialog__footer-btn inbox-dialog-list-user create click">Nhắn tin</button>`
+    if (username != currentUser.username && isHost){
+        html += `<button class="dialog__footer-btn kick-dialog-list-user create click">Đá</button>
+        <button class="dialog__footer-btn appoint-admin create click">Bổ nhiệm QTV</button>`;
     }
+    if (username != currentUser.username){
+        html += `<button class="dialog__footer-btn inbox-dialog-list-user create click">Nhắn tin</button>`
+
+    }
+    if (username == currentUser.username){
+        html += `<button class="dialog__footer-btn leave-group create click">Rời khỏi nhóm</button>`
+    }
+
     html += `</div></div>`
     return html;
 }
@@ -289,6 +296,9 @@ async function renderTotalUser(){
     totalUsers = totalUsers.filter((user)=>{
         return user.username != currentUser.username
     })
+
+    
+
     var html = totalUsers.map((user) => {
         return htmlTotalUser(user.username, user.nickname)
     })
@@ -402,6 +412,7 @@ async function renderThreadChat(idRoom, name, isPersonal){
         isPersonal = true;
         name = '';
     }
+    console.log(idRoom, name, isPersonal)
     if (!isPersonal){
         var length = await getLengthGroupByIdRoom(idRoom)
         console.log(length)
@@ -469,12 +480,11 @@ async function renderContainerChat(){
 async function renderUserInRoom(isHost){
     var idRoom = getCurrentIdRoom();
     var users = await getUserInRoom(idRoom);
-    console.log(users)
     var promises = users.map(async (user)=>{
-        return await htmlUserInRoom(user.username, isHost);
+        return await htmlUserInRoom(user.username, user.nickname, isHost);
     })
     var html = await Promise.all(promises);
-
+    
     $('#list-user').html(html);
 }
 
@@ -596,6 +606,14 @@ async function getIdRoomOnline(){
         })
 }
 
+async function getIsHost(username, idRoom){
+    return await axios.get(`/api/is-host/${username}/${idRoom}`)
+    .then((response)=>{
+        return response.data;
+    })
+
+}
+
 
 //============================================================================================================
 //---------------------------------------Function show hide dialog -------------------------------------------------
@@ -654,7 +672,7 @@ function hideDialogListUser(){
 
 function hideAllDialog(){
     $('#dialogAddGroup').attr("hidden", "hidden")
-    // $('#dialogAddUser').attr("hidden", "hidden")
+    $('#dialogListUser').attr("hidden", "hidden")
     $('#dialogCreateGroup').attr("hidden", "hidden")
     $('#dialogAddUser').attr("hidden", "hidden")
     $('.overlay').attr("hidden", "hidden")
@@ -808,9 +826,9 @@ function appendChatListRoll(){
     })
 }
 
-function alertKichOutDialogListUser(){
+function alertHasButton(text){
     return swal({
-        title: "Are you sure?",
+        title: text,
         buttons: true,
         dangerMode: true,
       })
@@ -1147,7 +1165,8 @@ function closeDialogByOverlay(){
     $('.overlay').on('click', function(){
         var isHideDialogCreateGroup = $('#dialogCreateGroup').attr('hidden');
         var isHideDialogAddGroup = $('#dialogAddGroup').attr('hidden');
-        if (!isHideDialogCreateGroup || !isHideDialogAddGroup){
+        var isHideDialogListUser = $('#dialogListUser').attr('hidden');
+        if (!isHideDialogCreateGroup || !isHideDialogAddGroup || !isHideDialogListUser){
             handleCloseDialog(['.overlay'], hideAllDialog)
         }
     })
@@ -1391,7 +1410,7 @@ $(document).ready(()=>{
         $('#list-user').on('click', '.inbox-dialog-list-user', function(){
             var idRoom = getCurrentIdRoom();
             var container = $(this).closest('.list-user-item');
-            var receiver = container.find('span.dialog-name').text();
+            var receiver = container.data('name');
             
             var data = {idRoom, receiver}
             $.ajax({
@@ -1408,7 +1427,7 @@ $(document).ready(()=>{
   
     async function kickUserDialogListUser(){
         $('#list-user').on('click', '.kick-dialog-list-user',async function(){
-            var isDelete =  await alertKichOutDialogListUser();
+            var isDelete =  await alertHasButton('are you sure???');
             console.log(isDelete)
             if (!isDelete){
                 return;
@@ -1442,21 +1461,68 @@ $(document).ready(()=>{
 
     
     async function handleDialogListUser(){
-        var idRoom = getCurrentIdRoom();
-        var userHost = await getUserHostInRoom(idRoom);
-        var currentUser = await getCurrentUser();
-        var isHost = userHost.username === currentUser.username;
-        renderNumberUserDialogListUser()
+        
         closeDialogListUser()
         addChatListInDialogListUser()
         kickUserDialogListUser()
-        $(document).on('click', '#icon-setting', function(){
-            showDialogListUser();
+        appointAdminListUser()
+        leaveGroupListUser()
+        $(document).on('click', '#icon-setting', async function(){
+            var idRoom = getCurrentIdRoom();
+            var userHost = await getUserHostInRoom(idRoom);
+            var currentUser = await getCurrentUser();
+            var isHost = userHost.username === currentUser.username;
+
+            renderNumberUserDialogListUser()
             renderUserInRoom(isHost);
+            showDialogListUser();
         })
     }
 
-    
+
+    function leaveGroupListUser(){
+        $('#list-user').on('click', '.leave-group', async function(){
+            var idRoom = getCurrentIdRoom();
+            var currentUser = await getCurrentUser()
+            var isHost = await getIsHost(currentUser.username, idRoom);
+            if (isHost){
+                alertHasButton('You are the admin, you need to remove the admin before leaving the group');
+            }else{
+                $.ajax({
+                    url: '/kick-out-group',
+                    method: 'POST',
+                    data:{
+                        receiver: currentUser.username, 
+                        idRoom: idRoom
+                    },
+                    success: function(){
+                        alert("ok")
+                    }
+                })
+            }
+        })
+    }
+
+    function appointAdminListUser(){
+        $('#list-user').on('click', '.appoint-admin', async function(){
+            var isAppoint = await alertHasButton('are you sure??');
+            if (isAppoint){
+                var container = $(this).closest('.list-user-item');
+                var data = {
+                    username: container.data('name'),
+                    idRoom: getCurrentIdRoom()
+                }
+                $.ajax({
+                    url: '/appoint-admin', 
+                    data: data,
+                    method: 'POST',
+                    success: function(){
+                        hideDialogListUser();
+                    }
+                })
+            }
+        })
+    }
     
     //hàm chính để sử lý
     async function main(){
@@ -1541,10 +1607,10 @@ $(document).ready(()=>{
     })
 
     //khi mà sender send message thì sẽ hiện lên trên màng hình của sender
-    socket.on('server send message', ({message, sender, idroom})=>{
+    socket.on('server send message', async ({message, sender, idRoom})=>{
         // console.log("socket/sendMessage",sender, $('#username').data('name'))
-        if (getCurrentIdRoom() === idroom){
-            var html = htmlMessage(sender, message)
+        if (getCurrentIdRoom() === idRoom){
+            var html = await htmlMessage(sender, message)
             $('#list-message').append(html)
             scrollChatList()
         }

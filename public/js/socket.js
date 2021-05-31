@@ -1,4 +1,5 @@
 const sqlHelper = require('../../helpers/sqlHelper');
+const functionHelper = require('../../helpers/functionHelper')
 function socket(io){
     
     io.on('connection', (socket) => {
@@ -7,13 +8,13 @@ function socket(io){
             socket.join(currentUser.socketid)
             socket.username = currentUser.username;
 
-            var listRoomOnline = await sqlHelper.filterAndGetRoomOnline(io.sockets.adapter.rooms, currentUser);
+            var listRoomOnline = await functionHelper.filterAndGetRoomOnline(io.sockets.adapter.rooms, currentUser);
             io.emit('new user connect', listRoomOnline);
             
         })
 
         socket.on('disconnect', async ()=>{
-            var listRoomOnline = await sqlHelper.filterAndGetRoomOnline(io.sockets.adapter.rooms, {socketid: socket.id, username: socket.username});
+            var listRoomOnline = await functionHelper.filterAndGetRoomOnline(io.sockets.adapter.rooms, {socketid: socket.id, username: socket.username});
             console.log("user disconnect", listRoomOnline);
             socket.broadcast.emit('user disconnect', listRoomOnline);
         })

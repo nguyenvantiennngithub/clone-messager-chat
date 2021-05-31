@@ -82,7 +82,7 @@
       </div>
     </div>
 
-    <!-- add grouppppppppppppppppppppppppppppp -->
+    <!-- Mời 1 ng vào nhiều nhóm -->
     <div class="dialog" id="dialogAddGroup" hidden>
       <!-- <i class="fas fa-check-circle"></i> checked -->
       <!-- <i class="far fa-check-circle"></i> uncheck -->
@@ -128,12 +128,40 @@
     </div>
 
 
+    <!-- Mời nhiều người vào 1 nhóm -->
+    <div class="dialog" id="dialogAddUsersToGroup" hidden>
+      <div class="dialog__header">
+        <span class="dialog__header-title">Mời tham gia nhóm</span>
+        <div class="dialog__header-close" id="headerIconCloseAddUsersToGroup"><i class="fas fa-times"></i></div>
+      </div>
+
+      <div class="col-sm-12" style="background-color:#ccc;"></div>
+      <div class="dialog__group">
+        <span class="dialog-title" id="count-group-selected">Thêm vào nhóm (2)</span>
+        <input type="text" class="dialog__group-input" placeholder="Nhập tên muốn tìm">        
+      </div>
+
+      <div class="dialog__choose">
+        <span class="dialog-title">Đã chọn</span>
+
+        <div class="dialog__choose-checked" id="userSelected">
+        </div>
+        <span class="dialog-title">Danh sách</span>
+        <div class="dialog__choose-list" id="listUser">
+        </div>
+      </div>
+      <div class="col-sm-12" style="background-color:#ccc;"></div>
+      <div class="dialog__footer">
+        <div class="dialog__footer-container">
+          <button class="dialog__footer-btn cancel" id="btnCloseAddUsersToGroup">Hủy</button>
+          <button class="dialog__footer-btn create" id="btnAddUsersToGroup">Thêm</button>
+        </div>
+      </div>
+    </div>
+
     <div class="dialog" id="dialogAddUser" hidden>
-      <!-- <i class="fas fa-check-circle"></i> checked -->
-      <!-- <i class="far fa-check-circle"></i> uncheck -->
       <div class="dialog__header">
         <span class="dialog__header-title">Chọn người để chat</span>
-        <!-- <div class="dialog__header-close" id="headerIconCloseAddUser"><i class="fas fa-times"></i></div> -->
       </div>
 
       <div class="col-sm-12" style="background-color:#ccc;"></div>
@@ -149,27 +177,17 @@
 
       <div class="dialog__choose">
         <div class="dialog__choose-checked" id="user-add-checked">
-          <!-- <div class="dialog__choose-checked-item">
-            <div class="fake-padding">
-              <span class="dialog__choose-checked-item-name">Tien</span>
-              <div class="container-close">
-                <i class="fas fa-times"></i>
-              </div>
-            </div>
-          </div> -->
+         
         </div>
         <span class="dialog-title">Trò chuyện gần đây</span>
         <div class="dialog__choose-list" id="list-user-add">
-          <!-- <div class="dialog__choose-item">
-            <input type="checkbox" name="" id="" class="dialog__choose-item-input" data-name="Tien">
-            <label for="" class="dialog__choose-item-label">Tien</label>
-          </div> -->
+         
         </div>
       </div>
       <div class="col-sm-12" style="background-color:#ccc;"></div>
       <div class="dialog__footer">
         <div class="dialog__footer-container">
-          <!-- <button class="dialog__footer-btn cancel" id="btnCloseAddUser">Hủy</button> -->
+          
           <button class="dialog__footer-btn create" id="btnCreateAdduser">Thêm</button>
         </div>
       </div>

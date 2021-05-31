@@ -21,3 +21,5 @@ class functionHelper{
         return result;
     }
 }
+
+module.exports = new functionHelper();

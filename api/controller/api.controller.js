@@ -1,12 +1,13 @@
 
 const db = require('../../db/connect.db')
 const sqlHelper = require('../../helpers/sqlHelper');
+const functionHelper = require('../../helpers/functionHelper');
 class apiController{
     //[GET] /api/users
     //lấy tất cả user
     async totalUser(req, res, next){
         var sql = `select nickname, username, socketid from users`
-        await db.query(sql, (err, result)=>{
+        db.query(sql, (err, result)=>{
             if (err) throw err
             res.json(result)
         })
@@ -94,7 +95,6 @@ class apiController{
             if (err) throw err
             res.json(result)
         })
-        
     }
 
     getLengthGroupByIdRoom(req, res, next){
@@ -105,7 +105,6 @@ class apiController{
             return;
         }
        
-        console.log("hihi")
         var getLengthGroup = `select count(*) as length from rooms where id=${idRoom}`
         db.query(getLengthGroup, (err, result)=>{
             if (err) throw err
@@ -136,7 +135,8 @@ class apiController{
         const idRoom = req.params.id;
         console.log(idRoom)
         var getUserInRoomsSql = `
-            select username, is_host from rooms where id=${idRoom};
+            select user.username, user.nickname, room.is_host from rooms room, users user
+            where room.username=user.username AND room.id=${idRoom}
         `
         db.query(getUserInRoomsSql, (err, result)=>{
             if (err) throw err;
@@ -148,7 +148,7 @@ class apiController{
         const currentUser = res.locals.username;
         const idRoom = req.params.id;
         // console.log('groupCurrentUserByIdRoom', {currentUser, idRoom})
-        var getInfoRoom = `select * from rooms where username!='${currentUser}' AND id=${idRoom}`
+        var getInfoRoom = `select * from rooms where id=${idRoom}`
         db.query(getInfoRoom, (err, result)=>{
             if (err) throw err
             // console.log('groupCurrentUserByIdRoom', result);
@@ -168,9 +168,15 @@ class apiController{
     async idRoomOnline(req, res){
         const io = req.app.get('socketio');
         const currentUser = await sqlHelper.getInfoUser(res.locals.username)
-        var roomOnline = await sqlHelper.filterAndGetRoomOnline(io.sockets.adapter.rooms, currentUser);
+        var roomOnline = await functionHelper.filterAndGetRoomOnline(io.sockets.adapter.rooms, currentUser);
         res.json(roomOnline);
 
+    }
+
+    async isHost(req, res){
+        const {username, id} = req.params;
+        const isHost = await sqlHelper.getIsHost(username, id);
+        res.json(isHost);
     }
 
 

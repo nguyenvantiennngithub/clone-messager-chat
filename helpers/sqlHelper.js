@@ -160,6 +160,18 @@ class functionClass{
         )
     }
 
+    getIsHost(username, idRoom){
+        return new Promise(
+            function (res, rej){
+                var sql = `select is_host as isHost from rooms
+                where username='${username}' AND id=${idRoom}`
+                db.query(sql, (err, result)=>{
+                    if (err) rej(err);
+                    res(result[0].isHost);
+                })
+            })
+    }
+
     setUpdatedAt(username, idRoom){
         //và update lại cái is_show cho nó bằng 1 là hiển thị
         var updateUpdatedAtSql = `update rooms 
@@ -181,6 +193,14 @@ class functionClass{
         })
     }
     
+    setIsHost(username, idRoom, isHost){
+        var sql = `update rooms
+            set is_host=${isHost}
+            where username='${username}' AND id=${idRoom}`
+        db.query(sql, (err, result)=>{
+            if (err) throw err;
+        })
+    }
 
     insertAddChatListPersonal(username, idRoom, is_show, nicknameReceiver){
         var insertRoomsSql = `insert into rooms (id, username, is_show, name) 
@@ -211,6 +231,7 @@ class functionClass{
             if (err) throw err
             // console.log('function/emit', result)
             var socketId = result[0].socketid;
+            console.log("sqlHelper/emit", data)
             io.in(socketId).emit(event, data)
         })
     }

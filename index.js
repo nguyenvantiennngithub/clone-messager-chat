@@ -33,14 +33,6 @@ var options = {
 	password: process.env.DB_PASSWORD ||'',
 	database: process.env.DB_DATABASE ||'messagers'
 };
-//run cpanel
-// var options = {
-//     host: 'localhost',
-//     port: 3306,
-//     user: 'nveysqehosting_vantiennn',
-//     password: '1Ew^^)D_B7_g',
-//     database: 'nveysqehosting_messager'
-// };
 var sessionStore = new MySQLStore(options);
 var sess = {
     secret: 'this is secret',
@@ -50,8 +42,6 @@ var sess = {
     
     cookie:{
         maxAge: 1000 * 60 * 60 * 48,
-        // secure: process.env.NODE_ENV == "production" ? true : false ,
-        // maxAge: 1000*60*60*24, //1 ngày
     },
 }
 app.use(session(sess));
