@@ -87,7 +87,7 @@ class functionClass{
     getInfoUser(username){
         return new Promise(
             function(resolve, reject){
-                var getInfoSql = `select id, nickname, username, socketid from users where username='${username}'`
+                var getInfoSql = `select nickname, username, socketid from users where username='${username}'`
                 return db.query(getInfoSql, (err, result)=>{
                     if (err) return reject(err)
                     return resolve(result[0])

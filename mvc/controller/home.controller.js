@@ -48,7 +48,7 @@ class homeController{
         
     }
 
-    async addChatList(req, res, next){
+    async createOrAddChatListPersonal(req, res, next){
         const io = req.app.get('socketio') //lay socket
         //nhận data tùy vào add 1 user hoặc add nhiều user
         var receiver = req.body.receiver || req.body['receivers[]']
@@ -113,23 +113,33 @@ class homeController{
     }
 
 
-    async addGroupChat(req, res, next){
+
+    async addUserToGroups(req, res, next){
         const io = req.app.get('socketio')
-        const {userAdd} = req.body;
-        var idRooms = req.body['idRooms[]']
+        var usernames = req.body.username || req.body['usernames[]'];
+        var idRooms = req.body.idRoom || req.body['idRooms[]']
         const currentUser = res.locals.username
-        console.log('addGroupChat', {idRooms, userAdd})
+
         if (!Array.isArray(idRooms)){
             idRooms = [idRooms]
         }
-        idRooms.forEach(async (idRoom)=>{
-            var groupName = await sqlHelper.getGroupName(currentUser, idRoom)
-            sqlHelper.insertAddChatListGroup(userAdd, idRoom, 1, groupName, 0)
-            sqlHelper.emit(userAdd, 'add chat list', {groupName: groupName, idRoom: idRoom, isActive: false, isPersonal: false}, io)
-        })
+        if (!Array.isArray(usernames)){
+            usernames = [usernames];
+        }
 
+        console.log('addGroupChat', {usernames, idRooms})
+
+        for (const username of usernames){
+            for (const idRoom of idRooms){
+                var groupName = await sqlHelper.getGroupName(currentUser, idRoom)
+                sqlHelper.insertAddChatListGroup(username, idRoom, 1, groupName, 0)
+                sqlHelper.emit(username, 'add chat list', {groupName: groupName, idRoom: idRoom, isActive: false, isPersonal: false}, io)
+
+            }
+        }
         res.end()
     }
+
     //khi mà có tinh nhắn
     async setUpdatedGroupChat(req, res, next){
         const io = req.app.get('socketio')
@@ -168,7 +178,7 @@ class homeController{
         
         res.end()
     }
-    async changeName(req, res){
+    async changGroupName(req, res){
         const {text, idRoom} = req.body;
         console.log({text, idRoom})
         const currentUser = res.locals.username
@@ -198,7 +208,7 @@ class homeController{
         })
     }
 
-    appointAdmin(req, res){
+    appointGroupAdmin(req, res){
         const {username, idRoom} = req.body;
         const currentUser = res.locals.username;
         sqlHelper.setIsHost(username, idRoom, 1);
