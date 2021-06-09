@@ -7,7 +7,7 @@ const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
-
+const fileupload = require('express-fileupload')
 const connect = require('./db/index.db')
 const router = require('./mvc/router/index.router');
 const api = require('./api/router/api.router')
@@ -21,7 +21,7 @@ app.use(express.static('./public'))
 app.set('view engine', 'ejs')
 app.set('views', './mvc/views')
 app.set('socketio', io) //export socket io to a global
-
+app.use(fileupload())
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(cookieParser())

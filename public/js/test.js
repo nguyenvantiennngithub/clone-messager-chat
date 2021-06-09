@@ -20,15 +20,7 @@ function handleChangeCheckboxCreatePersonalChatsVersion2(){
         checkBtnSubmitCreatePersonalChats();
     })
 }
-function handleChangeCheckboxAddUserToGroups(){
-    handleClickCheckbox('#groupAddUserToGroups', 'idroom', async function(primary, foreign){
-        var html = htmlGroupCheckedAddUserToGroups(primary, foreign);
-        $('#groupSelectedAddUserToGroups').append(html);
-    }, function(){
-        renderNumberGroupCheckedAddUserToGroups()
-        checkBtnSubmitAddUserToGroups()
-    })
-}
+
 
 function handleChangeCheckboxAddUserToGroups(){
     $('#gropAddUserToGroups').on('change', 'div input.checkbox-select-group', function(){
@@ -41,3 +33,5 @@ function handleChangeCheckboxAddUserToGroups(){
         
     })
 }
+
+<img class="avatar avatar-16" src="${avatar}">

@@ -2,7 +2,8 @@ const express = require('express')
 const homeController = require('../controller/home.controller')
 const authController = require('../controller/auth.controller')
 const middleware = require('../../middleware/index.middleware')
-
+const multer  = require('multer')
+const upload = multer({ dest: 'public/uploads/' })
 const router = express.Router()
 
 router.get('/', middleware.isLogin, homeController.home)

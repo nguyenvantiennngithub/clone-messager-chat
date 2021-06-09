@@ -13,15 +13,15 @@ class functionClass{
             })
         })
     }
-
-    async getGroupName(username, idRoom){
+    
+    async getInfoGroupByUsernameIdRoom(username, idRoom){
         // console.log("function/getGroupName", {username, idRoom})
         return new Promise((res, rej)=>{
             //tim trong db lay ra cai usrename do roi resolve
-            var sqlGetGroupName = `select name from rooms where username='${username}' AND id=${idRoom}`
+            var sqlGetGroupName = `select name, avatar from rooms where username='${username}' AND id=${idRoom}`
             db.query(sqlGetGroupName, (err, result)=>{
                 if (err) throw err
-                res(result[0].name)
+                res(result[0])
             })
         })
     }
@@ -87,7 +87,7 @@ class functionClass{
     getInfoUser(username){
         return new Promise(
             function(resolve, reject){
-                var getInfoSql = `select nickname, username, socketid from users where username='${username}'`
+                var getInfoSql = `select nickname, username, socketid, avatar from users where username='${username}'`
                 return db.query(getInfoSql, (err, result)=>{
                     if (err) return reject(err)
                     return resolve(result[0])
@@ -210,9 +210,9 @@ class functionClass{
         })
     }
 
-    insertAddChatListGroup(username, idRoom, is_show, name, is_host){
-        var createGroupSenderSql = `insert into rooms (username, is_show, id, is_personal, name, is_host) 
-            values ('${username}', ${is_show}, ${idRoom}, 0, '${name}', ${is_host})`
+    insertAddChatListGroup(username, idRoom, is_show, name, is_host, avatar){
+        var createGroupSenderSql = `insert into rooms (username, is_show, id, is_personal, name, is_host, avatar) 
+            values ('${username}', ${is_show}, ${idRoom}, 0, '${name}', ${is_host}, '${avatar}')`
         db.query(createGroupSenderSql, (err, result)=>{
             if (err) throw err
         })
@@ -222,6 +222,13 @@ class functionClass{
         var insertMessageSql = `insert into messages (idroom, sender, message) values (${idRoom }, '${sender}', '${message}')`
         db.query(insertMessageSql, (err, result)=>{
             if (err) throw err
+        })
+    }
+
+    insertUser(username, nickname, hashPsw, socketid, avatar){
+        var sql = `insert into users (nickname, username, password, socketid, avatar) values ('${nickname}', '${username}', '${hashPsw}', '${socketid}', '${avatar}')`
+        db.query(sql, (err, result)=>{
+            if (err) throw err;
         })
     }
 
@@ -255,6 +262,21 @@ class functionClass{
             }
         )
     }
+
+    isExistsUser(username){
+        return new Promise(
+            function (resolve, reject){
+                var sql = `select username from users where username='${username}'`
+                db.query(sql, (err, result)=>{
+                    if (err) return reject(err) 
+                    if (result.length == 1){
+                        return resolve(true);
+                    }
+                    return resolve(false);
+                })
+            }
+        )
+    } 
 
     
 }

@@ -6,7 +6,7 @@ class apiController{
     //[GET] /api/users
     //lấy tất cả user
     async totalUser(req, res, next){
-        var sql = `select nickname, username, socketid from users`
+        var sql = `select nickname, username, socketid, avatar from users`
         db.query(sql, (err, result)=>{
             if (err) throw err
             res.json(result)
@@ -28,7 +28,7 @@ class apiController{
     async currentUser(req, res, next){
         const username = res.locals.username
         const socketid = req.session.id
-        var sql = `select nickname, username, socketid from users u, sessions s where s.session_id='${socketid}' AND u.username='${username}'`
+        var sql = `select nickname, username, socketid, avatar from users u, sessions s where s.session_id='${socketid}' AND u.username='${username}'`
         db.query(sql, (err, result)=>{
             if (err) throw err
             res.json(result)
@@ -42,7 +42,7 @@ class apiController{
         
         //sql này dùng dể lấy những username có cùng rooms với currentUser và ko lấy currentUser     
         var getUserInRoomsSql = `
-            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.is_personal, receiver.name
+            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.is_personal, receiver.name, user.avatar
             from rooms r, (
                 select * from rooms 
                 where id in (select id from rooms where username='${currentUser}' AND is_show=1) AND username != '${currentUser}')
@@ -61,7 +61,7 @@ class apiController{
     checkedGroup(req, res){
         const currentUser = res.locals.username;
         var getGroupSql = `
-            select name, updatedAt, id, is_personal from rooms where username='${currentUser}' AND is_show=1 AND is_personal=0 
+            select name, updatedAt, id, is_personal, avatar from rooms where username='${currentUser}' AND is_show=1 AND is_personal=0 
         `
         db.query(getGroupSql, (err, result)=>{
             if (err) throw err
@@ -135,7 +135,7 @@ class apiController{
         const idRoom = req.params.id;
         console.log(idRoom)
         var getUserInRoomsSql = `
-            select user.username, user.nickname, room.is_host from rooms room, users user
+            select user.username, user.nickname, room.is_host, user.avatar from rooms room, users user
             where room.username=user.username AND room.id=${idRoom}
         `
         db.query(getUserInRoomsSql, (err, result)=>{
@@ -148,10 +148,18 @@ class apiController{
         const currentUser = res.locals.username;
         const idRoom = req.params.id;
         // console.log('groupCurrentUserByIdRoom', {currentUser, idRoom})
-        var getInfoRoom = `select * from rooms where id=${idRoom}`
-        db.query(getInfoRoom, (err, result)=>{
+        var getInfoRoom = `select distinct id, name, is_personal, avatar from rooms where id=${idRoom}`
+        db.query(getInfoRoom,async (err, result)=>{
             if (err) throw err
-            // console.log('groupCurrentUserByIdRoom', result);
+            console.log('groupCurrentUserByIdRoom', result);
+            if (result.length != 0){
+                if (result[0].is_personal){
+                    var infoUser = await sqlHelper.getInfoUser(currentUser);
+                    result[0].avatar = infoUser.avatar
+                }
+            }
+
+            
             res.json(result[0]);
         })
     }

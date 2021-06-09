@@ -36,7 +36,7 @@
 
 .dialog{
     border-radius: 8px;
-    margin-top: 32px;
+    margin-top: 16px;
     z-index: 1010;
     content: "";
     width: 480px;
@@ -169,6 +169,10 @@
     height: 180px;
 }
 
+#dialogCreateGroup .dialog__choose-list{
+    height: 134px;
+}
+
 .dialog__choose-item{
     margin-top: 8px;
     height: 32px;
@@ -262,4 +266,21 @@
 .text-nickname{
     display: block;
     align-items: center;
+}
+
+.avatar{
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.avatar-16{
+    width: 32px;
+    height: 32px;
+    
+}
+
+#dialogListUser{
+    width: 700px;
 }

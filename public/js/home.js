@@ -6,9 +6,10 @@ var page = 1;
 //============================================================================================================
 
 //code html render ra li ben phai cho user
-function htmlTotalUser(username, nickname){ //bên phải
+function htmlTotalUser(username, nickname, avatar){ //bên phải
     return `
      <li class="list-group-item list-group-item-success d-flex" data-name="${username}">
+        <img class="avatar avatar-32" src="${avatar}">
          <span class="text-nickname" style="font-size: 24px">${nickname}</span>
          <div class="dropdown ml-auto">
              <button class="btn btn-secondary dropdown-toggle" type="button" id="right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
@@ -20,9 +21,10 @@ function htmlTotalUser(username, nickname){ //bên phải
 `
 }
 //html render li ben phai cho group
-function htmlToTalGroup(name, idRoom){
+function htmlToTalGroup(name, idRoom, avatar){
     return `
     <li class="list-group-item list-group-item-success d-flex" data-idRoom=${idRoom}>
+        <img class="avatar avatar-32" src="${avatar}">
         <span class="text-nickname" style="font-size: 24px">${name}</span>
         <div class="dropdown ml-auto">
             <button class="btn btn-secondary dropdown-toggle" type="button" id="right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
@@ -35,7 +37,7 @@ function htmlToTalGroup(name, idRoom){
 }
 
 //code html render ra li ben trai cho user
-function htmlCheckedUser(receiver, nickname, id, isOnline){ //bên trái
+function htmlCheckedUser(receiver, nickname, id, avatar, isOnline){ //bên trái
     var html = `<li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-name="${receiver}" data-id="${id}" data-nickname="${nickname}">`
     if (isOnline){
         html += `<i class="fas fa-circle circle online"></i>`;
@@ -43,6 +45,7 @@ function htmlCheckedUser(receiver, nickname, id, isOnline){ //bên trái
         html += `<i class="fas fa-circle circle"></i>`;
     }
     html += `
+    <img class="avatar avatar-32" src="${avatar}">
          <span class="text-nickname" style="font-size: 24px">${nickname}</span>
             <div class="dropdown ml-auto">
                  <button class="btn btn-secondary dropdown-toggle" type="button" id="left" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
@@ -58,11 +61,12 @@ function htmlCheckedUser(receiver, nickname, id, isOnline){ //bên trái
 }
 
 //render thẻ li bên trái cho group
-function htmlCheckedGroup(name, idRoom, isOnline){ //bên trái
+function htmlCheckedGroup(name, idRoom, avatar, isOnline){ //bên trái
     var html = ` <li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-id="${idRoom}" data-nickname="${name}">`
     if (isOnline) html += `<i class="fas fa-circle circle online"></i>`
     else html += `<i class="fas fa-circle circle"></i>`;
     html+=`
+            <img class="avatar avatar-32" src="${avatar}">
             <span class="text-nickname" style="font-size: 24px">${name}</span> 
 
             <div class="dropdown ml-auto">
@@ -95,7 +99,7 @@ async function htmlMessage(sender, message){
 
 
 //render item cho user ở dưới trong dialog craete group
-async function htmlUserDialog(name, nickname, isChecked, isDisable){
+async function htmlUserDialog(name, nickname, avatar, isChecked, isDisable){
     var {username} = await getCurrentUser();
     var html = '';
     if (name != username){//khong render ra chin minh
@@ -104,7 +108,11 @@ async function htmlUserDialog(name, nickname, isChecked, isDisable){
         
         if (isChecked) html += ' checked'
         if (isDisable) html += ' disabled'
-        html += `><label class="dialog__choose-item-label">${nickname}</label>
+
+        html += `>
+            <img class="avatar avatar-16" src="${avatar}">
+            
+            <label class="dialog__choose-item-label">${nickname}</label>
                 </div>`
         return html;
 
@@ -113,13 +121,14 @@ async function htmlUserDialog(name, nickname, isChecked, isDisable){
 }
 
 //render ra user đã chọn ở trên dialog create group
-async function htmlCheckedUserDialog(name, nickname){
+async function htmlCheckedUserDialog(name, nickname, avatar){
     var {username} = await getCurrentUser();
     
     if (name === username){//khong render dau X
         return `
         <div class="dialog__choose-checked-item" data-name="${name}">
             <div class="fake-padding">
+                <img class="avatar avatar-16" src="${avatar}">
                 <span class="dialog__choose-checked-item-name">${nickname}</span>
             </div>
         </div>
@@ -128,6 +137,7 @@ async function htmlCheckedUserDialog(name, nickname){
     return `
         <div class="dialog__choose-checked-item" data-name="${name}">
             <div class="fake-padding">
+                <img class="avatar avatar-16" src="${avatar}">
                 <span class="dialog__choose-checked-item-name">${nickname}</span>
                 <div class="container-close">
                     <i class="fas fa-times"></i>
@@ -138,11 +148,12 @@ async function htmlCheckedUserDialog(name, nickname){
 }
 
 
-function htmlGroupCheckedAddUserToGroups(idRoom, name){
+function htmlGroupCheckedAddUserToGroups(idRoom, name, avatar){
     
     return `
         <div class="dialog__choose-checked-item group-selected" data-idroom="${idRoom}">
             <div class="fake-padding">
+                <img class="avatar avatar-16" src="${avatar}">
                 <span class="dialog__choose-checked-item-name">${name}</span>
                 <div class="container-close remove-group">
                     <i class="fas fa-times"></i>
@@ -152,11 +163,12 @@ function htmlGroupCheckedAddUserToGroups(idRoom, name){
     `
 }
 
-function htmlGroupAddUserToGroups(name, idRoom, isDisable){
+function htmlGroupAddUserToGroups(name, idRoom, avatar, isDisable){
     if (isDisable){
         return `
         <div class="dialog__choose-item">
             <input type="checkbox" name="" id="" class="dialog__choose-item-input checkbox-select-group" data-idroom="${idRoom}" disabled>
+            <img class="avatar avatar-16" src="${avatar}">
             <label for="" class="dialog__choose-item-label">${name}</label>
         </div>
     `
@@ -164,13 +176,15 @@ function htmlGroupAddUserToGroups(name, idRoom, isDisable){
     return `
         <div class="dialog__choose-item">
             <input type="checkbox" name="" id="" class="dialog__choose-item-input checkbox-select-group" data-idroom="${idRoom}">
+            <img class="avatar avatar-16" src="${avatar}">
             <label for="" class="dialog__choose-item-label">${name}</label>
         </div>
     `
 }
-function htmlThreadChatPersonal(name){
+function htmlThreadChatPersonal(name, avatar){
     return `
         <h3 id="name-room">
+            <img class="avatar avatar-32" src="${avatar}">
             <span>${name}</span>
             <span id="edit-name" class="edit-name">
                 <i class="fas fa-user-edit"></i>
@@ -186,11 +200,13 @@ function htmlThreadChatPersonal(name){
     `
 }
 
-function htmlThreadChatGroup(name, count){
+function htmlThreadChatGroup(name, count, avatar){
     return `
         <h3 id="name-room">
             <div class="d-flex justify-content-between">
                 <div>
+                <img class="avatar avatar-32" src="${avatar}">
+
                     <span>${name}</span>
                     <span id="edit-name" class="edit-name click">
                         <i class="fas fa-user-edit"></i>
@@ -223,11 +239,12 @@ function htmlInputChangeName(){
     `
 }
 
-async function htmlUserInRoom(username, nickname, isHost){
+async function htmlUserInRoom(username, nickname, avatar, isHost){
     var currentUser = await getCurrentUser()
     var html = `
         <div class="list-user-item" data-name="${username}">
             <div>
+                <img class="avatar avatar-16" src="${avatar}">
                 <span class="dialog-name">${nickname}</span>
             </div>
             <div>
@@ -257,7 +274,7 @@ async function htmlMessageCantFind(){
 
 function htmlDialogCreateGroup(){
     return `
-    <div class="dialog" id="dialogCreateGroup" >
+    <div class="dialog" id="dialogCreateGroup">
         <div class="dialog__header">
             <span class="dialog__header-title">Tạo nhóm</span>
             <div class="dialog__header-close" id="headerIconCloseCreateGroup"><i class="fas fa-times"></i></div>
@@ -269,9 +286,15 @@ function htmlDialogCreateGroup(){
             <input type="text" id="name-group" class="dialog__name-input" placeholder="Nhập tên nhóm">        
         </div>
 
+        <div class="dialog__name">
+            <span class="dialog-title">Ảnh đại diện</span>
+            <input type="file" class="" id="avatar" name="avatar">
+        </div>
+
+
         <div class="dialog__group">
-            <span class="dialog-title" id="count-user-checked">Mời thêm bạn vào cuộc trò chuyện (2) người</span>
-            <input type="text" class="dialog__group-input" placeholder="Nhập tên muốn tìm" id="inputFilterCreateGroup">        
+            <span class="dialog-title" id="count-user-checked">Mời thêm bạn vào cuộc trò chuyện</span>
+            <input type="text" class="dialog__group-input" placeholder="Nhập tên muốn tìm" id="filterCreateGroup">        
         </div>
 
         <div class="dialog__option" id="filter-user-create-group">
@@ -294,9 +317,10 @@ function htmlDialogCreateGroup(){
         </div>
 
         <div class="dialog__choose">
-            <div class="dialog__choose-checked" id="user-choose"></div>
+            <span class="dialog-title" id="titleSelectedCreateGroup">Đã chọn</span>
+            <div class="dialog__choose-checked" id="selectedCreateGroup"></div>
             <span class="dialog-title">Trò chuyện gần đây</span>
-            <div class="dialog__choose-list" id="list-receiver-dialog">
+            <div class="dialog__choose-list" id="userCreateGroup">
            
             </div>
         </div>
@@ -304,7 +328,7 @@ function htmlDialogCreateGroup(){
         <div class="dialog__footer">
             <div class="dialog__footer-container">
             <button class="dialog__footer-btn cancel" id="btnCloseCreateGroup">Hủy</button>
-            <button class="dialog__footer-btn create" id="btn-create-group-chat">Tạo nhóm</button>
+            <button type="submit" class="dialog__footer-btn create" id="btn-create-group-chat">Tạo nhóm</button>
             </div>
         </div>
     </div>
@@ -322,14 +346,14 @@ function htmlDialogAddUserToGroups(){
 
     <div class="col-sm-12" style="background-color:#ccc;"></div>
     <div class="dialog__group">
-        <span class="dialog-title" id="textSelectedAddUserToGroups">Thêm vào nhóm (2)</span>
-        <input type="text" id="inputFilterAddUserToGroups" class="dialog__group-input" placeholder="Nhập tên muốn tìm">        
+        <span class="dialog-title">Thêm vào nhóm</span>
+        <input type="text" id="filterAddUserToGroups" class="dialog__group-input" placeholder="Nhập tên muốn tìm">        
     </div>
 
     <div class="dialog__choose">
-        <span class="dialog-title">Đã chọn</span>
+        <span class="dialog-title" id="titleSelectedAddUserToGroups">Đã chọn</span>
 
-        <div class="dialog__choose-checked" id="groupSelectedAddUserToGroups"></div>
+        <div class="dialog__choose-checked" id="selectedAddUserToGroups"></div>
         <span class="dialog-title">Nhóm</span>
         <div class="dialog__choose-list" id="groupAddUserToGroups"></div>
     </div>
@@ -355,18 +379,18 @@ function htmlDialogAddUsersToGroup(){
 
         <div class="col-sm-12" style="background-color:#ccc;"></div>
         <div class="dialog__group">
-            <span class="dialog-title" id="count-group-dsadselected">Thêm vào nhóm (2)</span>
-            <input type="text" id="inputFilterAddUsersToGroup" class="dialog__group-input" placeholder="Nhập tên muốn tìm">        
+            <span class="dialog-title" id="count-group-selected">Thêm vào nhóm</span>
+            <input type="text" id="filterAddUsersToGroup" class="dialog__group-input" placeholder="Nhập tên muốn tìm">        
         </div>
 
         <div class="dialog__choose">
             <span class="dialog-title">Đã chọn</span>
 
-        <div class="dialog__choose-checked" id="userSelected">
+        <div class="dialog__choose-checked" id="selectedAddUsersToGroup">
         </div>
         
-        <span class="dialog-title">Danh sách</span>
-        <div class="dialog__choose-list" id="listUser">
+        <span class="dialog-title" id="titleSelectedAddUsersToGroup">Danh sách</span>
+        <div class="dialog__choose-list" id="userAddUsersToGroup">
         </div>
         </div>
        
@@ -392,23 +416,25 @@ function htmlDialogCreatePersonalChats(){
         <div class="col-sm-12" style="background-color:#ccc;"></div>
         
         <div class="dialog__group">
-            <span class="dialog-title" id="count-user-add">Chọn thêm người bạn muốn trò chuyện (2) người</span>
-            <input type="text" id="inputFilterCreatePersonalChats" class="dialog__group-input" placeholder="Nhập tên muốn tìm">        
+            <span class="dialog-title">Chọn thêm người bạn muốn trò chuyện</span>
+            <input type="text" id="filterCreatePersonalChats" class="dialog__group-input" placeholder="Nhập tên muốn tìm">        
         </div>
 
         <div class="dialog__choose">
-            <div class="dialog__choose-checked" id="user-add-checked">
+        <span class="dialog-title" id="titleSelectedCreatePersonalChats">Đã chọn</span>
+        <div class="dialog__choose-checked" id="selectedCreatePersonalChat">
             
             </div>
+            
             <span class="dialog-title">Trò chuyện gần đây</span>
-            <div class="dialog__choose-list" id="list-user-add">
+            <div class="dialog__choose-list" id="userCreatePersonalChat">
             
             </div>
         </div>
     <div class="col-sm-12" style="background-color:#ccc;"></div>
         <div class="dialog__footer">
             <div class="dialog__footer-container">
-                <button class="dialog__footer-btn create" id="btnCreateAdduser">Thêm</button>
+                <button class="dialog__footer-btn create" id="btnCreatePersonalChat">Thêm</button>
             </div>
         </div>
     </div>
@@ -450,17 +476,16 @@ async function renderCheckedUser(){
     var checkedUsers = await getCheckedUser();
     var checkedGroups = await getCheckedGroup();
     var result = checkedUsers.concat(checkedGroups);
-
     //concat và sort theo updatedAt lại
     result = sortByUpdatedAt(result)
     // console.log(result)
-    
+    console.log("checkedUser", checkedUsers)
     //render ra html 
     var html = result.map((user)=>{ //{sender, receiver, updatedAt, id}
         if (user.is_personal){//kiểm tra nếu personal thì reder theo personal
-            return htmlCheckedUser(user.username, user.name, user.id)
+            return htmlCheckedUser(user.username, user.name, user.id, user.avatar, false)
         }else{//còn group thì render theo group
-            return htmlCheckedGroup(user.name, user.id)
+            return htmlCheckedGroup(user.name, user.id, user.avatar, false)
         }
     })
     //sau đó thì inner vào thẻ ul
@@ -473,13 +498,14 @@ async function renderCheckedUser(){
 async function renderTotalUser(){
     // [{nickname, username, socketid}, ....]
     var totalUsers = await getTotalUser();
-    var currentUser = await getCheckedUser();
+    var currentUser = await getCurrentUser();
+    console.log("currentUser", currentUser)
     totalUsers = totalUsers.filter((user)=>{
         return user.username != currentUser.username
     })
 
     var html = totalUsers.map((user) => {
-        return htmlTotalUser(user.username, user.nickname)
+        return htmlTotalUser(user.username, user.nickname, user.avatar)
     })
     $('#list-total-user').html(html)
 }
@@ -488,7 +514,7 @@ async function renderTotalUser(){
 async function renderTotalGroup(){
     var groups = await getTotalGroup();
     var html = groups.map(group=>{
-        return htmlToTalGroup(group.name, group.id); 
+        return htmlToTalGroup(group.name, group.id, group.avatar); 
     })
     // console.log("renderTotalGroup", html)
     $('#list-total-user').html(html)
@@ -521,7 +547,7 @@ async function renderMessageAppend(idRoom, page){
 
 
 function filterUserByInputCreateGroup(){
-    $('#inputFilterCreateGroup').on('input', function(){
+    $('#filterCreateGroup').on('input', function(){
         var option = $('#filter-user-create-group')
             .find('.dialog__option-container.active')
             .data('option')
@@ -529,7 +555,7 @@ function filterUserByInputCreateGroup(){
     })
 }
 function getUserCheckedCreateGroup(){
-    var listUserChecked = $('#user-choose')
+    var listUserChecked = $('#selectedCreateGroup')
         .find('.dialog__choose-checked-item[data-name != ' + $('#username').data('name') + ']')
         .map(function(){
             return $(this).data('name');
@@ -546,7 +572,7 @@ async function renderUserByOptionCreateGroup(option){
     //lay date theo option
     var users = await getUserByOptionCreateGroup(option)
     var listUserChecked = await getUserCheckedCreateGroup()
-    var text = $('#inputFilterCreateGroup').val();
+    var text = $('#filterCreateGroup').val();
 
     if (text){
         users = users.filter(function(user){
@@ -563,46 +589,46 @@ async function renderUserByOptionCreateGroup(option){
         }else{
             isChecked = false;
         }
-        return htmlUserDialog(user.username, user.nickname, isChecked)
+        
+        return htmlUserDialog(user.username, user.nickname, user.avatar, isChecked)
     })
     html = await Promise.all(promises)
 
-    $('#list-receiver-dialog').html(html)
+    $('#userCreateGroup').html(html)
     return;
 }
 
 
 //render ra số lượng người đã đc check trong phần dialog
-function renderNumberUserCheckedCreateGroup(){
-    $('#count-user-checked').text(`Mời thêm bạn vào cuộc trò chuyện (${$('.dialog__choose-checked-item').length}) người`)
+function renderNumberSelectedCreateGroup(){
+    renderNumberSelectedUser('#selectedCreateGroup', '#titleSelectedCreateGroup')
 }
 
 //render ra người dùng đã được chọn ở trên trong phần dialog
 async function renderUserChecked(array){
     // console.log(array)
     var promises = array.map((item)=>{
-        return htmlCheckedUserDialog(item.name, item.nickname)
+        return htmlCheckedUserDialog(item.name, item.nickname, item.avatar)
     })
     html = await Promise.all(promises);
-    $('#user-choose').html(html);//inner html ra 
-    renderNumberUserCheckedCreateGroup()//thay đổi số lượng nên là phải render lại số lượng người đã chọn
+    $('#selectedCreateGroup').html(html);//inner html ra 
+    renderNumberSelectedCreateGroup()//thay đổi số lượng nên là phải render lại số lượng người đã chọn
     return;
 }
 
 //render cái title ở trên cái tinh nhắn
-async function renderThreadChat(idRoom, name, isPersonal){
+async function renderThreadChat(idRoom, name, isPersonal, avatar){
     var html
     if (!isPersonal && !idRoom && !name){
         isPersonal = true;
         name = '';
     }
-    console.log(idRoom, name, isPersonal)
     if (!isPersonal){
         var length = await getLengthGroupByIdRoom(idRoom);
         console.log(length);
-        html = htmlThreadChatGroup(name, length);
+        html = htmlThreadChatGroup(name, length, avatar);
     }else{
-        html = htmlThreadChatPersonal(name);
+        html = htmlThreadChatPersonal(name, avatar);
     }
     $('#thread-chat').html(html);
 }  
@@ -619,17 +645,14 @@ function renderTotalUserByOption(option){
 } 
 //đếm xem có bao nhiêu group đã đc chọn
 //rồi render ra text
-function renderNumberGroupCheckedAddUserToGroups(){
-    var length = $('.group-selected').length;
-    var html = `Thêm vào nhóm (${length})`;
-    // console.log($('#textSelectedAddUserToGroups'))
-    $('#textSelectedAddUserToGroups').html(html);
+function renderNumberSelectedAddUserToGroups(){
+    renderNumberSelectedUser('#selectedAddUserToGroups', '#titleSelectedAddUserToGroups')
 }
 
 async function renderUserDialog(container, isFilter, input){
     var users = await getTotalUser();
     var idRoom = getCurrentIdRoom();
-    var checkedUsers = $('#user-add-checked')
+    var checkedUsers = $('#selectedCreatePersonalChat')
         .find('.dialog__choose-checked-item')
         .map(function(){
             return $(this).data('name')
@@ -656,7 +679,7 @@ async function renderUserDialog(container, isFilter, input){
         }
         isChecked = checkedUsers.includes(user.username);
 
-        return htmlUserDialog(user.username, user.nickname, isChecked, isDisable); 
+        return htmlUserDialog(user.username, user.nickname, user.avatar, isChecked, isDisable); 
     })
     var html = await Promise.all(promises);
     $(container).html(html);
@@ -664,8 +687,7 @@ async function renderUserDialog(container, isFilter, input){
 
 
 function renderNumberCheckedUserCreatePersonalChats(){
-    var length = $('#user-add-checked').find('.dialog__choose-checked-item').length;
-    $('#count-user-add').html(`Chọn thêm người bạn muốn trò chuyện (${length}) người`)
+   renderNumberSelectedUser('#selectedCreatePersonalChat', '#titleSelectedCreatePersonalChats')
 }
 
 async function renderMessageCantFind(){
@@ -677,13 +699,13 @@ async function renderMessageCantFind(){
 async function renderContainerChat(){
     var idRoom = getCurrentIdRoom();
     var infoRoom = await getCurrentUserRoomByIdRoom(idRoom); 
-
+    console.log("infoRoom", infoRoom)
     if (infoRoom){
         renderMessage(idRoom);
     }else{
         htmlMessageCantFind();
     }
-    renderThreadChat(infoRoom.id, infoRoom.name, infoRoom.is_personal);
+    renderThreadChat(infoRoom.id, infoRoom.name, infoRoom.is_personal, infoRoom.avatar);
 }
 
 
@@ -699,7 +721,7 @@ async function renderUserInRoom(isHost){
     }
 
     var promises = users.map(async (user)=>{
-        return await htmlUserInRoom(user.username, user.nickname, isHost);
+        return await htmlUserInRoom(user.username, user.nickname, user.avatar, isHost);
     })
     var html = await Promise.all(promises);
     
@@ -907,7 +929,6 @@ function hideAllDialog(){
 //thay đổi style màu bg cho thằng vừa tương tác 
 function activeCurrentReceiver(){
     var currentIdRoom = getCurrentIdRoom() || $('#btn-send-message').data('idroom')
-
     $('.list-chat-user-item.active').removeClass('active')//xóa hết mấy thằng có class active
     window.history.pushState("", "", `/chat/${currentIdRoom}`)
     renderContainerChat()
@@ -958,25 +979,34 @@ function handleRemoveAndCheck(element, type){
 }
 
 async function handleClickCheckbox(container, type, success, final){
-    $(container).on('change', '.dialog__choose-item-input', async function(){
+    $(document).on('change', `${container} .dialog__choose-item-input`, async function(){
         var primary = $(this).data(type);
         var foreign = $(this).siblings('label').text();
         if ($(this).is(':checked')){
-            await success(primary, foreign)
+            var avatar = $(this).siblings('img').attr('src')
+            console.log("avatar", avatar)
+            await success(primary, foreign, avatar)
         }else{
             $(".dialog__choose-checked-item[data-" + type + "= " + primary + "]").remove()
         }
-        final();
+        if (final){
+            final();
+            console.log("type", typeof(final));
+        }
         return;
     })
 }
 
+function renderNumberSelectedUser(container, ele){
+    var length = $(container).find('.dialog__choose-checked-item').length;
+    console.log('length', container, length);
+    $(ele).html(`Đã chọn (${length})`)
+}
 
 
 //tùy vào option và dialog nào mà mình render khác nhau
 function filterByOption(container, renderCallBack){
     $(container).on('click', 'div.dialog__option-container', function(){
-        console.log(this)
         var option = $(this).data('option');
         $(container)
                 .find('.dialog__option-container.active')
@@ -1009,15 +1039,13 @@ async function getCheckedListByOption(option){
 async function renderCheckedListByOption(option){
     var result = await getCheckedListByOption(option);
     var roomOnline = await getIdRoomOnline();
-
     var html = result.map((user)=>{ //{sender, receiver, updatedAt, id}
         var isOnline = $.inArray(Number.parseInt(user.id), roomOnline) != -1;
 
         if (user.is_personal){//kiểm tra nếu personal thì reder theo personal
-            console.log(isOnline, user)
-            return htmlCheckedUser(user.username, user.name, user.id, isOnline)
+            return htmlCheckedUser(user.username, user.name, user.id, user.avatar, isOnline)
         }else{//còn group thì render theo group
-            return htmlCheckedGroup(user.name, user.id, isOnline)
+            return htmlCheckedGroup(user.name, user.id, user.avatar, isOnline)
         }
     })
     $('#list-chat-user').html(html)      
@@ -1122,12 +1150,13 @@ function handleCloseDialogCreateGroup(){
 
 //click check box create group 
 function handleClickCheckboxCreateGroup(){
-    handleClickCheckbox('#list-receiver-dialog', 'name', async function(primary, foreign){
-        var html = await htmlCheckedUserDialog(primary, foreign)
-        $('#user-choose').append(html)    
+    handleClickCheckbox('#userCreateGroup', 'name', async function(primary, foreign, avatar){
+        var html = await htmlCheckedUserDialog(primary, foreign, avatar)
+        
+        $('#selectedCreateGroup').append(html)    
     }, function(){
         checkBtnSubmitCreateGroup()
-        renderNumberUserCheckedCreateGroup() 
+        renderNumberSelectedCreateGroup() 
     })
 }
 
@@ -1135,11 +1164,11 @@ function handleClickCheckboxCreateGroup(){
 
 //khi nhấn vào dấu x trong user checked trong dialog cre gr
 function handleClickRemoveCreateGroup(){
-    $('#user-choose').on('click', 'div.container-close', function(){
+    $(document).on('click', '#selectedCreateGroup div.container-close', function(){
         handleRemoveAndCheck(this, 'name');
 
         checkBtnSubmitCreateGroup()
-        renderNumberUserCheckedCreateGroup()
+        renderNumberSelectedCreateGroup()
     })
 }
 
@@ -1148,21 +1177,25 @@ function submitDialogCreateGroup(){
     //khi click vào tạo
     $('#btn-create-group-chat').click(async function(){
         var listNameUserChecked = [];
-        //lấy ra tên của những thằng đã được chọn
-        // console.log('submitDialogCreateGroup', $('.dialog__choose-checked-item'))
+        var inputAvatar = $('#avatar')
+        var formData = new FormData();
+        console.log(inputAvatar.prop('files')[0])
+        
+
+        // formData.append('avatar', )
         $('.dialog__choose-checked-item').off().each(function(index, userCheckedItem){
             listNameUserChecked.push($(userCheckedItem).data('name'));
         })
-        // console.log(listNameUserChecked)
-        //rồi gọi ajax về server sử lý
-        var currentUser = await getCurrentUser(); 
+
+        formData.append("avatar", inputAvatar.prop('files')[0]);
+        formData.append('usernames', listNameUserChecked);
+        formData.append('name', $('#name-group').val())
         $.ajax({
             url: '/create-group-chat',
-            data: {
-                usernames: listNameUserChecked,
-                name: $('#name-group').val(),
-            },
+            data: formData,
             method: 'POST',
+            contentType: false,
+            processData: false,
             success: function(){
                 ///xong thì đóng cái dialog lại
                 hideDialogCreateGroup()
@@ -1173,9 +1206,10 @@ function submitDialogCreateGroup(){
 
 async function getFirstUserCheckedCreateGroup(ele){
     var container = $(ele).closest('.list-chat-user-item')
+    var containerAvatar = container.find('img.avatar').attr('src')
     var currentUser = await getCurrentUser();
 
-    $('#list-receiver-dialog')
+    $('#userCreateGroup')
         .find('.dialog__choose-item-input[data-name=' + container.data('name') + ']')
         .prop('checked', true)
 
@@ -1186,10 +1220,12 @@ async function getFirstUserCheckedCreateGroup(ele){
         {
             nickname: currentUser.nickname,
             name: currentUser.username,
+            avatar: currentUser.avatar
         }, 
         {
             nickname: container.data('nickname'),
             name: container.data('name'),
+            avatar: containerAvatar
         }
     ]
     return userChecked
@@ -1200,7 +1236,7 @@ async function getFirstUserCheckedCreateGroup(ele){
 //============================================================================================================
 
 function filterGroupByInputAddUserToGroups(receiver){
-    $('#inputFilterAddUserToGroups').on('input', function(){
+    $('#filterAddUserToGroups').on('input', function(){
         renderGroupAddUserToGroups(receiver)
     })
 }
@@ -1214,28 +1250,21 @@ function closeDialogAddUserToGroups(){
 }
     
 function handleChangeCheckboxAddUserToGroups(){
-    handleClickCheckbox('#groupAddUserToGroups', 'idroom', async function(primary, foreign){
-        var html = htmlGroupCheckedAddUserToGroups(primary, foreign);
-        $('#groupSelectedAddUserToGroups').append(html);
+    handleClickCheckbox('#groupAddUserToGroups', 'idroom', async function(primary, foreign, avatar){
+        var html = htmlGroupCheckedAddUserToGroups(primary, foreign, avatar);
+        $('#selectedAddUserToGroups').append(html);
     }, function(){
-        renderNumberGroupCheckedAddUserToGroups()
+        renderNumberSelectedAddUserToGroups()
         checkBtnSubmitAddUserToGroups()
     })
 }
 //khi nhấn vào dấu x trong user checked trong dialog add gr
 function handleClickRemoveAddUserToGroups(){
-    $('#groupSelectedAddUserToGroups').on('click', 'div.remove-group', function(){
+    $(document).on('click', '#selectedAddUserToGroups .remove-group', function(){
+        console.log("Click")
         handleRemoveAndCheck(this, 'idroom');
-        renderNumberGroupCheckedAddUserToGroups();
+        renderNumberSelectedAddUserToGroups();
         checkBtnSubmitAddUserToGroups();
-    })
-}
-
-
-
-function handleClickRemoveAddUserToGroups(){
-    $('#userSelected').on('click', 'div.container-close', function(){
-        handleRemoveAndCheck(this, 'name');
     })
 }
 
@@ -1267,7 +1296,7 @@ async function renderGroupAddUserToGroups(receiver){
     var groupReceiver = await getTotalGroupByUsername(receiver);
     var isDisable
 
-    var text = $('#inputFilterAddUserToGroups').val()
+    var text = $('#filterAddUserToGroups').val()
     if (text){
         groupCurrentUser = groupCurrentUser.filter(function(group){
             return group.name.includes(text);
@@ -1279,7 +1308,7 @@ async function renderGroupAddUserToGroups(receiver){
         isDisable = groupReceiver.some((receiverGr)=>{
             return currentGr.id === receiverGr.id
         })
-        return htmlGroupAddUserToGroups(currentGr.name, currentGr.id, isDisable)
+        return htmlGroupAddUserToGroups(currentGr.name, currentGr.id, currentGr.avatar, isDisable)
     })
 
     $('#groupAddUserToGroups').html(html)
@@ -1296,16 +1325,14 @@ async function renderGroupAddUserToGroups(receiver){
 
 //khi mà click vào checkbox trong dialog add group
 function filterUserByInputCreatePersonalChats(container, isFilter){
-    $('#inputFilterCreatePersonalChats').on('input', function(){
-        renderUserDialog(container, isFilter, '#inputFilterCreatePersonalChats')
+    $('#filterCreatePersonalChats').on('input', function(){
+        renderUserDialog(container, isFilter, '#filterCreatePersonalChats')
     })
 }
 function handleChangeCheckboxCreatePersonalChats(){
-    handleClickCheckbox('#list-user-add', 'name', async function(primary, foreign){
-        console.log({primary, foreign})
-        var html = await htmlCheckedUserDialog(primary, foreign);
-        console.log(html)
-        $('#user-add-checked').append(html);
+    handleClickCheckbox('#userCreatePersonalChat', 'name', async function(primary, foreign, avatar){
+        var html = await htmlCheckedUserDialog(primary, foreign, avatar);
+        $('#selectedCreatePersonalChat').append(html);
         return;
     }, function(){
         renderNumberCheckedUserCreatePersonalChats();
@@ -1314,15 +1341,15 @@ function handleChangeCheckboxCreatePersonalChats(){
 }
 
 function handleClickRemoveCreatePersonalChats(){
-    $('#user-add-checked').on('click', 'div.container-close', function(){
+    $('#selectedCreatePersonalChat').on('click', 'div.container-close', function(){
         handleRemoveAndCheck(this, 'name');
         checkBtnSubmitCreatePersonalChats();
         renderNumberCheckedUserCreatePersonalChats();
     })
 }
 function submitDialogCreatePersonalChats(){
-    $('#btnCreateAdduser').on('click', function(){
-        var receivers = $('#user-add-checked')
+    $('#btnCreatePersonalChat').on('click', function(){
+        var receivers = $('#selectedCreatePersonalChat')
             .find('.dialog__choose-checked-item')
             .map((idx, container)=>{
                 console.log($(container).data('name'))
@@ -1351,14 +1378,18 @@ function checkBtnSubmitCreatePersonalChats(){
 // ==================================Dialog Add Users To Group===============================
 
 function filterUserByInputAddUsersToGroup(container, isFilter){
-    $('#inputFilterAddUsersToGroup').on('input', function(){
-        renderUserDialog(container, isFilter, '#inputFilterAddUsersToGroup')
+    $('#filterAddUsersToGroup').on('input', function(){
+        renderUserDialog(container, isFilter, '#filterAddUsersToGroup')
     })
+}
+
+function renderNumberSelectedAddUsersToGroup(){
+    renderNumberSelectedUser('#selectedAddUsersToGroup', '#titleSelectedAddUsersToGroup')
 }
 
 function submitDialogAddUsersToGroup(){
     $('#btnAddUsersToGroup').on('click', function(){
-        var users = $('#userSelected')
+        var users = $('#selectedAddUsersToGroup')
             .find('.dialog__choose-checked-item')
             .map(function(){
                 return $(this).data('name')
@@ -1383,25 +1414,22 @@ function submitDialogAddUsersToGroup(){
 }
 
 async function handleClickCheckboxAddUsersToGroup(){
-    handleClickCheckbox('#listUser', 'name', async function(primary, foreign){
-        var html = await htmlCheckedUserDialog(primary, foreign)
-        $('#userSelected').append(html)
+    handleClickCheckbox('#userAddUsersToGroup', 'name', async function(primary, foreign, avatar){
+        var html = await htmlCheckedUserDialog(primary, foreign, avatar)
+        $('#selectedAddUsersToGroup').append(html)
+    }, function(){
+        renderNumberSelectedAddUsersToGroup()
     })
 }
 
-function handleDialogAddUsersToGroup(){
-    $('#list-chat-user').on('click', '.add-users-to-group', function(){
-        console.log("hihi")
-        showDialogAddUsersToGroup();
-        var isFilter = true;
-        renderUserDialog('#listUser', isFilter);
-        handleClickRemoveAddUserToGroups(); 
-        handleClickCheckboxAddUsersToGroup();
-        filterUserByInputAddUsersToGroup('#listUser', isFilter)
-        closeDialogAddUsersToGroup();
-        submitDialogAddUsersToGroup();
+
+function handleClickRemoveAddUsersToGroup(){
+    $(document).on('click', '#selectedAddUsersToGroup div.container-close', function(){
+        handleRemoveAndCheck(this, 'name');
+        renderNumberSelectedAddUsersToGroup()
     })
 }
+
 function closeDialogAddUsersToGroup(){
     var array = ['#headerIconCloseAddUsersToGroup', '#btnCloseAddUsersToGroup']
     handleCloseDialog(array, hideDialogAddUsersToGroup)
@@ -1609,7 +1637,7 @@ function submitChangeName(){
             method: 'POST',
             success: async function(){
                 var infoRoom = await getCurrentUserRoomByIdRoom(idRoom); 
-                renderThreadChat(infoRoom.id, infoRoom.name, infoRoom.is_personal)                    
+                renderThreadChat(infoRoom.id, infoRoom.name, infoRoom.is_personal, infoRoom.avatar)                    
             }
         })
     })
@@ -1698,11 +1726,11 @@ $(document).ready(()=>{
         })
     }
 
-
-
     //day la hàm chính để sử lý trong cái dialog
     function handleDialogCreateGroup(){
         
+        handleClickCheckboxCreateGroup()
+        handleClickRemoveCreateGroup()
         $('#list-chat-user').on('click', 'button.create-group-chat', async function(){
             showDialogCreateGroup()
             var container = $(this).closest('.list-chat-user-item')
@@ -1718,8 +1746,6 @@ $(document).ready(()=>{
         
 
             checkBtnSubmitCreateGroup();
-            handleClickCheckboxCreateGroup()
-            handleClickRemoveCreateGroup()//ham de su ly viec them hoac xoa 1 user vao muc create group
 
             //su ly khi chon option
             filterUserCreateGroup()
@@ -1730,32 +1756,52 @@ $(document).ready(()=>{
     }
     //hàm chính sử lý dialog add group
     async function handleDialogAddUserToGroups(){
-        
+        handleClickRemoveAddUserToGroups();
+        handleChangeCheckboxAddUserToGroups()
+
         $('#list-chat-user').on ('click', 'button.add-group-chat', async function(){
             showDialogAddUserToGroups();
             var containerTag = $(this).closest('.list-chat-user-item')
             var userAdd = containerTag.data('name')
-            $('#groupSelectedAddUserToGroups').html('')
+            $('#selectedAddUserToGroups').html('')
+
             await renderGroupAddUserToGroups(userAdd);
-            submitDialogAddUserToGroups(userAdd);
+            renderNumberSelectedAddUserToGroups()
+
             filterGroupByInputAddUserToGroups(userAdd)
-            renderNumberGroupCheckedAddUserToGroups()
+
             checkBtnSubmitAddUserToGroups()
-            handleChangeCheckboxAddUserToGroups()
-            handleClickRemoveAddUserToGroups();
+            
+            submitDialogAddUserToGroups(userAdd);
             closeDialogAddUserToGroups();
         })
     }
 
+    
    
+    function handleDialogAddUsersToGroup(){
+        handleClickRemoveAddUsersToGroup(); 
+        handleClickCheckboxAddUsersToGroup();
+        
+        $('#list-chat-user').on('click', '.add-users-to-group', function(){
+            console.log("hihi")
+            showDialogAddUsersToGroup();
+            var isFilter = true;
+            renderUserDialog('#userAddUsersToGroup', isFilter);
+            renderNumberSelectedAddUsersToGroup()
+            filterUserByInputAddUsersToGroup('#userAddUsersToGroup', isFilter)
+            closeDialogAddUsersToGroup();
+            submitDialogAddUsersToGroup();
+        })
+    }
 
     async function handleDialogCreatePersonalChats(){
         showDialogCreatePersonalChats();
         var isFilter = false;
-        renderUserDialog('#list-user-add', isFilter);
+        renderUserDialog('#userCreatePersonalChat', isFilter);
         renderNumberCheckedUserCreatePersonalChats();
         checkBtnSubmitCreatePersonalChats();
-        filterUserByInputCreatePersonalChats('#list-user-add', isFilter);
+        filterUserByInputCreatePersonalChats('#userCreatePersonalChat', isFilter);
         handleChangeCheckboxCreatePersonalChats();
         handleClickRemoveCreatePersonalChats();
         submitDialogCreatePersonalChats()
@@ -1888,7 +1934,7 @@ $(document).ready(()=>{
     socket.on('add chat list', async function(data){
         var container = $(`.list-chat-user-item[data-id=${data.idRoom}]`);  
         var firstChild = $('#list-chat-user .list-chat-user-item:first-child');
-    
+        
         if (container.length > 0){
             firstChild.before(container);
         }else{
@@ -1896,9 +1942,10 @@ $(document).ready(()=>{
             var isOnline = $.inArray(Number.parseInt(data.idRoom), roomOnline) != -1;
             var html;
             if (data.isPersonal){
-                html = htmlCheckedUser(data.receiver, data.nickname, data.id, isOnline)
+                html = htmlCheckedUser(data.receiver, data.nickname, data.idRoom, data.avatar, isOnline)
             }else{
-                html = htmlCheckedGroup(data.groupName, data.idRoom, isOnline);
+                console.log(data.groupName, data.idRoom, data.avatar, isOnline)
+                html = htmlCheckedGroup(data.groupName, data.idRoom, data.avatar, isOnline);
             }
             $('#list-chat-user').prepend(html)
             if (data.isActive){

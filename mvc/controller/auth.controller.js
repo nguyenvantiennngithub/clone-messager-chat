@@ -1,6 +1,9 @@
 const db = require('../../db/connect.db')
 const bcrypt = require('bcryptjs')
 const sqlHelper = require('../../helpers/sqlHelper')
+
+
+
 class authController{
     //[POST] /auth/checkLogin
     async checkLogin(req, res){
@@ -35,34 +38,26 @@ class authController{
     }
 
     //[POST] /auth/checkRegister
-    checkRegister(req, res){
+    async checkRegister(req, res){
         const saltRounds = 8
         const io = req.app.get('socketio');
         const {nickname, username, password, socketid} = req.body
         const hashPsw = bcrypt.hashSync(password, saltRounds);
+        const fileName = "/uploads/"+req.file.filename;
+        var isExistsUser = await sqlHelper.isExistsUser(username)
+        if (!isExistsUser){
+            sqlHelper.insertUser(username, nickname, hashPsw, socketid, fileName);
+            io.emit('new user', {username, nickname})
+            return res.redirect("/")
+        }else{ 
+            return res.render('register', {
+                nickname: nickname,
+                username: username,
+                password: password,
+                messageError: 'Username is available'
+            })
+        }
 
-        //tìm xem là user này đã tồn tại chưa
-        var sql = `select * from users where username='${req.body.username}'`
-        db.query(sql, (err, result)=>{
-            if (err) console.log(err)
-            if (result.length == 0){ // nếu chưa tồn tại thì insert vào db
-                var insert = `insert into users (nickname, username, password, socketid) values ('${nickname}', '${username}', '${hashPsw}', '${socketid}')`
-                db.query(insert, (err, result)=>{
-                    if (err) console.log(err)
-                    else{
-                        io.emit('new user', {username, nickname}) //sau khi đã insert thì sẽ báo cho clinet biết
-                        return res.redirect("/")
-                    } 
-                })
-            }else{
-                return res.render('register', {
-                    nickname: nickname,
-                    username: username,
-                    password: password,
-                    messageError: 'Username is available'
-                })
-            }
-        })
     }
     logout(req, res){
         req.session.destroy(function(err) {
