@@ -284,3 +284,8 @@
 #dialogListUser{
     width: 700px;
 }
+
+.dialog-message{
+    font-size: 14px;
+    color: red;
+}

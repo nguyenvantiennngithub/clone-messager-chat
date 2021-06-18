@@ -5,7 +5,7 @@ function api(app){
     app.get('/api/total-user', apiController.totalUser)
     app.get('/api/total-group', middlewareController.checkAuth, apiController.totalGroup)
     app.get('/api/idroom-online', middlewareController.checkAuth, apiController.idRoomOnline)
-    app.get('/api/room-nearest', middlewareController.checkAuth, apiController.getIdRoomNearest)
+    // app.get('/api/room-nearest', middlewareController.checkAuth, apiController.getIdRoomNearest)
     app.get('/api/checked-user', middlewareController.checkAuth, apiController.checkedUser)
     app.get('/api/checked-group', middlewareController.checkAuth, apiController.checkedGroup)
 

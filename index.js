@@ -11,9 +11,6 @@ const fileupload = require('express-fileupload')
 const connect = require('./db/index.db')
 const router = require('./mvc/router/index.router');
 const api = require('./api/router/api.router')
-const middleware = require('./middleware/index.middleware')
-const db = require('./db/connect.db')
-const sqlHelper = require('./helpers/sqlHelper')
 const socket = require('./public/js/socket')
 const port = process.env.PORT || 8080
 
@@ -41,7 +38,7 @@ var sess = {
     saveUninitialized: false,
     
     cookie:{
-        maxAge: 1000 * 60 * 60 * 48,
+        maxAge: 1000 * 60 * 60 * 24,
     },
 }
 app.use(session(sess));

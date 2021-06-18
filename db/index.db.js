@@ -1,14 +1,17 @@
 const db = require('./connect.db')
 
-async function connect(){
-    try{
-        await db.connect(()=>{
-            console.log('Connect successfully')
-        })
-    }
-    catch{
-        console.log('Connect failure')
-    }
+function connect(){
+    db.getConnection(function(err) {
+        if (err) {
+            throw err;
+        }
+
+        console.log("connect success")
+    });
+
 }
+  
+
+
 
 module.exports = connect

@@ -49,7 +49,7 @@ class functionClass{
             function (resolve, reject){
                 var getReceiverSql = `
                 select username, id from rooms 
-                where username='${receiver}' AND is_personal=1 AND id in (select id from rooms where username='${sender}' AND is_personal=1)`
+                where username='${receiver}' AND isPersonal=1 AND id in (select id from rooms where username='${sender}' AND isPersonal=1)`
                 db.query(getReceiverSql, (err, result)=>{
                     if (err) return reject(err);
                     // console.log("function/getIdRoom",result)
@@ -69,7 +69,7 @@ class functionClass{
                 var getRoomSql = `
                     select id
                     from rooms 
-                    where username='${username}' AND is_show=1
+                    where username='${username}' AND isShow=1
                     order by updatedAt desc
                 `
                 db.query(getRoomSql, (err, result)=>{
@@ -119,7 +119,7 @@ class functionClass{
                 var getUserInRoom = `select * from rooms where username='${username}' AND id=${idRoom}`
                 db.query(getUserInRoom, (err, result)=>{
                     if (err) return reject(err) 
-                    resolve(result[0].is_personal)
+                    resolve(result[0].isPersonal)
                 })
             }
         )
@@ -150,7 +150,7 @@ class functionClass{
                 var sql = `select user.id 
                     from rooms user, rooms roomReceiver, users receiver
                     where user.username='${currentUser.username}' AND user.id=roomReceiver.id AND 
-                        receiver.username = roomReceiver.username AND receiver.socketid in ('${joinSockets}') 
+                        receiver.username = roomReceiver.username AND receiver.socketid in ('${joinSockets}')
                     `
                 db.query(sql, (err, result)=>{
                     if (err) return rej(err);
@@ -163,7 +163,7 @@ class functionClass{
     getIsHost(username, idRoom){
         return new Promise(
             function (res, rej){
-                var sql = `select is_host as isHost from rooms
+                var sql = `select isHost as isHost from rooms
                 where username='${username}' AND id=${idRoom}`
                 db.query(sql, (err, result)=>{
                     if (err) rej(err);
@@ -173,9 +173,9 @@ class functionClass{
     }
 
     setUpdatedAt(username, idRoom){
-        //và update lại cái is_show cho nó bằng 1 là hiển thị
+        //và update lại cái isShow cho nó bằng 1 là hiển thị
         var updateUpdatedAtSql = `update rooms 
-            set is_show=1, updatedAt=CURRENT_TIMESTAMP() 
+            set isShow=1, updatedAt=CURRENT_TIMESTAMP() 
             where username='${username}' AND id=${idRoom}
         `
         db.query(updateUpdatedAtSql, (err, result) => {
@@ -185,7 +185,7 @@ class functionClass{
 
     setIsShow(username, idRoom){
         var updateUpdatedAtSql = `update rooms 
-            set is_show=0
+            set isShow=0
             where username='${username}' AND id=${idRoom}
         `
         db.query(updateUpdatedAtSql, (err, result) => {
@@ -195,24 +195,24 @@ class functionClass{
     
     setIsHost(username, idRoom, isHost){
         var sql = `update rooms
-            set is_host=${isHost}
+            set isHost=${isHost}
             where username='${username}' AND id=${idRoom}`
         db.query(sql, (err, result)=>{
             if (err) throw err;
         })
     }
 
-    insertAddChatListPersonal(username, idRoom, is_show, nicknameReceiver){
-        var insertRoomsSql = `insert into rooms (id, username, is_show, name) 
-            values (${idRoom}, '${username}', ${is_show}, '${nicknameReceiver}')`
+    insertAddChatListPersonal(username, idRoom, isShow, nicknameReceiver){
+        var insertRoomsSql = `insert into rooms (id, username, isShow, nickname) 
+            values (${idRoom}, '${username}', ${isShow}, '${nicknameReceiver}')`
         db.query(insertRoomsSql, (err, result) => {
             if (err) throw err
         })
     }
 
-    insertAddChatListGroup(username, idRoom, is_show, name, is_host, avatar){
-        var createGroupSenderSql = `insert into rooms (username, is_show, id, is_personal, name, is_host, avatar) 
-            values ('${username}', ${is_show}, ${idRoom}, 0, '${name}', ${is_host}, '${avatar}')`
+    insertAddChatListGroup(username, idRoom, isShow, name, isHost, avatar){
+        var createGroupSenderSql = `insert into rooms (username, isShow, id, isPersonal, name, isHost, avatar) 
+            values ('${username}', ${isShow}, ${idRoom}, 0, '${name}', ${isHost}, '${avatar}')`
         db.query(createGroupSenderSql, (err, result)=>{
             if (err) throw err
         })

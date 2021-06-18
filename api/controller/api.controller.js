@@ -16,7 +16,7 @@ class apiController{
     //lấy tất cả group của curentUser
     async totalGroup(req, res, next){
         const username = res.locals.username
-        var getGroupSql = `select * from rooms where username='${username}' AND is_personal=0`
+        var getGroupSql = `select * from rooms where username='${username}' AND isPersonal=0`
         db.query(getGroupSql, (err, result)=>{
             if (err) throw err
             res.json(result)
@@ -42,12 +42,12 @@ class apiController{
         
         //sql này dùng dể lấy những username có cùng rooms với currentUser và ko lấy currentUser     
         var getUserInRoomsSql = `
-            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.is_personal, receiver.name, user.avatar
+            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.isPersonal, receiver.name, user.avatar
             from rooms r, (
                 select * from rooms 
-                where id in (select id from rooms where username='${currentUser}' AND is_show=1) AND username != '${currentUser}')
+                where id in (select id from rooms where username='${currentUser}' AND isShow=1) AND username != '${currentUser}')
                 as receiver, users user
-            where r.id=receiver.id AND r.username='${currentUser}' AND user.username= receiver.username AND r.is_personal = 1
+            where r.id=receiver.id AND r.username='${currentUser}' AND user.username= receiver.username AND r.isPersonal = 1
         `
 
         db.query(getUserInRoomsSql, (err, result)=>{
@@ -61,7 +61,7 @@ class apiController{
     checkedGroup(req, res){
         const currentUser = res.locals.username;
         var getGroupSql = `
-            select name, updatedAt, id, is_personal, avatar from rooms where username='${currentUser}' AND is_show=1 AND is_personal=0 
+            select name, updatedAt, id, isPersonal, avatar from rooms where username='${currentUser}' AND isShow=1 AND isPersonal=0 
         `
         db.query(getGroupSql, (err, result)=>{
             if (err) throw err
@@ -90,7 +90,7 @@ class apiController{
 
     totalGroupByUsername(req, res, next){
         const {receiver} = req.params
-        var getRoomSql = `select id from rooms where username='${receiver}' AND is_personal=0`
+        var getRoomSql = `select id from rooms where username='${receiver}' AND isPersonal=0`
         db.query(getRoomSql, (err, result)=>{
             if (err) throw err
             res.json(result)
@@ -112,30 +112,13 @@ class apiController{
         })
     }
 
-    getIdRoomNearest(req, res){
-        const currentUser = res.locals.username
-        var getRoomSql = `
-            select id
-            from rooms 
-            where username='${currentUser}' AND is_show=1
-            order by updatedAt desc
-        `
-        db.query(getRoomSql, (err, result)=>{
-            if (err) throw(err)
-            // console.log('getIdRoomNearest', result)
-            if (result.length > 0){
-                return res.json(result[0].id);
-            }
-            res.json(0)
-        })
-    }
-
+   
     userInRoom(req, res){
         const currentUser = res.locals.username;
         const idRoom = req.params.id;
-        console.log(idRoom)
+        console.log("userInRoom", idRoom)
         var getUserInRoomsSql = `
-            select user.username, user.nickname, room.is_host, user.avatar from rooms room, users user
+            select user.username, user.nickname, room.isHost, user.avatar from rooms room, users user
             where room.username=user.username AND room.id=${idRoom}
         `
         db.query(getUserInRoomsSql, (err, result)=>{
@@ -148,13 +131,13 @@ class apiController{
         const currentUser = res.locals.username;
         const idRoom = req.params.id;
         // console.log('groupCurrentUserByIdRoom', {currentUser, idRoom})
-        var getInfoRoom = `select distinct id, name, is_personal, avatar from rooms where id=${idRoom}`
+        var getInfoRoom = `select distinct username, id, name, isPersonal, avatar, nickname from rooms where id=${idRoom} AND username!='${currentUser}'`
         db.query(getInfoRoom,async (err, result)=>{
             if (err) throw err
             console.log('groupCurrentUserByIdRoom', result);
             if (result.length != 0){
-                if (result[0].is_personal){
-                    var infoUser = await sqlHelper.getInfoUser(currentUser);
+                if (result[0].isPersonal){
+                    var infoUser = await sqlHelper.getInfoUser(result[0].username);
                     result[0].avatar = infoUser.avatar
                 }
             }
@@ -166,7 +149,7 @@ class apiController{
 
     hostUserInRoom(req, res){
         var id = req.params.id;
-        var getUserHostSql = `select username from rooms where id=${id} AND is_host=1`
+        var getUserHostSql = `select username from rooms where id=${id} AND isHost=1`
         db.query(getUserHostSql, (err, result)=>{
             if (err) throw err;
             res.json(result[0]);

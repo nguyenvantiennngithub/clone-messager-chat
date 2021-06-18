@@ -8,6 +8,7 @@ const router = express.Router()
 
 router.get('/', middleware.isLogin, homeController.home)
 router.get('/chat', middleware.checkAuth, homeController.chat)
+router.get('/chat/:idroom', middleware.checkAuth, homeController.chat)
 router.post('/change-name', middleware.checkAuth, homeController.changGroupName)
 router.post('/appoint-admin-group', middleware.checkAuth, homeController.appointGroupAdmin)
 router.post('/create-or-add-chat-list-personal', middleware.checkAuth, homeController.createOrAddChatListPersonal)
@@ -16,6 +17,5 @@ router.post('/hide-chat-list', middleware.checkAuth, homeController.hideChatList
 router.post('/kick-out-group', middleware.checkAuth, homeController.kickOutGroup)
 router.post('/create-group-chat', middleware.checkAuth, homeController.createGroupChat)
 router.post('/set-updatedAt-group-chat', middleware.checkAuth, homeController.setUpdatedGroupChat)
-router.get('/chat/:idroom', middleware.checkAuth, homeController.chat)
 
 module.exports = router

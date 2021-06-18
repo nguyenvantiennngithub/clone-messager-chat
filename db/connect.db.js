@@ -1,11 +1,11 @@
 const mysql = require('mysql');
 
 //run local
-var db = mysql.createConnection({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_DATABASE || "messagers",
+var db = mysql.createPool({
+    host: process.env.DB_HOST || "localhost",
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "",
+    database: process.env.DB_DATABASE || "messagers",
 });
 //run cpanel
 // var db = mysql.createConnection({
@@ -15,3 +15,4 @@ var db = mysql.createConnection({
 //   database: "nveysqehosting_messager"
 // });
 module.exports = db
+

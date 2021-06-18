@@ -42,11 +42,19 @@ class authController{
         const saltRounds = 8
         const io = req.app.get('socketio');
         const {nickname, username, password, socketid} = req.body
+        const avatar = req.files.avatar;
         const hashPsw = bcrypt.hashSync(password, saltRounds);
-        const fileName = "/uploads/"+req.file.filename;
+        const uploads = "./public/uploads/" + avatar.md5;
+        const avatarDB = "/uploads/" + avatar.md5;
+
         var isExistsUser = await sqlHelper.isExistsUser(username)
         if (!isExistsUser){
-            sqlHelper.insertUser(username, nickname, hashPsw, socketid, fileName);
+
+            avatar.mv(uploads, function(err){
+                if (err) throw err;
+            })
+
+            sqlHelper.insertUser(username, nickname, hashPsw, socketid, avatarDB);
             io.emit('new user', {username, nickname})
             return res.redirect("/")
         }else{ 
