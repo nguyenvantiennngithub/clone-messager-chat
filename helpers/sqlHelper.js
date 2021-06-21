@@ -39,7 +39,17 @@ class functionClass{
 
             })
         })
-        
+    }
+
+    async getMessageNearest(idRoom){
+        return new Promise((res, rej)=>{
+            var sql = `select * from messages where idRoom=${idRoom} order by updatedAt DESC`
+            db.query(sql, (err, result)=>{
+                if (err) rej(err);
+                console.log(result)
+                res(result[0])
+            })
+        })
     }
 
     //hàm kiểm tra xem 2 người này đã có room với nhau chưa
@@ -193,6 +203,13 @@ class functionClass{
         })
     }
     
+    setIsShowTimeByMessageId(id){
+        var sql = `update messages set isShowTime=0 where id=${id}`
+        db.query(sql, (err, result)=>{
+            if (err) throw err;
+        })
+    }
+
     setIsHost(username, idRoom, isHost){
         var sql = `update rooms
             set isHost=${isHost}
@@ -218,8 +235,8 @@ class functionClass{
         })
     }
 
-    insertMessage(sender, idRoom, message){
-        var insertMessageSql = `insert into messages (idroom, sender, message) values (${idRoom }, '${sender}', '${message}')`
+    insertMessage(sender, idRoom, message, isTimeLine){
+        var insertMessageSql = `insert into messages (idroom, sender, message, isTimeLine, isShowTime) values (${idRoom }, '${sender}', '${message}', '${isTimeLine}', 1)`
         db.query(insertMessageSql, (err, result)=>{
             if (err) throw err
         })

@@ -35,6 +35,12 @@ class apiController{
         })
     }
 
+    async userByUsername(req, res, next){
+        const username = req.params.username;
+        var result = await sqlHelper.getInfoUser(username)
+        res.json(result)
+    }
+
     //[GET] /api/user-chat-list
     //lấy user được add
     checkedUser(req, res, next){
@@ -75,7 +81,7 @@ class apiController{
         const idRoom = req.params.id
         const currentUser = res.locals.username
         var getMessageSql = `
-            select room.id, mess.sender, mess.updatedAt, mess.message
+            select room.id, mess.sender, mess.updatedAt, mess.message, mess.isShowTime, mess.isTimeLine
             from messages mess, rooms room 
             where mess.idroom='${idRoom}' AND room.username='${currentUser}' AND
                 mess.idroom=room.id 
@@ -83,7 +89,6 @@ class apiController{
         `
         db.query(getMessageSql, (err, result)=>{
             if (err) throw err
-            // console.log("message", result)
             res.json(result)
         })
     }
@@ -97,6 +102,28 @@ class apiController{
         })
     }
 
+    messageOldest(req, res){
+        const idRoom = req.params.idroom;
+        var sql = ` select *
+                    from messages 
+                    where idRoom='${idRoom}' 
+                    order by updatedAt asc`
+        db.query(sql, (err, result)=>{
+            if (err) throw err
+            res.json(result[0]);
+        })
+    }
+    messageNearest(req, res){
+        const idRoom = req.params.idroom;
+        var sql = ` select *
+                    from messages 
+                    where idRoom='${idRoom}' 
+                    order by updatedAt DESC`
+        db.query(sql, (err, result)=>{
+            if (err) throw err
+            res.json(result[0]);
+        })
+    }
     getLengthGroupByIdRoom(req, res, next){
         const idRoom = req.params.id;
         console.log('getLengthGroupByIdRoom', idRoom)

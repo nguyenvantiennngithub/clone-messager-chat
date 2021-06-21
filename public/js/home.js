@@ -1,6 +1,7 @@
 
 var socket = io();
 var page = 1;
+var isIncreasePage = true;
 
 //============================================================================================================
 //---------------------------------------Function store html code-------------------------------------------------
@@ -82,20 +83,61 @@ function htmlCheckedGroup(name, idRoom, avatar, isOnline){ //bên trái
     return html;
 }
 
-//render message
-async function htmlMessage(sender, message){
-    //thay đổi style để dể nhìn người nhận người gữi
-    // console.log($('#username').data('name'), sender)
-    var {username} = await getCurrentUser();
-    if (username !== sender){
-        return `
-            <li class="list-group-item list-group-item-secondary list-group-message message-item" style="margin-right: auto">${message}</li>
-        `
-    }else{
-        return `
-            <li class="list-group-item list-group-item-success list-group-message message-item" style="margin-left: auto">${message}</li>
-        `
+function calcDate(date){
+    if (typeof(date) == 'string'){
+        date = new Date(date);
     }
+    console.log(date)
+    var result = `${date.getHours()}:${formatMinute(date.getMinutes())} `;
+    var now = new Date();
+    if (now.getDay() === date.getDay() && now.getMonth() === date.getMonth() && now.getFullYear() === date.getFullYear()){
+        result += 'Today';
+    }else if (now.getDay() === date.getDay() && now.getMonth() === date.getMonth() && now.getFullYear() === date.getFullYear()){
+        result += 'Yesterday';
+    }else{
+        result += `${date.getDay()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+    }
+    return result;
+}
+
+
+function htmlTimeLine(date){
+    var time = calcDate(date);
+    console.log(time)
+    return `
+        <div class="time-line">
+            <span class="line-start"></span>
+            <span class="translate-date">${time}</span>
+            <span class="line-end"></span>
+        </div>
+    `
+}
+
+//render message
+async function htmlMessage(sender, message, date, isShowTime){
+    var currentUser = await getCurrentUser();
+    var username = await getUserByUsername(sender)
+
+    if (typeof(date) == 'string') date = new Date(date);
+    else if (!date) date = new Date();
+
+    var minutes = date.getMinutes();
+    minutes = formatMinute(minutes)
+
+    var html = '';
+
+    html += (currentUser.username !== sender) ? '<li class="message">' : '<li class="message message--reverse">';
+    html += `<div class="message__avatar">`
+    html += (isShowTime) ? `<img src="${username.avatar}" alt="" class="avatar avatar-16">` : '';
+    html += `</div>
+            <div class="message__content">
+                <span class="message__content-name ">${sender}</span>
+                <span class="message__content-message">${message}</span>`
+    html += (isShowTime) ? `<span class="message__content-time">${date.getHours()}:${minutes}</span>` : '';
+    html += ' </div></li>'
+    
+    return html
+
 }
 
 
@@ -116,8 +158,6 @@ async function htmlUserDialog(name, nickname, avatar, isChecked, isDisable){
             <label class="dialog__choose-item-label">${nickname}</label>
                 </div>`
         return html;
-
-       
     }
 }
 
@@ -327,7 +367,7 @@ function htmlDialogCreateGroup(){
             <div class="dialog__choose-checked" id="selectedCreateGroup"></div>
             <span class="dialog-title">Trò chuyện gần đây</span>
             <div class="dialog__choose-list" id="userCreateGroup">
-           
+            /api/user-by-username/
             </div>
         </div>
         <div class="col-sm-12" style="background-color:#ccc;"></div>
@@ -526,31 +566,42 @@ async function renderTotalGroup(){
     $('#list-total-user').html(html)
 }
 
+function compareDate(date1, date2){
+
+    if (typeof(date1) == 'string') date1 = new Date(date1);
+    if (typeof(date2) == 'string') date2 = new Date(date2);
+
+    if (date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth() && date1.getFullYear() === date2.getFullYear()){
+        return true;
+    }
+    return false;
+}
+
 //render ra tinh nhắn
-async function renderMessage(idRoom){
-    page = 1;
-    console.log('set page', page)
-    var messages = await getMessage(idRoom, 1)
-    // console.log("start")
-    var promises = messages.reverse().map((message)=>{
-        return htmlMessage(message.sender, message.message)
+async function renderMessage(idRoom, type){
+    console.log("render message")
+    var messages = await getMessage(idRoom, page);
+    var promises = messages.reverse().map(async (message, index)=>{
+        if (message.isTimeLine){
+            return htmlTimeLine(message.updatedAt) + await htmlMessage(message.sender, message.message, message.updatedAt, message.isShowTime);
+        }else{
+            return htmlMessage(message.sender, message.message, message.updatedAt, message.isShowTime)
+        }
     })
     var html = await Promise.all(promises)
-    $('#list-message').html(html)
+    if (type == 'inner'){
+        $('#list-message').html(html)
+    }else{
+        $('#list-message').prepend(html);
+    }
+
+    if (messages.length < 10){
+        isIncreasePage = false;
+        var date = await getMessageOldest(idRoom);
+        renderTimeLine(date.updatedAt)
+    }
     scrollChatList()
 }
-
-async function renderMessageAppend(idRoom, page){
-    var messages = await getMessage(idRoom, page)
-    // console.log("start")
-    var promises = messages.reverse().map((message)=>{
-        return htmlMessage(message.sender, message.message)
-    })
-    var html = await Promise.all(promises)
-    $('#list-message').prepend(html)
-    return;
-}
-
 
 function filterUserByInputCreateGroup(){
     $('#filterCreateGroup').on('input', function(){
@@ -702,9 +753,10 @@ async function renderMessageCantFind(){
 async function renderContainerChat(){
     var idRoom = getCurrentIdRoom();
     var infoRoom = await getUserInGroup(idRoom);
-    console.log(infoRoom) 
+    page = 1;
+    isIncreasePage = true;
     if (infoRoom){
-        renderMessage(idRoom);
+        renderMessage(idRoom, 'inner');
     }else{
         htmlMessageCantFind();
     }
@@ -729,6 +781,12 @@ async function renderUserInRoom(isHost){
     var html = await Promise.all(promises);
     
     $('#list-user').html(html);
+}
+
+function renderTimeLine(date){
+    var html = htmlTimeLine(date);
+    console.log(html)
+    $('#list-message').prepend(html);
 }
 // function renderInputChangeName(){
 //     var html = htmlInputChangeName();
@@ -780,7 +838,6 @@ async function getMessage(idRoom, page){
         var begin = (page - 1) * lengthPerPage;
         var end = (page - 1) * lengthPerPage + lengthPerPage;
         return response.data.slice(begin, end)
-
     })
 }
 
@@ -831,6 +888,13 @@ async function getUserHostInRoom(idRoom){
         })
 }
 
+async function getUserByUsername(username){
+    return await axios.get(`/api/user-by-username/${username}`)
+        .then((response)=>{
+            return response.data;
+        })
+}
+
 async function getIdRoomOnline(){
     return await axios.get(`/api/idroom-online`)
         .then((response)=>{
@@ -843,10 +907,20 @@ async function getIsHost(username, idRoom){
         .then((response)=>{
             return response.data;
         })
-
 }
 
-
+async function getMessageOldest(idRoom){
+    return await axios.get(`/api/message-oldest/${idRoom}`)
+        .then((response)=>{
+            return response.data;
+        })
+}
+async function getMessageNearest(idRoom){
+    return await axios.get(`/api/message-nearest/${idRoom}`)
+        .then((response)=>{
+            return response.data;
+        })
+}
 //============================================================================================================
 //---------------------------------------Function show hide dialog -------------------------------------------------
 //============================================================================================================
@@ -930,12 +1004,10 @@ function activeCurrentReceiver(){
     //cái thằng có data-id bằng với cái idRoom hiện tại 
     var $itemActive =  $(`.list-chat-user-item[data-id=${currentIdRoom}]`)
     $itemActive.addClass('active')
-    console.log('activeCurrentReceiver', page)
 }
 function sortByUpdatedAt(array){
-    array = array.sort((a, b)=>{ //sau đó sắp xếp theo thời gian
-        //để người nào tương tác gần thì ở trên
-        var aValue = new Date(a.updatedAt).getTime()//chuyen thoi gian sang number de so sanh
+    array = array.sort((a, b)=>{ 
+        var aValue = new Date(a.updatedAt).getTime()
         var bValue = new Date(b.updatedAt).getTime()
 
         return bValue - aValue 
@@ -1068,14 +1140,19 @@ function appendChatListRoll(){
     var scrollTop;
     var heightContainer = $('#list-message').height();
     $('#list-message').on('scroll', async function(){
+
         scrollTop = $('#list-message').scrollTop()
         console.log(scrollTop)
+
         if (scrollTop === 0){//nếu scroll đến đỉnh thì append thêm
             var idRoom = getCurrentIdRoom();
 
-            page++;
-            await renderMessageAppend(idRoom, page);
-            $('#list-message').scrollTop(-heightContainer)
+            if (isIncreasePage){
+                page++;
+                await renderMessage(idRoom, 'prepend');
+            }
+            console.log(-heightContainer)
+            $('#list-message').scrollTop(10)
             console.log("page", page)
         }
     })
@@ -1101,7 +1178,12 @@ function getCurrentIdRoom(){
     var urlString = window.location.pathname;
     return urlString.split('/')[2]
 }
-
+function formatMinute(minutes){
+    if (minutes < 10){
+        minutes = "0" + minutes
+    }
+    return minutes
+}
 
 //============================================================================================================
 //---------------------------------------Hàm hổ trợ dialog Create Group---------------------------------------
@@ -1179,14 +1261,12 @@ function submitDialogCreateGroup(){
         console.log("CKICIHAJDHAKDH")
         if (!validator.submit('#dialogCreateGroup')) return;
 
-        console.log("RUN HERE")
         var listNameUserChecked = [];
         var inputAvatar = $('#avatar')
         var formData = new FormData();
         console.log(inputAvatar.prop('files')[0])
         
 
-        // formData.append('avatar', )
         $('.dialog__choose-checked-item').off().each(function(index, userCheckedItem){
             listNameUserChecked.push($(userCheckedItem).data('name'));
         })
@@ -1194,17 +1274,17 @@ function submitDialogCreateGroup(){
         formData.append("avatar", inputAvatar.prop('files')[0]);
         formData.append('usernames', listNameUserChecked);
         formData.append('name', $('#name-group').val())
-        // $.ajax({
-        //     url: '/create-group-chat',
-        //     data: formData,
-        //     method: 'POST',
-        //     contentType: false,
-        //     processData: false,
-        //     success: function(){
-        //         ///xong thì đóng cái dialog lại
-        //         hideDialogCreateGroup()
-        //     }
-        // })
+        $.ajax({
+            url: '/create-group-chat',
+            data: formData,
+            method: 'POST',
+            contentType: false,
+            processData: false,
+            success: function(){
+                ///xong thì đóng cái dialog lại
+                hideDialogCreateGroup()
+            }
+        })
     })
 }
 
@@ -1855,6 +1935,7 @@ $(document).ready(()=>{
                     message: text
                 }
                 $('#input-send-message').val('')
+                console.log("data message", dataMessage)
                 socket.emit('sender send message', dataMessage)
 
                 //nếu là personal
@@ -1952,19 +2033,18 @@ $(document).ready(()=>{
             if (data.isPersonal){
                 html = htmlCheckedUser(data.receiver, data.nickname, data.idRoom, data.avatar, isOnline)
             }else{
-                console.log(data.groupName, data.idRoom, data.avatar, isOnline)
                 html = htmlCheckedGroup(data.groupName, data.idRoom, data.avatar, isOnline);
             }
             $('#list-chat-user').prepend(html)
             if (data.isActive){
                 window.history.pushState("", "", `/chat/${data.idRoom}`)
-                // renderMessage(id);
                 showListMessage()
+                activeCurrentReceiver()
+                $('.container-send-message').show()
                 // $('.list-chat-user-item.active').removeClass('active')
             }
-            activeCurrentReceiver()
-            $('.container-send-message').show()
         }
+        
     })
 
     //lắng nghe event ẩn 1 user cột bên trái
@@ -1977,9 +2057,19 @@ $(document).ready(()=>{
 
     //khi mà sender send message thì sẽ hiện lên trên màng hình của sender
     socket.on('server send message', async ({message, sender, idRoom})=>{
-        // console.log("socket/sendMessage",sender, $('#username').data('name'))
         if (getCurrentIdRoom() === idRoom){
-            var html = await htmlMessage(sender, message)
+            var date = new Date();
+            var messageNearest = await getMessageNearest(idRoom);
+            var isTimeLine = compareDate(date, messageNearest.updatedAt) === true ? 0 : 1
+            var isShowTime = (sender == messageNearest.sender && isTimeLine == false);
+            
+            if (isShowTime){
+                $('#list-message li').last().find('img.avatar').remove()
+
+                $('#list-message li').last().find('.message__content-time').remove()
+            }
+
+            var html = await htmlMessage(sender, message, date, true)
             $('#list-message').append(html)
             scrollChatList()
         }

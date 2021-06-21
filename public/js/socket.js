@@ -18,16 +18,25 @@ function socket(io){
             console.log("user disconnect", listRoomOnline);
             socket.broadcast.emit('user disconnect', listRoomOnline);
         })
+        //lay message gan nhat trong room roi so sanh (updatedAt, currentDateTime. sender voi currentUser)
+        //time line = updatedAt(DMY) == currentDateTime,
+        //MessageNearest sua lai showDate khi message.sender==sender && timeLine== false
         
         socket.on('sender send message', async ({sender, message, idRoom})=>{ // {sender, message, idRoom}
-            // var is_personal = await sqlHelper.getIsPersonal(sender, idRoom)
-            // console.log('index/senderSendMessage', {sender, message, idRoom})
             var usernames = await sqlHelper.getUserInRoom(idRoom)
+            var messageNearest = await sqlHelper.getMessageNearest(idRoom);
+            var date = new Date();
+            var isTimeLine = functionHelper.compareDate(date, messageNearest.updatedAt) === true ? 0 : 1
+            var isShowTime = (sender == messageNearest.sender && isTimeLine == false);
+
             usernames.forEach((user)=>{
                 sqlHelper.emit(user, 'server send message', {message, idRoom, sender}, io)
             })
-
-            sqlHelper.insertMessage(sender, idRoom, message)
+            if (isShowTime){
+                sqlHelper.setIsShowTimeByMessageId(messageNearest.id);
+            }
+            
+            sqlHelper.insertMessage(sender, idRoom, message, isTimeLine);
             
         })
     });
