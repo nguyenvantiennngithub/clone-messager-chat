@@ -3,16 +3,16 @@ const bcrypt = require('bcryptjs')
 
 class functionClass{
     //ham nay nhan vao 1 cai username 
-    async getSocketId(username){
-        return new Promise((res, rej)=>{
-            //tim trong db lay ra cai usrename do roi resolve
-            var sqlGetSocketid = `select socketid from users where username='${username}'`
-            db.query(sqlGetSocketid, (err, result)=>{
-                if (err) throw err
-                res(result[0].socketid)
-            })
-        })
-    }
+    // async getSocketId(username){
+    //     return new Promise((res, rej)=>{
+    //         //tim trong db lay ra cai usrename do roi resolve
+    //         var sqlGetSocketid = `select socketid from users where username='${username}'`
+    //         db.query(sqlGetSocketid, (err, result)=>{
+    //             if (err) throw err
+    //             res(result[0].socketid)
+    //         })
+    //     })
+    // }
     
     async getInfoGroupByUsernameIdRoom(username, idRoom){
         // console.log("function/getGroupName", {username, idRoom})
@@ -97,7 +97,7 @@ class functionClass{
     getInfoUser(username){
         return new Promise(
             function(resolve, reject){
-                var getInfoSql = `select nickname, username, socketid, avatar from users where username='${username}'`
+                var getInfoSql = `select nickname, username, avatar from users where username='${username}'`
                 return db.query(getInfoSql, (err, result)=>{
                     if (err) return reject(err)
                     return resolve(result[0])
@@ -136,12 +136,11 @@ class functionClass{
 
     }
 
-    getInfoBySocketId(socketId){
+    getInfoUserByUsername(username){
         return new Promise(
             function (resolve, reject){
-                // console.log("function/getInfoBySocketId", socketId);
-                var sql = `select username, nickname, socketid from users
-                    where socketid='${socketId}'`
+                var sql = `select nickname, username from users
+                    where username='${username}'`
                 db.query(sql, (err, result)=>{
                     if (err) return reject(err)
                     resolve(result[0]);
@@ -150,18 +149,23 @@ class functionClass{
         )
     }
 
-    getRoomOnlineBySocket(sockets, currentUser){
+    //rooms is username beacause username create room name
+    getRoomOnlineBySocket(rooms, currentUser){
         return new Promise(
             function (res, rej){
-                sockets = sockets.filter((socket)=>{
-                    return socket != currentUser.socketid;
+                rooms = rooms.filter((room)=>{
+                    return room != currentUser.username;
                 })
-                var joinSockets = sockets.join(', ');
-                var sql = `select user.id 
-                    from rooms user, rooms roomReceiver, users receiver
-                    where user.username='${currentUser.username}' AND user.id=roomReceiver.id AND 
-                        receiver.username = roomReceiver.username AND receiver.socketid in ('${joinSockets}')
-                    `
+                //format SQL
+                var joinRooms = rooms.join(', ');
+                var sql = `
+                    select * 
+                    from users receiver, rooms receiverRoom, rooms currentUserRoom
+                    where currentUserRoom.username='${currentUser.username}' AND 
+                        currentUserRoom.id=receiverRoom.id AND
+                        receiverRoom.username=receiver.username AND
+                        receiver.username in ('${joinRooms}')
+                `
                 db.query(sql, (err, result)=>{
                     if (err) return rej(err);
                     res(result);
@@ -242,28 +246,33 @@ class functionClass{
         })
     }
 
-    insertUser(username, nickname, hashPsw, socketid, avatar){
-        var sql = `insert into users (nickname, username, password, socketid, avatar) values ('${nickname}', '${username}', '${hashPsw}', '${socketid}', '${avatar}')`
+    insertUser(username, nickname, hashPsw, avatar){
+        var sql = `insert into users (nickname, username, password, avatar) values ('${nickname}', '${username}', '${hashPsw}', '${avatar}')`
         db.query(sql, (err, result)=>{
             if (err) throw err;
         })
     }
 
     async emit(username, event, data, io){
-        var sqlGetSocketid = `select socketid from users where username='${username}'`
-        db.query(sqlGetSocketid, (err, result)=>{
-            if (err) throw err
-            // console.log('function/emit', result)
-            var socketId = result[0].socketid;
-            console.log("sqlHelper/emit", data)
-            io.in(socketId).emit(event, data)
-        })
+        io.in(username).emit(event, data)
+    }
+
+    checkIsExistsUserByUsername(username){
+        return new Promise(
+            function (resolve, reject){
+                var sql = `select password from users where username='${username}'`
+                db.query(sql, (err, result)=>{
+                    if (err) return reject(err) 
+                    resolve(result);
+                })
+            }
+        )
     }
 
     checkUser(username, password){
         return new Promise(
             function (resolve, reject){
-                var sql = `select password, socketid from users where username='${username}'`
+                var sql = `select password from users where username='${username}'`
                 db.query(sql, (err, result)=>{
                     if (err) return reject(err) 
                     if (result.length == 1){

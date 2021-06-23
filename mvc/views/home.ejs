@@ -44,6 +44,12 @@
             </div>
         </div>
     </div>
+
+    <form action="/auth/facebook/login">
+        <button type="submit">Submit</button>
+    </form>
+
+
     <script src="/js/jquery.js"></script>
    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
@@ -51,6 +57,9 @@
     <script src="/js/validate.js"></script>
 
     <script>
+        var socket = io();
+        
+
         $('#form-login').on('submit', function(e){
             var isSubmit = validator.submit('#form-login');
             console.log(isSubmit)

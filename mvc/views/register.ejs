@@ -41,7 +41,7 @@
                         <span class="dialog-message"></span>
                     </div>
 
-                    <input type="text" id="socketid" name="socketid" hidden>
+                    
                     <button type="submit" class="btn btn-primary btn-block">Sign in</button>
                   </form>
             </div>
@@ -55,13 +55,7 @@
     <script src="/js/validate.js"></script>
 
     <script>
-        var socket = io();
-        $(document).ready(()=>{
-            socket.on('connect', ()=>{
-                $('#socketid').val(socket.id)
-            })
-        })
-
+        
         $('#form-register').on('submit', function(e){
             var isSubmit = validator.submit('#form-register');
             if (!isSubmit){

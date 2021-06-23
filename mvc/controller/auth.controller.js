@@ -41,7 +41,7 @@ class authController{
     async checkRegister(req, res){
         const saltRounds = 8
         const io = req.app.get('socketio');
-        const {nickname, username, password, socketid} = req.body
+        const {nickname, username, password} = req.body
         const avatar = req.files.avatar;
         const hashPsw = bcrypt.hashSync(password, saltRounds);
         const uploads = "./public/uploads/" + avatar.md5;
@@ -54,7 +54,7 @@ class authController{
                 if (err) throw err;
             })
 
-            sqlHelper.insertUser(username, nickname, hashPsw, socketid, avatarDB);
+            sqlHelper.insertUser(username, nickname, hashPsw, avatarDB);
             io.emit('new user', {username, nickname})
             return res.redirect("/")
         }else{ 

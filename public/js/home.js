@@ -82,12 +82,19 @@ function htmlCheckedGroup(name, idRoom, avatar, isOnline){ //bên trái
     `
     return html;
 }
+function formatDate(date){
+    if (typeof(date) == 'string'){
+        return new Date(date)
+    }else if (!date){
+        return new Date();
+    }else{
+        return date;
+    }
+}
+
 
 function calcDate(date){
-    if (typeof(date) == 'string'){
-        date = new Date(date);
-    }
-    console.log(date)
+    date = formatDate(date);
     var result = `${date.getHours()}:${formatMinute(date.getMinutes())} `;
     var now = new Date();
     if (now.getDay() === date.getDay() && now.getMonth() === date.getMonth() && now.getFullYear() === date.getFullYear()){
@@ -118,8 +125,7 @@ async function htmlMessage(sender, message, date, isShowTime){
     var currentUser = await getCurrentUser();
     var username = await getUserByUsername(sender)
 
-    if (typeof(date) == 'string') date = new Date(date);
-    else if (!date) date = new Date();
+    date = formatDate(date);
 
     var minutes = date.getMinutes();
     minutes = formatMinute(minutes)
@@ -131,7 +137,7 @@ async function htmlMessage(sender, message, date, isShowTime){
     html += (isShowTime) ? `<img src="${username.avatar}" alt="" class="avatar avatar-16">` : '';
     html += `</div>
             <div class="message__content">
-                <span class="message__content-name ">${sender}</span>
+                <span class="message__content-name ">${username.nickname}</span>
                 <span class="message__content-message">${message}</span>`
     html += (isShowTime) ? `<span class="message__content-time">${date.getHours()}:${minutes}</span>` : '';
     html += ' </div></li>'
@@ -567,9 +573,8 @@ async function renderTotalGroup(){
 }
 
 function compareDate(date1, date2){
-
-    if (typeof(date1) == 'string') date1 = new Date(date1);
-    if (typeof(date2) == 'string') date2 = new Date(date2);
+    date1 = formatDate(date1)
+    date2 = formatDate(date2)
 
     if (date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth() && date1.getFullYear() === date2.getFullYear()){
         return true;
@@ -595,10 +600,8 @@ async function renderMessage(idRoom, type){
         $('#list-message').prepend(html);
     }
 
-    if (messages.length < 10){
+    if (messages.length < 10 && messages.length > 0){
         isIncreasePage = false;
-        var date = await getMessageOldest(idRoom);
-        renderTimeLine(date.updatedAt)
     }
     scrollChatList()
 }
@@ -1743,7 +1746,7 @@ $(document).ready(()=>{
         getCurrentUser() //[{nickname, username, socketid}]
             .then((data)=>{
                 //emit về server để add socketid
-                socket.id = data.socketid
+                // socket.id = data.socketid
                 socket.username = data.username
                 socket.emit('join socket id new user online', data)
             })
@@ -2057,19 +2060,30 @@ $(document).ready(()=>{
 
     //khi mà sender send message thì sẽ hiện lên trên màng hình của sender
     socket.on('server send message', async ({message, sender, idRoom})=>{
+        console.log({message, sender, idRoom})
         if (getCurrentIdRoom() === idRoom){
             var date = new Date();
+            var isTimeLine = 1;//1 is true in sql
+            var isShowTime = true;
+            var html = '';
             var messageNearest = await getMessageNearest(idRoom);
-            var isTimeLine = compareDate(date, messageNearest.updatedAt) === true ? 0 : 1
-            var isShowTime = (sender == messageNearest.sender && isTimeLine == false);
+            console.log("message nearset", messageNearest)    
+
+            if (messageNearest){
+                //if two dates are equal. time line should be dont display. so it set is 0 
+                isTimeLine = compareDate(date, messageNearest.updatedAt) === true ? 0 : 1
+                isShowTime = (sender == messageNearest.sender && isTimeLine == false);
+            }
             
             if (isShowTime){
                 $('#list-message li').last().find('img.avatar').remove()
-
                 $('#list-message li').last().find('.message__content-time').remove()
             }
+            // console.log(isTimeLine, renderTimeLine())
 
-            var html = await htmlMessage(sender, message, date, true)
+
+            html += (isTimeLine) ? htmlTimeLine() : ''; 
+            html += await htmlMessage(sender, message, date, true)
             $('#list-message').append(html)
             scrollChatList()
         }

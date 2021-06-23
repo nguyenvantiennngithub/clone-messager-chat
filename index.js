@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 const express = require('express')
 const app = express()
 const http = require('http').createServer(app);
@@ -13,6 +15,10 @@ const router = require('./mvc/router/index.router');
 const api = require('./api/router/api.router')
 const socket = require('./public/js/socket')
 const port = process.env.PORT || 8080
+const passport = require('passport')
+const loginFacebook = require('./helpers/loginFacebook')
+
+
 
 app.use(express.static('./public'))
 app.set('view engine', 'ejs')
@@ -22,6 +28,8 @@ app.use(fileupload())
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(cookieParser())
+
+
 // run local
 var options = {
 	host: process.env.DB_HOST || 'localhost',
@@ -41,8 +49,14 @@ var sess = {
         maxAge: 1000 * 60 * 60 * 24,
     },
 }
-app.use(session(sess));
 
+app.use(session(sess));
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+
+loginFacebook(passport, io);
 socket(io)
 connect()
 api(app)

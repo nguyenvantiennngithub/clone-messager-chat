@@ -6,7 +6,7 @@ class apiController{
     //[GET] /api/users
     //lấy tất cả user
     async totalUser(req, res, next){
-        var sql = `select nickname, username, socketid, avatar from users`
+        var sql = `select nickname, username, avatar from users`
         db.query(sql, (err, result)=>{
             if (err) throw err
             res.json(result)
@@ -28,7 +28,7 @@ class apiController{
     async currentUser(req, res, next){
         const username = res.locals.username
         const socketid = req.session.id
-        var sql = `select nickname, username, socketid, avatar from users u, sessions s where s.session_id='${socketid}' AND u.username='${username}'`
+        var sql = `select nickname, username, avatar from users u, sessions s where s.session_id='${socketid}' AND u.username='${username}'`
         db.query(sql, (err, result)=>{
             if (err) throw err
             res.json(result)
