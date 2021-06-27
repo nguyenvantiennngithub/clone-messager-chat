@@ -6,6 +6,7 @@ const db = require('../db/connect.db')
 const sqlHelper = require('./sqlHelper')
 // var passport = require('passport')
 var FacebookStrategy = require('passport-facebook').Strategy;
+var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 
 function loginFacebook(passport, io){
     
@@ -18,14 +19,8 @@ function loginFacebook(passport, io){
     // used to deserialize the user
     passport.deserializeUser(function(user, done) {
 
-        // var sql = `select username, nickname, avatar from users where username='${id.id}'`
-        // db.query(sql, function(err,result){	
-
-            // console.log(result[0])
-            done(null, user);
-        // });
+        done(null, user);
     });
-
     
     passport.use(new FacebookStrategy({
         clientID: process.env.CLIENT_ID_FB,
@@ -49,8 +44,28 @@ function loginFacebook(passport, io){
         }
     ));
 
+    passport.use(new GoogleStrategy({
+        clientID: process.env.CLIENT_ID_GG,
+        clientSecret: process.env.CLIENT_SECRET_GG,
+        callbackURL: "http://localhost:8080/auth/google/login"
+      },
+    async function(accessToken, refreshToken, profile, done) {
+        console.log(profile)
+        var user = {
+            username: profile._json.sub,
+            nickname: profile._json.name, 
+            avatar: profile._json.picture,
+            passport: '',
+        }
+        var result = await sqlHelper.checkIsExistsUserByUsername(user.username);
+        if (result.length == 0){
+            sqlHelper.insertUser(user.username, user.nickname, '', user.avatar)
+        }
 
-    
+        return done(false, user)
+}
+
+    ));
     
 }
 

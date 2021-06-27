@@ -81,11 +81,14 @@ class apiController{
         const idRoom = req.params.id
         const currentUser = res.locals.username
         var getMessageSql = `
-            select room.id, mess.sender, mess.updatedAt, mess.message, mess.isShowTime, mess.isTimeLine
-            from messages mess, rooms room 
-            where mess.idroom='${idRoom}' AND room.username='${currentUser}' AND
-                mess.idroom=room.id 
-            order by mess.updatedAt DESC
+            select currentUserRoom.id, mess.sender, mess.updatedAt, mess.message, mess.isShowTime, mess.isTimeLine, senderRoom.nickname
+            from messages mess, rooms currentUserRoom , rooms senderRoom
+            where mess.idRoom='${idRoom}' AND 
+                currentUserRoom.username='${currentUser}' AND
+                mess.idRoom=currentUserRoom.id AND
+                senderRoom.id=currentUserRoom.id AND
+                senderRoom.username=mess.sender
+                order by mess.updatedAt DESC
         `
         db.query(getMessageSql, (err, result)=>{
             if (err) throw err
@@ -121,7 +124,7 @@ class apiController{
                     order by updatedAt DESC`
         db.query(sql, (err, result)=>{
             if (err) throw err
-            res.json(result[0]);
+            res.json(result[1]);
         })
     }
     getLengthGroupByIdRoom(req, res, next){
@@ -161,7 +164,7 @@ class apiController{
         var getInfoRoom = `select distinct username, id, name, isPersonal, avatar, nickname from rooms where id=${idRoom} AND username!='${currentUser}'`
         db.query(getInfoRoom,async (err, result)=>{
             if (err) throw err
-            console.log('groupCurrentUserByIdRoom', result);
+            // console.log('groupCurrentUserByIdRoom', result);
             if (result.length != 0){
                 if (result[0].isPersonal){
                     var infoUser = await sqlHelper.getInfoUser(result[0].username);
@@ -191,12 +194,16 @@ class apiController{
 
     }
 
-    async isHost(req, res){
+    async getUserInRoomByUsernameIdRoom(req, res){
         const {username, id} = req.params;
-        const isHost = await sqlHelper.getIsHost(username, id);
+        const isHost = await sqlHelper.getUserInRoomByUsernameIdRoom(username, id);
         res.json(isHost);
     }
-
+    async idRoomNearest(req, res){
+        const currentUser = res.locals.username;
+        const result = await sqlHelper.getIdRoomNearest(currentUser);
+        res.json(result);
+    }
 
 }
 

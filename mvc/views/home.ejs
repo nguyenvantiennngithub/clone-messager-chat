@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/css/style.css">
+    <link href="/css/all.min.css" rel="stylesheet">
+    <link href="/css/fontawesome.min.css" rel="stylesheet">
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <title>VanTiennn</title>
@@ -37,6 +39,23 @@
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">Login</button>
                     </form>
+                    <div class="container-login">
+                        <form action="/auth/facebook">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fab fa-facebook"></i>
+                                Facebook
+                            </button>
+                        </form>
+
+                        <form action="/auth/google">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fab fa-google-plus"></i>
+                                Google
+                            </button>
+                        </form>
+                    </div>
+                    
+
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="/auth/register">New around here? Sign up</a>
                     <a class="dropdown-item" href="#">Forgot password?</a>
@@ -45,10 +64,7 @@
         </div>
     </div>
 
-    <form action="/auth/facebook/login">
-        <button type="submit">Submit</button>
-    </form>
-
+    
 
     <script src="/js/jquery.js"></script>
    

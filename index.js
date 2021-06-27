@@ -16,7 +16,7 @@ const api = require('./api/router/api.router')
 const socket = require('./public/js/socket')
 const port = process.env.PORT || 8080
 const passport = require('passport')
-const loginFacebook = require('./helpers/loginFacebook')
+const login = require('./helpers/login')
 
 
 
@@ -56,7 +56,7 @@ app.use(passport.session());
 
 
 
-loginFacebook(passport, io);
+login(passport, io);
 socket(io)
 connect()
 api(app)

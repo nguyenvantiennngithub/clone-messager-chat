@@ -7,7 +7,7 @@ function socket(io){
         socket.on('join socket id new user online', async (currentUser)=>{ //socketId
             socket.join(currentUser.username)
             socket.username = currentUser.username;
-            console.log(io.sockets.adapter.rooms)
+            // console.log(io.sockets.adapter.rooms)
             var listRoomOnline = await functionHelper.filterAndGetRoomOnline(io.sockets.adapter.rooms, currentUser);
             io.emit('new user connect', listRoomOnline);
             
@@ -24,11 +24,12 @@ function socket(io){
         
         socket.on('sender send message', async ({sender, message, idRoom})=>{ // {sender, message, idRoom}
             var isShowTimeMessageNearest = false;//thoi gian duoi message cua message gan nhat trong room
+            var date = new Date();
             var isTimeLine = 1;//time line truoc block message, 1 is true in sql
-            var usernames = await sqlHelper.getUserInRoom(idRoom)
+            var usersInGroup = await sqlHelper.getUserInRoom(idRoom)
+            var messageNearest = await sqlHelper.getMessageNearest(idRoom);
             var date = new Date();
 
-            var messageNearest = await sqlHelper.getMessageNearest(idRoom);
             if (messageNearest){
                 isTimeLine = functionHelper.compareDate(date, messageNearest.updatedAt) === true ? 0 : 1
                 isShowTimeMessageNearest = (sender == messageNearest.sender && isTimeLine == false);
@@ -36,16 +37,13 @@ function socket(io){
 
             sqlHelper.insertMessage(sender, idRoom, message, isTimeLine);
             
-            usernames.forEach((user)=>{
+            usersInGroup.forEach((user)=>{
                 sqlHelper.emit(user, 'server send message', {message, idRoom, sender}, io)
             })
 
             if (isShowTimeMessageNearest){
                 sqlHelper.setIsShowTimeByMessageId(messageNearest.id);
             }
-            
-           
-            
         })
     });
 }

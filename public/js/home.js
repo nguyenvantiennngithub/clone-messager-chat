@@ -1,4 +1,3 @@
-
 var socket = io();
 var page = 1;
 var isIncreasePage = true;
@@ -121,10 +120,10 @@ function htmlTimeLine(date){
 }
 
 //render message
-async function htmlMessage(sender, message, date, isShowTime){
+async function htmlMessage(sender, nickname, message, date, isShowTime){
     var currentUser = await getCurrentUser();
     var username = await getUserByUsername(sender)
-
+    console.log(sender, nickname, message, date, isShowTime)
     date = formatDate(date);
 
     var minutes = date.getMinutes();
@@ -137,7 +136,7 @@ async function htmlMessage(sender, message, date, isShowTime){
     html += (isShowTime) ? `<img src="${username.avatar}" alt="" class="avatar avatar-16">` : '';
     html += `</div>
             <div class="message__content">
-                <span class="message__content-name ">${username.nickname}</span>
+                <span class="message__content-name ">${nickname}</span>
                 <span class="message__content-message">${message}</span>`
     html += (isShowTime) ? `<span class="message__content-time">${date.getHours()}:${minutes}</span>` : '';
     html += ' </div></li>'
@@ -373,7 +372,7 @@ function htmlDialogCreateGroup(){
             <div class="dialog__choose-checked" id="selectedCreateGroup"></div>
             <span class="dialog-title">Trò chuyện gần đây</span>
             <div class="dialog__choose-list" id="userCreateGroup">
-            /api/user-by-username/
+            
             </div>
         </div>
         <div class="col-sm-12" style="background-color:#ccc;"></div>
@@ -588,9 +587,9 @@ async function renderMessage(idRoom, type){
     var messages = await getMessage(idRoom, page);
     var promises = messages.reverse().map(async (message, index)=>{
         if (message.isTimeLine){
-            return htmlTimeLine(message.updatedAt) + await htmlMessage(message.sender, message.message, message.updatedAt, message.isShowTime);
+            return htmlTimeLine(message.updatedAt) + await htmlMessage(message.sender, message.nickname, message.message, message.updatedAt, message.isShowTime);
         }else{
-            return htmlMessage(message.sender, message.message, message.updatedAt, message.isShowTime)
+            return htmlMessage(message.sender, message.nickname, message.message, message.updatedAt, message.isShowTime)
         }
     })
     var html = await Promise.all(promises)
@@ -905,8 +904,8 @@ async function getIdRoomOnline(){
         })
 }
 
-async function getIsHost(username, idRoom){
-    return await axios.get(`/api/is-host/${username}/${idRoom}`)
+async function getUserInRoomByUsernameIdRoom(username, idRoom){
+    return await axios.get(`/api/user-in-room/${username}/${idRoom}`)
         .then((response)=>{
             return response.data;
         })
@@ -924,6 +923,14 @@ async function getMessageNearest(idRoom){
             return response.data;
         })
 }
+
+async function getIdRoomNearest(){
+    return await axios.get(`/api/idRoom-nearest`)
+        .then((response)=>{
+            return response.data;
+        })
+}
+
 //============================================================================================================
 //---------------------------------------Function show hide dialog -------------------------------------------------
 //============================================================================================================
@@ -963,7 +970,7 @@ function showDialogCreatePersonalChats(){
 }
 function hideDialogCreatePersonalChats(){
     // console.log($('#dialogAddUser'))
-    $('#dialogCreatePersonalChat').remove()
+    $('#dialogCreatePersonalChats').remove()
     $('.overlay').remove()
 }
 
@@ -1153,9 +1160,8 @@ function appendChatListRoll(){
             if (isIncreasePage){
                 page++;
                 await renderMessage(idRoom, 'prepend');
+                $('#list-message').scrollTop(10)
             }
-            console.log(-heightContainer)
-            $('#list-message').scrollTop(10)
             console.log("page", page)
         }
     })
@@ -1443,14 +1449,17 @@ function submitDialogCreatePersonalChats(){
                 return $(container).data('name')
             })
             .toArray();
-        console.log(receivers);
-
+        var data = JSON.stringify({
+            receivers: receivers,
+            isShowReceiver: false,
+        })
+        
         $.ajax({
             url: '/create-or-add-chat-list-personal',
-            data: {
-                receivers: receivers
-            },
+            data: data,
             method: 'POST',
+            contentType: 'application/json',
+            dataType: 'json',
             success: function(){
                 hideDialogCreatePersonalChats();
             } 
@@ -1486,6 +1495,7 @@ function submitDialogAddUsersToGroup(){
             usernames: users,
             idRoom: getCurrentIdRoom(),
         }
+
 
         $.ajax({
             url: '/add-user-to-groups',
@@ -1537,12 +1547,18 @@ async function addChatListInDialogListUser(){
         var idRoom = getCurrentIdRoom();
         var container = $(this).closest('.list-user-item');
         var receiver = container.data('name');
-        
-        var data = {idRoom, receiver}
+
+        var data = JSON.stringify({
+            idRoom, 
+            receiver,
+            isShowReceiver: false,
+        })
         $.ajax({
             url: '/create-or-add-chat-list-personal',
             method: 'POST',
             data: data,
+            contentType: 'application/json',
+            dataType: 'json',
             success: function(){
                 hideDialogListUser();
             }
@@ -1593,23 +1609,34 @@ function closeDialogListUser(){
     handleCloseDialog(array, hideDialogListUser);
 }
 function leaveGroupListUser(){
-    $('#list-user').on('click', '.leave-group', async function(){
+    $(document).on('click', '#list-user .leave-group', async function(){
+        var currentIdRoom = getCurrentIdRoom();
+        var eleRemove = $('#list-chat-user').find('.list-chat-user-item[data-id=' + currentIdRoom + ']')
         var idRoom = getCurrentIdRoom();
         var currentUser = await getCurrentUser()
-        var isHost = await getIsHost(currentUser.username, idRoom);
-        if (isHost){
+        var user = await getUserInRoomByUsernameIdRoom(currentUser.username, idRoom);
+        if (user.isHost){
             alertHasButton('You are the admin, you need to remove the admin before leaving the group');
         }else{
-            $.ajax({
-                url: '/kick-out-group',
-                method: 'POST',
-                data:{
-                    receiver: currentUser.username, 
-                    idRoom: idRoom
-                },
-                success: function(){
-                }
-            })
+            var isOk = await alertHasButton('Are you sure')
+            if (isOk){
+                $.ajax({
+                    url: '/kick-out-group',
+                    method: 'POST',
+                    data:{
+                        receiver: currentUser.username, 
+                        idRoom: idRoom
+                    },
+                    success: async function(){
+                        hideDialogListUser();
+                        eleRemove.remove();
+                        var idRoomNearest = await getIdRoomNearest()
+                        window.history.pushState("", "", `/chat/${idRoomNearest}`)
+                        activeCurrentReceiver();
+                    }
+                })
+            }
+            
         }
     })
 }
@@ -1759,16 +1786,17 @@ $(document).ready(()=>{
     function addChatListUser(){
         $('#list-total-user').on('click', 'button.add-chat-list',async function(){
             var container = $(this).closest('.list-group-item');
-            var data = {//username của receiver và sender 
+            var data = JSON.stringify({//username của receiver và sender 
                 receiver: container.data('name'),
-            }
-            //gọi ajax sau khi gọi ajax thì
-            //server sẽ emit lên để mà render ra html
-            //"sender add chat list" ở dưới cùng
+                isShowReceiver: false,
+            })
+            
             $.ajax({
                 url: '/create-or-add-chat-list-personal',
                 method: 'POST',
                 data: data,
+                contentType: 'application/json',
+                dataType: 'json',
                 success: function(){
                 }
             })
@@ -1784,7 +1812,7 @@ $(document).ready(()=>{
                 method: 'POST',
                 data: JSON.stringify({
                     idRoom,
-                    isShow: false
+                    isShowReceiver: false,
                 }),
                 contentType: 'application/json',
                 dataType: 'json',
@@ -1943,15 +1971,16 @@ $(document).ready(()=>{
 
                 //nếu là personal
                 if (sender){
-                    var data = {
+                    var data = JSON.stringify({
                         receiver: sender,
-                        sender: currentUser.username,
-                        
-                    }
+                        isShowReceiver: true,//add 2 phia
+                    })
                     $.ajax({
                         url: '/create-or-add-chat-list-personal',
                         method: 'POST',
                         data: data,
+                        contentType: 'application/json',
+                        dataType: 'json',
                         success: function(){
                         }
                     })
@@ -1959,7 +1988,7 @@ $(document).ready(()=>{
                 }else if (!sender){
                     var data = {
                         idRoom: idRoom,
-                        isShow: true,
+                        isShowReceiver: true,
                     }
                     $.ajax({
                         url: '/set-updatedAt-group-chat', 
@@ -2023,29 +2052,29 @@ $(document).ready(()=>{
         console.log(userOnline)
     })
 
-    socket.on('add chat list', async function(data){
-        var container = $(`.list-chat-user-item[data-id=${data.idRoom}]`);  
+    socket.on('add chat list', async function({isActive, idRoom, nickname, receiver, groupName, avatar, isPersonal}){
+        var container = $(`.list-chat-user-item[data-id=${idRoom}]`);  
         var firstChild = $('#list-chat-user .list-chat-user-item:first-child');
-        
+        console.log({isActive, idRoom, nickname, receiver, groupName, avatar, isPersonal})
         if (container.length > 0){
             firstChild.before(container);
         }else{
             var roomOnline = await getIdRoomOnline();
-            var isOnline = $.inArray(Number.parseInt(data.idRoom), roomOnline) != -1;
+            var isOnline = $.inArray(Number.parseInt(idRoom), roomOnline) != -1;
             var html;
-            if (data.isPersonal){
-                html = htmlCheckedUser(data.receiver, data.nickname, data.idRoom, data.avatar, isOnline)
+            if (isPersonal){
+                html = htmlCheckedUser(receiver, nickname, idRoom, avatar, isOnline)
             }else{
-                html = htmlCheckedGroup(data.groupName, data.idRoom, data.avatar, isOnline);
+                console.log("RUN EHRE")
+                html = htmlCheckedGroup(groupName, idRoom, avatar, isOnline);
             }
             $('#list-chat-user').prepend(html)
-            if (data.isActive){
-                window.history.pushState("", "", `/chat/${data.idRoom}`)
-                showListMessage()
-                activeCurrentReceiver()
-                $('.container-send-message').show()
-                // $('.list-chat-user-item.active').removeClass('active')
-            }
+        }
+        if (isActive){
+            window.history.pushState("", "", `/chat/${idRoom}`)
+            showListMessage()
+            activeCurrentReceiver()
+            $('.container-send-message').show()
         }
         
     })
@@ -2067,7 +2096,8 @@ $(document).ready(()=>{
             var isShowTime = true;
             var html = '';
             var messageNearest = await getMessageNearest(idRoom);
-            console.log("message nearset", messageNearest)    
+            var infoSender = await getUserInRoomByUsernameIdRoom(sender, idRoom);
+            console.log("message nearset", infoSender)    
 
             if (messageNearest){
                 //if two dates are equal. time line should be dont display. so it set is 0 
@@ -2080,10 +2110,8 @@ $(document).ready(()=>{
                 $('#list-message li').last().find('.message__content-time').remove()
             }
             // console.log(isTimeLine, renderTimeLine())
-
-
             html += (isTimeLine) ? htmlTimeLine() : ''; 
-            html += await htmlMessage(sender, message, date, true)
+            html += await htmlMessage(sender, infoSender.nickname, message, date, true)
             $('#list-message').append(html)
             scrollChatList()
         }

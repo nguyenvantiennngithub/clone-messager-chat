@@ -342,6 +342,9 @@
     font-size: 12px;
     color: #FFF;
 }
-#username{
-    font-size: 24px;
+
+.container-login{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around
 }

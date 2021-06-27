@@ -148,7 +148,17 @@ class functionClass{
             }
         )
     }
-
+    getInfoSenderInRoom(sender, idRoom){
+        return new Promise(
+            function (resolve, reject){
+                var sql = `select nickname from rooms where username='${sender}' AND id=${idRoom}`
+                db.query(sql, (err, result)=>{
+                    if (err) return reject(err)
+                    resolve(result[0]);
+                })
+            }
+        )
+    }
     //rooms is username beacause username create room name
     getRoomOnlineBySocket(rooms, currentUser){
         return new Promise(
@@ -174,22 +184,22 @@ class functionClass{
         )
     }
 
-    getIsHost(username, idRoom){
+    getUserInRoomByUsernameIdRoom(username, idRoom){
         return new Promise(
             function (res, rej){
-                var sql = `select isHost as isHost from rooms
+                var sql = `select isHost, nickname from rooms
                 where username='${username}' AND id=${idRoom}`
                 db.query(sql, (err, result)=>{
                     if (err) rej(err);
-                    res(result[0].isHost);
+                    res(result[0]);
                 })
             })
     }
 
-    setUpdatedAt(username, idRoom){
+    setUpdatedAt(username, idRoom, isShow){
         //và update lại cái isShow cho nó bằng 1 là hiển thị
         var updateUpdatedAtSql = `update rooms 
-            set isShow=1, updatedAt=CURRENT_TIMESTAMP() 
+            set isShow=${isShow}, updatedAt=CURRENT_TIMESTAMP() 
             where username='${username}' AND id=${idRoom}
         `
         db.query(updateUpdatedAtSql, (err, result) => {

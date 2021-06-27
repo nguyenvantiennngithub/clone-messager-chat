@@ -27,6 +27,12 @@ class authController{
         }
     }
 
+    checkLoginSocial(req, res){
+        req.session.username = req.user.username
+        req.session.isAuth = true;
+        res.redirect('/chat');
+    }
+
     //[GET] /auth/register
     register(req, res){
         res.render('register', {
