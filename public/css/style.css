@@ -348,3 +348,7 @@
     flex-direction: row;
     justify-content: space-around
 }
+
+.fas.fa-key{
+    color: #e0af1d;
+}

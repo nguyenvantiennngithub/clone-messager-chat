@@ -74,8 +74,7 @@ class functionClass{
     }
     getIdRoomNearest(username){
         return new Promise(
-            function (resolve, reject){
-                
+            function (resolve, reject){            
                 var getRoomSql = `
                     select id
                     from rooms 
@@ -86,6 +85,7 @@ class functionClass{
                     if (err) return reject(err)
                     // console.log('getIdRoomNearest', result)
                     if (result.length > 0){
+                        console.log(result);
                         resolve(result[0].id);
                     }
                     resolve(0)
@@ -264,7 +264,7 @@ class functionClass{
     }
 
     async emit(username, event, data, io){
-        io.in(username).emit(event, data)
+        io.in(username.toString()).emit(event, data)
     }
 
     checkIsExistsUserByUsername(username){

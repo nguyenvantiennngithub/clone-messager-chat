@@ -26,29 +26,10 @@ class homeController{
         
         if (!idRoom){
             idRoom = await sqlHelper.getIdRoomNearest(currentUser)
-           res.render("chat", {currentUser, idRoom, avatar})
+           res.redirect('/chat/' + idRoom);
            return;
         }
-        // console.log("ctrl/home", idRoom, currentUser)
-
-
-        //check xem currentUser co room nay hay khong
-        var checkRoomSql = `select * from rooms where username='${currentUser}' AND id='${idRoom}'`
-        db.query(checkRoomSql, async function(err, result){
-            if (err) throw err
-            if (result.length == 1){ // nếu có thì vào db lấy rồi render ra
-                var getMessagesSql = `select sender, message from messages where idroom='${idRoom}'`
-                db.query(getMessagesSql, (err, result)=>{
-                    if (err) throw err
-                    var messages = result
-                    res.render("chat", {messages, currentUser, idRoom, avatar})
-                    
-                })
-            }else{//cponf không thì trả về không tồn tại
-                res.render("chat", {messages: [{sender: undefined, message: 'Người dùng không tồn tại'}], currentUser, idRoom, avatar})
-            }
-        })        
-        
+        res.render("chat", {currentUser, idRoom, avatar})
     }
 
     async createOrAddChatListPersonal(req, res, next){
@@ -56,12 +37,12 @@ class homeController{
         const io = req.app.get('socketio') //lay socket
         const currentUser = res.locals.username
         //nhận data tùy vào add 1 user hoặc add nhiều user
-        var receiver = req.body.receiver || req.body['receivers[]']
+        var receiver = req.body.receiver || req.body['receivers[]'] || req.body.receivers
         if (!Array.isArray(receiver)){
             receiver = [receiver]
         }
 
-        console.log(receiver)
+        console.log(receiver, req.body, req.body.receivers);
         var infoSender = await sqlHelper.getInfoUser(currentUser);
         var infoReceiver;
 
@@ -99,12 +80,13 @@ class homeController{
 
             var dataSender = {
                 receiver: receiver, 
-                idRoom: idRoom, 
+                idRoom: idRoom,
                 nickname: infoReceiver.nickname,
                 avatar: infoReceiver.avatar,
-                isActive: true, 
+                isActive: req.body.isShowReceiver, 
                 isPersonal: true
             }
+
             sqlHelper.emit(user, 'add chat list', dataReceiver, io)
             sqlHelper.emit(currentUser, 'add chat list', dataSender, io)
         }
@@ -193,17 +175,20 @@ class homeController{
         const usernames = await sqlHelper.getUserInRoom(idRoom)
         const infoGroup = await sqlHelper.getInfoGroupByUsernameIdRoom(currentUser, idRoom);
         
+        if (!usernames.includes(currentUser)){
+            return sqlHelper.emit(currentUser, 'error cant send message', 'You are not in the room', io)
+        }
+
+
         var data = {
             groupName: infoGroup.name, 
             idRoom: idRoom, 
             avatar: infoGroup.avatar,
             isPersonal: false,
+            isActive: false,
         }
 
         usernames.forEach((user)=>{
-            
-            data.isActive = (user == currentUser) ? true : false;
-            
             sqlHelper.setUpdatedAt(user, idRoom, isShowReceiverNumber);
             if (isShowReceiver || user == currentUser){
                 sqlHelper.emit(user, 'add chat list', data, io)
