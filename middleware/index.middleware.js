@@ -5,15 +5,14 @@ class indexMiddleware{
         if (req.session.isAuth){
             res.locals.username = req.session.username
             res.locals.isAuth = req.session.isAuth
-            
             const username = req.session.username
             var getNickNameCurrentUserSql = `select nickname from users where username='${username}'`
             db.query(getNickNameCurrentUserSql, (err, result)=>{
                 if (err) throw err
                 res.locals.nickname = result[0].nickname
+                next()
             })
             // console.log("middle/idx/checkauth", req.session.username)
-            next()
         }else{
             return res.render('home', {
                 username: '',

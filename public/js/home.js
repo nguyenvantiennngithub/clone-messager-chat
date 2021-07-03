@@ -36,47 +36,115 @@ function htmlToTalGroup(name, idRoom, avatar){
     `
 }
 
+function calcDateTimeStamp(date1, date2){
+    date1 = formatDate(date1)
+    date2 = formatDate(date2)
+    var year = Math.abs(date1.getFullYear() - date2.getFullYear())
+    var month = Math.abs(date1.getMonth() - date2.getMonth())
+    var date = Math.abs(date1.getDate() - date2.getDate())
+    var hour = Math.abs(date1.getHours() - date2.getHours())
+    var minute = Math.abs(date1.getMinutes() - date2.getMinutes())
+    console.log(minute);
+    if (year == 0){
+        if (month == 0){
+            if (date == 0){
+                if (hour == 0){
+                    if (minute == 0){
+                        return '1 m'
+                    }else{//Minutes
+                        return minute + ' m'
+                    }
+                }else{
+                    return hour + ' h';
+                }
+            }else{
+                return date + ' d';
+            }
+        }else{
+            return month + ' m';
+        }
+    }else{
+        return year + ' y';
+    }
+}
+
 //code html render ra li ben trai cho user
-function htmlCheckedUser(receiver, nickname, id, avatar, isOnline){ //bên trái
-    var html = `<li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-name="${receiver}" data-id="${id}" data-nickname="${nickname}">`
+async function htmlCheckedUser({username, nickname, id, avatar}, isOnline){ //bên trái
+    var messageNearest = await getMessageAtIndex(id, 0);
+    var message = (messageNearest) ? messageNearest.message : ""
+    var date = new Date();
+    var time = calcDateTimeStamp(messageNearest.updatedAt, date)
+    var html = `<li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-name="${username}" data-id="${id}" data-nickname="${nickname}">
+        <div class="container-avatar-checked">`
     if (isOnline){
         html += `<i class="fas fa-circle circle online"></i>`;
     }else{
         html += `<i class="fas fa-circle circle"></i>`;
     }
     html += `
-    <img class="avatar avatar-32" src="${avatar}">
-         <span class="text-nickname" style="font-size: 24px">${nickname}</span>
-            <div class="dropdown ml-auto">
-                 <button class="btn btn-secondary dropdown-toggle" type="button" id="left" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
-                 <div class="dropdown-menu" aria-labelledby="left">
-                    <button class="hide-chat-list dropdown-item" type="button">Ẩn</button>
-                    <button class="create-group-chat dropdown-item" type="button">Tạo nhóm chat</button>
-                    <button class="add-group-chat dropdown-item" type="button">Thêm thành viên</button>
-                 </div>
-             </div>
-         </li>`
-    return html;
+            <img class="avatar avatar-32" src="${avatar}">
+        </div>
+        <div class="content-container">
+            <span class="text-nickname">${nickname}</span>
+            <span class="text-message">${message}</span>
+        </div>
+        <div class="dropdown ml-auto menu-container">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="left" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+            <div class="dropdown-menu" aria-labelledby="left">
+                <button class="hide-chat-list dropdown-item" type="button">Ẩn</button>
+                <button class="create-group-chat dropdown-item" type="button">Tạo nhóm chat</button>
+                <button class="add-group-chat dropdown-item" type="button">Thêm thành viên</button>
+            </div>
+            <span class="text-time">${time}</span>
 
+        </div>
+    </li>`
+    return html;
 }
+//add a field countUnread in rooms table
+//sender send message dont increase it up 1
+//and receivers will increase it up 1
+//on client if currentUser stay in that room 
+//we will dont render unRead element
+//else if has Unread element we will increase it up 1
+//else we will render unRead element default = 1
+//if currentUser click on receiver. 
+//if has unread class element will remove it and 
+//emit to server and set countUnread = 0 
+
+
 
 //render thẻ li bên trái cho group
-function htmlCheckedGroup(name, idRoom, avatar, isOnline){ //bên trái
-    var html = ` <li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-id="${idRoom}" data-nickname="${name}">`
-    if (isOnline) html += `<i class="fas fa-circle circle online"></i>`
-    else html += `<i class="fas fa-circle circle"></i>`;
+async function htmlCheckedGroup({name, id, avatar}, isOnline){ //bên trái
+    var messageNearest = await getMessageAtIndex(id, 0);
+    var message = (messageNearest) ? messageNearest.message : ""
+    var date = new Date();
+    var time = calcDateTimeStamp(messageNearest.updatedAt, date)
+    var html = 
+    `<li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-id="${id}" data-nickname="${name}">
+        <div class="container-avatar-checked">`
+    if (isOnline){
+        html += `<i class="fas fa-circle circle online"></i>`
+    }else{
+        html += `<i class="fas fa-circle circle"></i>`;
+    } 
     html+=`
             <img class="avatar avatar-32" src="${avatar}">
-            <span class="text-nickname" style="font-size: 24px">${name}</span> 
-
-            <div class="dropdown ml-auto">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="left" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
-                <div class="dropdown-menu" aria-labelledby="left">
+        </div>
+        <div class="content-container">
+            <span class="text-nickname">${name}</span> 
+            <span class="text-message">${message}</span>
+        </div>
+        <div class="dropdown ml-auto menu-container">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="left" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+            <div class="dropdown-menu" aria-labelledby="left">
                 <button class="hide-chat-list dropdown-item" type="button">Ẩn</button>
                 <button class="add-users-to-group dropdown-item" type="button">Thêm thành viên</button>
-                </div>
-             </div>
-         </li>
+            </div>
+            <span class="text-time">${time}</span>
+
+        </div>
+    </li>
     `
     return html;
 }
@@ -502,7 +570,7 @@ function htmlDialogListUser(){
 //============================================================================================================
    
 //render ra cả user và group bên trái
-async function renderCheckedUser(){
+async function renderCheckedRoom(){
     //lấy user và group đã được check
     var checkedUsers = await getCheckedUser();
     var checkedGroups = await getCheckedGroup();
@@ -510,15 +578,16 @@ async function renderCheckedUser(){
     //concat và sort theo updatedAt lại
     result = sortByUpdatedAt(result)
     // console.log(result)
-    console.log("checkedUser", checkedUsers)
     //render ra html 
-    var html = result.map((user)=>{ //{sender, receiver, updatedAt, id}
+    var promises = result.map(async (user)=>{ //{sender, receiver, updatedAt, id}
         if (user.isPersonal){//kiểm tra nếu personal thì reder theo personal
-            return htmlCheckedUser(user.username, user.nickname, user.id, user.avatar, false)
+            return htmlCheckedUser(user, false)
         }else{//còn group thì render theo group
-            return htmlCheckedGroup(user.name, user.id, user.avatar, false)
+            return htmlCheckedGroup(user, false)
         }
     })
+    var html = await Promise.all(promises);
+    console.log(html, promises)
     //sau đó thì inner vào thẻ ul
     $('#list-chat-user').html(html)      
     return;
@@ -862,7 +931,6 @@ async function getUserInRoom(idRoom){
         })
 }
 
-
 async function getUserHostInRoom(idRoom){
     return await axios.get(`/api/user-host-room/${idRoom}`)
         .then((response)=>{
@@ -884,6 +952,12 @@ async function getIdRoomOnline(){
         })
 }
 
+async function getIdRoomNearest(){
+    return await axios.get(`/api/idRoom-nearest`)
+        .then((response)=>{
+            return response.data;
+        })
+}
 async function getUserInRoomByUsernameIdRoom(username, idRoom){
     return await axios.get(`/api/user-in-room/${username}/${idRoom}`)
         .then((response)=>{
@@ -891,21 +965,8 @@ async function getUserInRoomByUsernameIdRoom(username, idRoom){
         })
 }
 
-async function getMessageOldest(idRoom){
-    return await axios.get(`/api/message-oldest/${idRoom}`)
-        .then((response)=>{
-            return response.data;
-        })
-}
-async function getMessageNearest(idRoom){
-    return await axios.get(`/api/message-nearest/${idRoom}`)
-        .then((response)=>{
-            return response.data;
-        })
-}
-
-async function getIdRoomNearest(){
-    return await axios.get(`/api/idRoom-nearest`)
+async function getMessageAtIndex(idRoom, index){
+    return await axios.get(`/api/message-at-index/${idRoom}/${index}`)
         .then((response)=>{
             return response.data;
         })
@@ -1100,15 +1161,17 @@ async function getCheckedListByOption(option){
 async function renderCheckedListByOption(option){
     var result = await getCheckedListByOption(option);
     var roomOnline = await getIdRoomOnline();
-    var html = result.map((user)=>{ //{sender, receiver, updatedAt, id}
+    var promises = result.map((user)=>{ //{sender, receiver, updatedAt, id}
         var isOnline = $.inArray(Number.parseInt(user.id), roomOnline) != -1;
 
         if (user.isPersonal){//kiểm tra nếu personal thì reder theo personal
-            return htmlCheckedUser(user.username, user.nickname, user.id, user.avatar, isOnline)
+            return htmlCheckedUser(user, isOnline)
         }else{//còn group thì render theo group
-            return htmlCheckedGroup(user.name, user.id, user.avatar, isOnline)
+            return htmlCheckedGroup(user, isOnline)
         }
     })
+    var html = await Promise.all(promises);
+    
     $('#list-chat-user').html(html)      
     activeAndRenderMessageReceiver()
 }
@@ -2017,7 +2080,7 @@ $(document).ready(()=>{
     }    
     //hàm chính để sử lý
     async function main(){
-        await renderCheckedUser() //block ben trai
+        await renderCheckedRoom() //block ben trai
         renderTotalUser() //block ben phai
         var roomNearest = await getIdRoomNearest();
         var currentIdRoom = getCurrentIdRoom();
@@ -2081,6 +2144,7 @@ $(document).ready(()=>{
     socket.on('add chat list', async function({isActive, idRoom, nickname, receiver, groupName, avatar, isPersonal}){
         var container = $(`.list-chat-user-item[data-id=${idRoom}]`);
         var firstChild = $('#list-chat-user .list-chat-user-item:first-child');
+        var data;
         console.log({isActive, idRoom, nickname, receiver, groupName, avatar, isPersonal})
         if (container.length > 0){
             firstChild.before(container);
@@ -2089,9 +2153,11 @@ $(document).ready(()=>{
             var isOnline = $.inArray(Number.parseInt(idRoom), roomOnline) != -1;
             var html;
             if (isPersonal){
-                html = htmlCheckedUser(receiver, nickname, idRoom, avatar, isOnline)
+                data = {username: receiver, nickname, idRoom, avatar}
+                html = await htmlCheckedUser(data, isOnline)
             }else{
-                html = htmlCheckedGroup(groupName, idRoom, avatar, isOnline);
+                data = {name: groupName, id: idRoom, avatar};
+                html = await htmlCheckedGroup(data, isOnline);
             }
             $('#list-chat-user').prepend(html)
         }
@@ -2113,6 +2179,7 @@ $(document).ready(()=>{
         hideListMessage()
     })
 
+
     //khi mà sender send message thì sẽ hiện lên trên màng hình của sender
     socket.on('server send message', async ({message, sender, idRoom})=>{
         console.log({message, sender, idRoom})
@@ -2121,9 +2188,9 @@ $(document).ready(()=>{
             var isTimeLine = 1;//1 is true in sql
             var isShowTime = true;
             var html = '';
-            var messageNearest = await getMessageNearest(idRoom);
+            //becausee new send message is already insert in db should be we set index at 1
+            var messageNearest = await getMessageAtIndex(idRoom, 1);
             var infoSender = await getUserInRoomByUsernameIdRoom(sender, idRoom);
-            console.log("message nearset", infoSender)    
 
             if (messageNearest){
                 //if two dates are equal. time line should be dont display. so it set is 0 
@@ -2138,8 +2205,11 @@ $(document).ready(()=>{
             // console.log(isTimeLine, renderTimeLine())
             html += (isTimeLine) ? htmlTimeLine() : ''; 
             html += await htmlMessage(sender, infoSender.nickname, message, date, true)
+            $('#list-chat-user').find(`.list-chat-user-item[data-id=${idRoom}]`).find('.text-message').text(message)
             $('#list-message').append(html)
             scrollChatList()
+        }else{
+
         }
     })
 

@@ -3,10 +3,11 @@
     height: 38px;
 }
 
-.list-group{
+#list-chat-user, #list-total-user{
     max-height: 400px;
     overflow-y: scroll;
-    overflow-x: height;
+    overflow-x: clip;
+    width: 255px;
 }
 
 #list-message, #list-message-hide{
@@ -266,13 +267,18 @@
 .text-nickname{
     display: block;
     align-items: center;
+    font-size: 18px;
 }
 
 .avatar{
-    width: 48px;
-    height: 48px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    margin-right: 8px;
+    margin-right: 4px;
+}
+
+.dropdown-toggle{
+    font-size: 8px;
 }
 
 .avatar-16{
@@ -299,6 +305,8 @@
 }
 
 .message__content{
+    max-width: 70%;
+    word-break: break-word;
     background-color: #FFF; 
     display: flex;
     flex-direction: column;
@@ -351,4 +359,33 @@
 
 .fas.fa-key{
     color: #e0af1d;
+}
+
+.text-message{
+    font-size: 12px;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.container-avatar-checked{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.content-container{
+    width: 120px;
+    min-width: 120px
+}
+.text-time{
+    font-size: 12px;
+    margin-left: auto;
+    
+}
+
+.menu-container{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between
 }

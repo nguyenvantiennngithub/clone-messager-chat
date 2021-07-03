@@ -116,15 +116,16 @@ class apiController{
             res.json(result[0]);
         })
     }
-    messageNearest(req, res){
+    getMessageAtIndex(req, res){
         const idRoom = req.params.idroom;
+        const index = req.params.index
         var sql = ` select *
                     from messages 
                     where idRoom='${idRoom}' 
                     order by updatedAt DESC`
         db.query(sql, (err, result)=>{
             if (err) throw err
-            res.json(result[1]);
+            res.json(result[index]);
         })
     }
     getLengthGroupByIdRoom(req, res, next){
@@ -204,6 +205,7 @@ class apiController{
         const result = await sqlHelper.getIdRoomNearest(currentUser);
         res.json(result);
     }
+
 
 }
 

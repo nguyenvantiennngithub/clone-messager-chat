@@ -29,7 +29,7 @@ class homeController{
            res.redirect('/chat/' + idRoom);
            return;
         }
-        res.render("chat", {currentUser, idRoom, avatar})
+        res.render("chat", {infoCurrentUser, idRoom, avatar})
     }
 
     async createOrAddChatListPersonal(req, res, next){

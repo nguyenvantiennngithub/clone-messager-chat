@@ -10,7 +10,7 @@ function api(app){
     app.get('/api/idRoom-nearest', middlewareController.checkAuth, apiController.idRoomNearest)
     
     app.get('/api/message-oldest/:idroom', middlewareController.checkAuth, apiController.messageOldest);
-    app.get('/api/message-nearest/:idroom', middlewareController.checkAuth, apiController.messageNearest);
+    app.get('/api/message-at-index/:idroom/:index', middlewareController.checkAuth, apiController.getMessageAtIndex);
         
 
     app.get('/api/user-by-username/:username', middlewareController.checkAuth, apiController.userByUsername);
