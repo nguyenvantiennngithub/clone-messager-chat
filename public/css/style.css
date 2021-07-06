@@ -93,8 +93,13 @@
     border: 1px solid #eee;
 }
 
+.container-option{
+    margin: auto;
+}
+
 .dialog__option-container{
     min-height: 28px;
+    white-space: nowrap;
     min-width: 80px;
     background-color: #eeeff2;
     margin-right: 16px;
@@ -151,7 +156,7 @@
 }
 
 .dialog__choose-checked-item{
-    max-width: 150px;
+    max-width: 172px;
     min-width: 100px;
     margin-right: 16px;
     margin-bottom: 8px;
@@ -160,9 +165,19 @@
 
 }
 
+.container-user-checked{
+    display: flex;
+    align-items: center;
+    text-align: center;
+}
+
 .dialog__choose-checked-item-name{
     display: inline-block;
-    margin-right: 24px;
+    white-space: nowrap;
+    margin-right: 8px;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .dialog__choose-list{
     overflow-y: scroll;
@@ -268,6 +283,9 @@
     display: block;
     align-items: center;
     font-size: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .avatar{
@@ -282,8 +300,8 @@
 }
 
 .avatar-16{
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     
 }
 
@@ -362,10 +380,12 @@
 }
 
 .text-message{
+    white-space: nowrap;
     font-size: 12px;
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 90px;
 }
 
 .container-avatar-checked{
@@ -380,7 +400,7 @@
 }
 .text-time{
     font-size: 12px;
-    margin-left: auto;
+    margin-left: 8px;
     
 }
 
@@ -388,4 +408,24 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between
+}
+
+.container-text{
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.text-unread{
+    display: block;
+    background-color: red;
+    width: 16px;
+    height: 16px;
+    color: white;
+    text-align: center;
+    border-radius: 50%;
+    margin: auto;
+    font-size: 12px;
 }

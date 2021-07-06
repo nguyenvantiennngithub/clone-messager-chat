@@ -8,9 +8,9 @@ var isIncreasePage = true;
 //code html render ra li ben phai cho user
 function htmlTotalUser(username, nickname, avatar){ //bên phải
     return `
-     <li class="list-group-item list-group-item-success d-flex" data-name="${username}">
+     <li class="list-group-item list-group-item-info d-flex" data-name="${username}">
         <img class="avatar avatar-32" src="${avatar}">
-         <span class="text-nickname" style="font-size: 24px">${nickname}</span>
+         <span class="text-nickname">${nickname}</span>
          <div class="dropdown ml-auto">
              <button class="btn btn-secondary dropdown-toggle" type="button" id="right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
              <div class="dropdown-menu" aria-labelledby="right">
@@ -23,9 +23,9 @@ function htmlTotalUser(username, nickname, avatar){ //bên phải
 //html render li ben phai cho group
 function htmlToTalGroup(name, idRoom, avatar){
     return `
-    <li class="list-group-item list-group-item-success d-flex" data-idRoom=${idRoom}>
+    <li class="list-group-item list-group-item-info d-flex" data-idRoom=${idRoom}>
         <img class="avatar avatar-32" src="${avatar}">
-        <span class="text-nickname" style="font-size: 24px">${name}</span>
+        <span class="text-nickname">${name}</span>
         <div class="dropdown ml-auto">
             <button class="btn btn-secondary dropdown-toggle" type="button" id="right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
             <div class="dropdown-menu" aria-labelledby="right">
@@ -44,36 +44,36 @@ function calcDateTimeStamp(date1, date2){
     var date = Math.abs(date1.getDate() - date2.getDate())
     var hour = Math.abs(date1.getHours() - date2.getHours())
     var minute = Math.abs(date1.getMinutes() - date2.getMinutes())
-    console.log(minute);
     if (year == 0){
         if (month == 0){
             if (date == 0){
                 if (hour == 0){
                     if (minute == 0){
-                        return '1 m'
+                        return '1m'
                     }else{//Minutes
-                        return minute + ' m'
+                        return minute + 'm'
                     }
                 }else{
-                    return hour + ' h';
+                    return hour + 'h';
                 }
             }else{
-                return date + ' d';
+                return date + 'd';
             }
         }else{
-            return month + ' m';
+            return month + 'm';
         }
     }else{
-        return year + ' y';
+        return year + 'y';
     }
 }
 
 //code html render ra li ben trai cho user
-async function htmlCheckedUser({username, nickname, id, avatar}, isOnline){ //bên trái
+async function htmlCheckedUser({username, nickname, id, avatar, countUnRead}, isOnline){ //bên trái
     var messageNearest = await getMessageAtIndex(id, 0);
     var message = (messageNearest) ? messageNearest.message : ""
     var date = new Date();
     var time = calcDateTimeStamp(messageNearest.updatedAt, date)
+    if (message == "") time = ""
     var html = `<li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-name="${username}" data-id="${id}" data-nickname="${nickname}">
         <div class="container-avatar-checked">`
     if (isOnline){
@@ -86,7 +86,10 @@ async function htmlCheckedUser({username, nickname, id, avatar}, isOnline){ //b�
         </div>
         <div class="content-container">
             <span class="text-nickname">${nickname}</span>
-            <span class="text-message">${message}</span>
+            <div class="container-text">
+                <span class="text-message">${message}</span>
+                <span class="text-time">${time}</span>
+            </div>
         </div>
         <div class="dropdown ml-auto menu-container">
             <button class="btn btn-secondary dropdown-toggle" type="button" id="left" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
@@ -94,32 +97,21 @@ async function htmlCheckedUser({username, nickname, id, avatar}, isOnline){ //b�
                 <button class="hide-chat-list dropdown-item" type="button">Ẩn</button>
                 <button class="create-group-chat dropdown-item" type="button">Tạo nhóm chat</button>
                 <button class="add-group-chat dropdown-item" type="button">Thêm thành viên</button>
-            </div>
-            <span class="text-time">${time}</span>
-
-        </div>
+            </div>`
+    html += (countUnRead > 0) ? `<span class="text-unread">${countUnRead}</span>` : `` 
+    html +=`</div>
     </li>`
     return html;
 }
-//add a field countUnread in rooms table
-//sender send message dont increase it up 1
-//and receivers will increase it up 1
-//on client if currentUser stay in that room 
-//we will dont render unRead element
-//else if has Unread element we will increase it up 1
-//else we will render unRead element default = 1
-//if currentUser click on receiver. 
-//if has unread class element will remove it and 
-//emit to server and set countUnread = 0 
-
-
 
 //render thẻ li bên trái cho group
-async function htmlCheckedGroup({name, id, avatar}, isOnline){ //bên trái
+async function htmlCheckedGroup({name, id, avatar, countUnRead}, isOnline){ //bên trái
     var messageNearest = await getMessageAtIndex(id, 0);
     var message = (messageNearest) ? messageNearest.message : ""
     var date = new Date();
     var time = calcDateTimeStamp(messageNearest.updatedAt, date)
+    if (message == "") time = ""
+
     var html = 
     `<li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-id="${id}" data-nickname="${name}">
         <div class="container-avatar-checked">`
@@ -133,22 +125,28 @@ async function htmlCheckedGroup({name, id, avatar}, isOnline){ //bên trái
         </div>
         <div class="content-container">
             <span class="text-nickname">${name}</span> 
-            <span class="text-message">${message}</span>
+            <div class="container-text">
+                <span class="text-message">${message}</span>
+                <span class="text-time">${time}</span>
+            </div>
         </div>
         <div class="dropdown ml-auto menu-container">
             <button class="btn btn-secondary dropdown-toggle" type="button" id="left" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
             <div class="dropdown-menu" aria-labelledby="left">
                 <button class="hide-chat-list dropdown-item" type="button">Ẩn</button>
                 <button class="add-users-to-group dropdown-item" type="button">Thêm thành viên</button>
-            </div>
-            <span class="text-time">${time}</span>
+            </div>`
 
-        </div>
-    </li>
+    html += (countUnRead > 0) ? `<span class="text-unread">${countUnRead}</span>` : `` 
+    html += `</div>
+        </li>
     `
     return html;
 }
 
+function htmlUnread(){
+    return `<span class="text-unread">1</span>`
+}
 
 function htmlTimeLine(date){
     var time = calcDate(date);
@@ -217,8 +215,10 @@ async function htmlCheckedUserDialog(name, nickname, avatar){
         return `
         <div class="dialog__choose-checked-item" data-name="${name}">
             <div class="fake-padding">
-                <img class="avatar avatar-16" src="${avatar}">
-                <span class="dialog__choose-checked-item-name">${nickname}</span>
+                <div class="container-user-checked">
+                    <img class="avatar avatar-16" src="${avatar}">
+                    <span class="dialog__choose-checked-item-name">${nickname}</span>
+                </div>
             </div>
         </div>
     `
@@ -226,10 +226,12 @@ async function htmlCheckedUserDialog(name, nickname, avatar){
     return `
         <div class="dialog__choose-checked-item" data-name="${name}">
             <div class="fake-padding">
-                <img class="avatar avatar-16" src="${avatar}">
-                <span class="dialog__choose-checked-item-name">${nickname}</span>
-                <div class="container-close">
-                    <i class="fas fa-times"></i>
+                <div class="container-user-checked">
+                    <img class="avatar avatar-16" src="${avatar}">
+                    <span class="dialog__choose-checked-item-name">${nickname}</span>
+                    <div class="container-close">
+                        <i class="fas fa-times"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -242,10 +244,12 @@ function htmlGroupCheckedAddUserToGroups(idRoom, name, avatar){
     return `
         <div class="dialog__choose-checked-item group-selected" data-idroom="${idRoom}">
             <div class="fake-padding">
-                <img class="avatar avatar-16" src="${avatar}">
-                <span class="dialog__choose-checked-item-name">${name}</span>
-                <div class="container-close remove-group">
-                    <i class="fas fa-times"></i>
+                <div class="container-user-checked">
+                    <img class="avatar avatar-16" src="${avatar}">
+                    <span class="dialog__choose-checked-item-name">${name}</span>
+                    <div class="container-close remove-group">
+                        <i class="fas fa-times"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -575,6 +579,7 @@ async function renderCheckedRoom(){
     var checkedUsers = await getCheckedUser();
     var checkedGroups = await getCheckedGroup();
     var result = checkedUsers.concat(checkedGroups);
+    var html;
     //concat và sort theo updatedAt lại
     result = sortByUpdatedAt(result)
     // console.log(result)
@@ -586,7 +591,7 @@ async function renderCheckedRoom(){
             return htmlCheckedGroup(user, false)
         }
     })
-    var html = await Promise.all(promises);
+    html = await Promise.all(promises);
     console.log(html, promises)
     //sau đó thì inner vào thẻ ul
     $('#list-chat-user').html(html)      
@@ -599,12 +604,12 @@ async function renderTotalUser(){
     // [{nickname, username, socketid}, ....]
     var totalUsers = await getTotalUser();
     var currentUser = await getCurrentUser();
-    console.log("currentUser", currentUser)
+    var html;
     totalUsers = totalUsers.filter((user)=>{
         return user.username != currentUser.username
     })
 
-    var html = totalUsers.map((user) => {
+    html = totalUsers.map((user) => {
         return htmlTotalUser(user.username, user.nickname, user.avatar)
     })
     $('#list-total-user').html(html)
@@ -634,6 +639,7 @@ function compareDate(date1, date2){
 async function renderMessage(idRoom, type){
     console.log("render message")
     var messages = await getMessage(idRoom, page);
+    var html;
     var promises = messages.reverse().map(async (message, index)=>{
         if (message.isTimeLine){
             return htmlTimeLine(message.updatedAt) + await htmlMessage(message.sender, message.nickname, message.message, message.updatedAt, message.isShowTime);
@@ -641,7 +647,7 @@ async function renderMessage(idRoom, type){
             return htmlMessage(message.sender, message.nickname, message.message, message.updatedAt, message.isShowTime)
         }
     })
-    var html = await Promise.all(promises)
+    html = await Promise.all(promises)
     if (type == 'inner'){
         $('#list-message').html(html)
     }else{
@@ -757,6 +763,12 @@ function renderNumberSelectedAddUserToGroups(){
 async function renderUserDialog(container, isFilter, input){
     var users = await getTotalUser();
     var idRoom = getCurrentIdRoom();
+    var text = $(input).val();
+
+    var isDisable;
+    var isChecked;
+    var userInRoom;
+    var html
     var checkedUsers = $('#selectedCreatePersonalChat')
         .find('.dialog__choose-checked-item')
         .map(function(){
@@ -764,7 +776,6 @@ async function renderUserDialog(container, isFilter, input){
         })
         .toArray()
     
-    var text = $(input).val();
     if (text){
         users = users.filter(function(user){
             return user.username.includes(text);
@@ -772,10 +783,10 @@ async function renderUserDialog(container, isFilter, input){
     }
 
     var promises = users.map(async (user)=>{
-        var isDisable = false;
-        var isChecked = false
+        isDisable = false;
+        isChecked = false
         if (isFilter){
-            var userInRoom = await getUserInRoom(idRoom);
+            userInRoom = await getUserInRoom(idRoom);
             userInRoom = userInRoom.map(function(user){
                 return user.username
             })
@@ -786,7 +797,7 @@ async function renderUserDialog(container, isFilter, input){
 
         return htmlUserDialog(user.username, user.nickname, user.avatar, isChecked, isDisable); 
     })
-    var html = await Promise.all(promises);
+    html = await Promise.all(promises);
     $(container).html(html);
 }
 
@@ -818,8 +829,8 @@ async function renderContainerChat(){
 async function renderUserInRoom(isCurrentUserHost){
     var idRoom = getCurrentIdRoom();
     var users = await getUserInRoom(idRoom);
-
     var text = $('#inputFilterListUser').val()
+    var html;
     if (text){
         users = users.filter(function(user){
             return user.nickname.includes(text);
@@ -829,14 +840,13 @@ async function renderUserInRoom(isCurrentUserHost){
     var promises = users.map(async (user)=>{
         return await htmlUserInRoom(user, isCurrentUserHost);
     })
-    var html = await Promise.all(promises);
+    html = await Promise.all(promises);
     
     $('#list-user').html(html);
 }
 
 function renderTimeLine(date){
     var html = htmlTimeLine(date);
-    console.log(html)
     $('#list-message').prepend(html);
 }
 // function renderInputChangeName(){
@@ -1048,13 +1058,14 @@ function hideAllDialog(){
 //============================================================================================================
 //thay đổi style màu bg cho thằng vừa tương tác 
 function activeAndRenderMessageReceiver(){
+    var itemActive;
     var currentIdRoom = getCurrentIdRoom() || $('#btn-send-message').data('idroom')
     $('.list-chat-user-item.active').removeClass('active')//xóa hết mấy thằng có class active
     window.history.pushState("", "", `/chat/${currentIdRoom}`)
     renderContainerChat()
     //cái thằng có data-id bằng với cái idRoom hiện tại 
-    var $itemActive =  $(`.list-chat-user-item[data-id=${currentIdRoom}]`)
-    $itemActive.addClass('active')
+    itemActive =  $(`.list-chat-user-item[data-id=${currentIdRoom}]`)
+    itemActive.addClass('active')
 }
 function sortByUpdatedAt(array){
     array = array.sort((a, b)=>{ 
@@ -1101,11 +1112,14 @@ function handleRemoveAndCheck(element, type){
 }
 
 async function handleClickCheckbox(container, type, success, final){
+    var avatar
+    var primary
+    var foreign
     $(document).on('change', `${container} .dialog__choose-item-input`, async function(){
-        var primary = $(this).data(type);
-        var foreign = $(this).siblings('label').text();
+        primary = $(this).data(type);
+        foreign = $(this).siblings('label').text();
         if ($(this).is(':checked')){
-            var avatar = $(this).siblings('img').attr('src')
+            avatar = $(this).siblings('img').attr('src')
             console.log("avatar", avatar)
             await success(primary, foreign, avatar)
         }else{
@@ -1128,8 +1142,9 @@ function renderNumberSelectedUser(container, ele){
 
 //tùy vào option và dialog nào mà mình render khác nhau
 function filterByOption(container, renderCallBack){
+    var option
     $(container).on('click', 'div.dialog__option-container', function(){
-        var option = $(this).data('option');
+        option = $(this).data('option');
         $(container)
                 .find('.dialog__option-container.active')
                 .removeClass('active');
@@ -1161,6 +1176,7 @@ async function getCheckedListByOption(option){
 async function renderCheckedListByOption(option){
     var result = await getCheckedListByOption(option);
     var roomOnline = await getIdRoomOnline();
+    var html;
     var promises = result.map((user)=>{ //{sender, receiver, updatedAt, id}
         var isOnline = $.inArray(Number.parseInt(user.id), roomOnline) != -1;
 
@@ -1170,7 +1186,7 @@ async function renderCheckedListByOption(option){
             return htmlCheckedGroup(user, isOnline)
         }
     })
-    var html = await Promise.all(promises);
+    html = await Promise.all(promises);
     
     $('#list-chat-user').html(html)      
     activeAndRenderMessageReceiver()
@@ -1192,20 +1208,19 @@ function checkBtnSubmit(container, lengthRequire){
 function appendChatListRoll(){
     var scrollTop;
     var heightContainer = $('#list-message').height();
+    var idRoom = getCurrentIdRoom();
     $('#list-message').on('scroll', async function(){
 
         scrollTop = $('#list-message').scrollTop()
         console.log(scrollTop)
 
         if (scrollTop === 0){//nếu scroll đến đỉnh thì append thêm
-            var idRoom = getCurrentIdRoom();
 
             if (isIncreasePage){
                 page++;
                 await renderMessage(idRoom, 'prepend');
-                $('#list-message').scrollTop(10)
+                $('#list-message').scrollTop(heightContainer+50)
             }
-            console.log("page", page)
         }
     })
 }
@@ -1335,13 +1350,16 @@ function handleClickRemoveCreateGroup(){
 function submitDialogCreateGroup(){
     //cái này là khi mà tạo bằng from 
     //khi click vào tạo
+    var listNameUserChecked
+    var inputAvatar
+    var formData
     $('#btn-create-group-chat').click(async function(){
         console.log("CKICIHAJDHAKDH")
         if (!validator.submit('#dialogCreateGroup')) return;
 
-        var listNameUserChecked = [];
-        var inputAvatar = $('#avatar')
-        var formData = new FormData();
+        listNameUserChecked = [];
+        inputAvatar = $('#avatar')
+        formData = new FormData();
         console.log(inputAvatar.prop('files')[0])
         
 
@@ -1378,7 +1396,7 @@ async function getFirstUserCheckedCreateGroup(ele){
     //hiện dialog create group và cho thêm cái overlay bên ngoại hiện lên
     //Sau đó sẽ có 2 thằng đầu tiên được auto chọn là
     //thằng currentUser và thằng được click theo thứ tự ở dưới
-    var userChecked = [
+    return [
         {
             nickname: currentUser.nickname,
             name: currentUser.username,
@@ -1390,7 +1408,6 @@ async function getFirstUserCheckedCreateGroup(ele){
             avatar: containerAvatar
         }
     ]
-    return userChecked
 }
 
 //============================================================================================================
@@ -1457,7 +1474,7 @@ async function renderGroupAddUserToGroups(receiver){
     var groupCurrentUser = await getCheckedGroup();
     var groupReceiver = await getTotalGroupByUsername(receiver);
     var isDisable
-
+    var html 
     var text = $('#filterAddUserToGroups').val()
     if (text){
         groupCurrentUser = groupCurrentUser.filter(function(group){
@@ -1465,7 +1482,7 @@ async function renderGroupAddUserToGroups(receiver){
         })
     }
 
-    var html = groupCurrentUser.map((currentGr)=>{
+    html = groupCurrentUser.map((currentGr)=>{
         //disabled checkbox cua group mà thằng cbi đc add đã có trong group đó r
         isDisable = groupReceiver.some((receiverGr)=>{
             return currentGr.id === receiverGr.id
@@ -1518,7 +1535,6 @@ function submitDialogCreatePersonalChats(){
                 return $(container).data('name')
             })
             .toArray();
-        console.log('receivers', receivers);
         var data = JSON.stringify({
             receivers: receivers,
             isShowReceiver: false,
@@ -1644,7 +1660,6 @@ async function addChatListInDialogListUser(){
 async function kickUserDialogListUser(){
     $('#list-user').on('click', '.kick-dialog-list-user',async function(){
         var isDelete =  await alertHasButton('are you sure???');
-        console.log(isDelete)
         if (!isDelete){
             return;
         }
@@ -1743,7 +1758,21 @@ function appointAdminListUser(){
 
 //hàm làm đẹp sử lý khi hover vào item của list receiver thì đổi màu tí
 //và đổi con chuột sang poiter và đổi màu thằng đang chọn cho nó khác biệt
-function handleHoverListReceiver(){
+function handleEventMouseTotalList(){
+    $('#list-total-user').on('mouseover', '.list-group-item', function(){
+        $(this).removeClass('list-group-item-info')
+            .addClass('list-group-item-primary')
+            .css('cursor', 'pointer') //thay doi con chuot
+    })
+    
+    $('#list-total-user').on('mouseout', '.list-group-item', function(){
+        $(this).removeClass('list-group-item-primary')
+            .addClass('list-group-item-info')
+    })
+
+}
+
+function handleEventMouseListReceiver(){
     $('#list-chat-user').on('mouseover', '.list-chat-user-item', function(){
         $(this).removeClass('list-group-item-info')
             .addClass('list-group-item-primary')
@@ -1755,12 +1784,22 @@ function handleHoverListReceiver(){
             .addClass('list-group-item-info')
     })
 
-    $('#list-chat-user').on('click', '.list-chat-user-item', function(){
+    $('#list-chat-user').on('click', '.list-chat-user-item',async function(){
+        var currentUser = await getCurrentUser()
+        var unreadEle = $(this).find('.text-unread')
+        var idRoom = $(this).data('id');
+
         //them active cho chinh thang do khi click vo no
         $('.list-chat-user-item.active').removeClass('active')
         $(this).addClass('active')
         $('.container-send-message').show()
-        // console.log("SHOW")
+
+        //remove notification
+        if (unreadEle.length == 1){
+            unreadEle.remove();
+            socket.emit('set unread field', {idRoom, sender: currentUser.username, inIncrase: false})
+        }
+
     })
 }
 function filterCheckedList(){
@@ -1772,8 +1811,6 @@ function filterCheckedList(){
 async function handleClickReceiver(){
     $('#list-chat-user').on('click', 'li', function(){
         var idRoom = $(this).data('id')
-        var name = $(this).data('nickname')
-        var isPersonal = $(this).data('name') ? true : false
 
         //thay đổi url cho giống với thực tế để copy sẽ ra đúng trang đó
         window.history.pushState("", "", `/chat/${idRoom}`)
@@ -1922,13 +1959,14 @@ $(document).ready(()=>{
 
     //day la hàm chính để sử lý trong cái dialog
     function handleDialogCreateGroup(){
-        
+        var container
+        var userChecked
         handleClickCheckboxCreateGroup()
         handleClickRemoveCreateGroup()
         $('#list-chat-user').on('click', 'button.create-group-chat', async function(){
             showDialogCreateGroup()
-            var container = $(this).closest('.list-chat-user-item')
-            var userChecked = await getFirstUserCheckedCreateGroup(this)
+            container = $(this).closest('.list-chat-user-item')
+            userChecked = await getFirstUserCheckedCreateGroup(this)
             renderUserChecked(userChecked);
 
             await renderUserByOptionCreateGroup("in_list");
@@ -1950,13 +1988,16 @@ $(document).ready(()=>{
     }
     //hàm chính sử lý dialog add group
     async function handleDialogAddUserToGroups(){
+        var containerTag
+        var userAdd
+
         handleClickRemoveAddUserToGroups();
         handleChangeCheckboxAddUserToGroups()
 
         $('#list-chat-user').on ('click', 'button.add-group-chat', async function(){
             showDialogAddUserToGroups();
-            var containerTag = $(this).closest('.list-chat-user-item')
-            var userAdd = containerTag.data('name')
+            containerTag = $(this).closest('.list-chat-user-item')
+            userAdd = containerTag.data('name')
             $('#selectedAddUserToGroups').html('')
 
             await renderGroupAddUserToGroups(userAdd);
@@ -1974,13 +2015,14 @@ $(document).ready(()=>{
     
    
     function handleDialogAddUsersToGroup(){
+        var isFilter = true;
+
         handleClickRemoveAddUsersToGroup(); 
         handleClickCheckboxAddUsersToGroup();
         
         $('#list-chat-user').on('click', '.add-users-to-group', function(){
             console.log("hihi")
             showDialogAddUsersToGroup();
-            var isFilter = true;
             renderUserDialog('#userAddUsersToGroup', isFilter);
             renderNumberSelectedAddUsersToGroup()
             filterUserByInputAddUsersToGroup('#userAddUsersToGroup', isFilter)
@@ -1990,8 +2032,9 @@ $(document).ready(()=>{
     }
 
     async function handleDialogCreatePersonalChats(){
-        showDialogCreatePersonalChats();
         var isFilter = false;
+
+        showDialogCreatePersonalChats();
         renderUserDialog('#userCreatePersonalChat', isFilter);
         renderNumberCheckedUserCreatePersonalChats();
         checkBtnSubmitCreatePersonalChats();
@@ -2002,14 +2045,17 @@ $(document).ready(()=>{
     }
 
     async function handleDialogListUser(){
-        
+        var idRoom
+        var userHost
+        var currentUser
+        var isHost
         
         $(document).on('click', '#icon-setting', async function(){
             showDialogListUser();
-            var idRoom = getCurrentIdRoom();
-            var userHost = await getUserHostInRoom(idRoom);
-            var currentUser = await getCurrentUser();
-            var isHost = userHost.username === currentUser.username;
+            idRoom = getCurrentIdRoom();
+            userHost = await getUserHostInRoom(idRoom);
+            currentUser = await getCurrentUser();
+            isHost = userHost.username === currentUser.username;
 
             renderNumberUserDialogListUser();
             renderUserInRoom(isHost);
@@ -2021,74 +2067,81 @@ $(document).ready(()=>{
             leaveGroupListUser();
         })
     }
-    //functuon sử lý khi chat
-    async function sendMessage(){
-        $('#btn-send-message').on('click', async function(){
-            var sender
-            var text = $('#input-send-message').val();
-            var idRoom = getCurrentIdRoom();
-            var currentUser = await getCurrentUser();
-            //lấy ra username của người nhận message
-            //lấy thằng có class đó và có data-id == idRoom hiện tại rồi lấy ra name của nó
-            sender = $(`.list-chat-user-item[data-id=${idRoom}]`).data('name')
-        
-            // console.log(sender)
-            if (text){
-                //emit tới server data của message
-                var dataMessage = {
-                    sender: currentUser.username,
-                    idRoom: idRoom,
-                    message: text
-                }
-                $('#input-send-message').val('')
-                console.log("data message", dataMessage)
-                socket.emit('sender send message', dataMessage)
 
-                //nếu là personal
-                if (sender){
-                    var data = JSON.stringify({
-                        receiver: sender,
-                        isShowReceiver: false,//add 2 phia
-                    })
-                    $.ajax({
-                        url: '/create-or-add-chat-list-personal',
-                        method: 'POST',
-                        data: data,
-                        contentType: 'application/json',
-                        dataType: 'json',
-                        success: function(){
-                        }
-                    })
-                    //cái này là group
-                }else if (!sender){
-                    var data = {
-                        idRoom: idRoom,
-                        isShowReceiver: true,
-                    }
-                    $.ajax({
-                        url: '/set-updatedAt-group-chat', 
-                        method: 'POST',
-                        data: JSON.stringify(data),
-                        contentType: 'application/json',
-                        dataType: 'json',
-                        success: function(){
-                        }
-                    })
-                }
+    async function eventSendMessage(){
+        $('#btn-send-message').on('click', function(){
+            sendMessage()
+        })
+
+        $('#input-send-message').on('keypress', function(e){
+            if (e.which == 13){
+                sendMessage();
             }
         })
-    }    
-    //hàm chính để sử lý
-    async function main(){
-        await renderCheckedRoom() //block ben trai
-        renderTotalUser() //block ben phai
+
+    }
+    //functuon sử lý khi chat
+    async function sendMessage(){
+        console.log("hihi")
+        var text = $('#input-send-message').val();
+        var idRoom = getCurrentIdRoom();
+        var currentUser = await getCurrentUser();
+        var sender = $(`.list-chat-user-item[data-id=${idRoom}]`).data('name')
+    
+        // console.log(sender)
+        if (text){
+            //emit tới server data của message
+            var dataMessage = {
+                sender: currentUser.username,
+                idRoom: idRoom,
+                message: text
+            }
+            $('#input-send-message').val('')
+            socket.emit('sender send message', dataMessage)
+
+            //nếu là personal
+            if (sender){
+                var data = JSON.stringify({
+                    receiver: sender,
+                    isShowReceiver: false,//add 2 phia
+                })
+                $.ajax({
+                    url: '/create-or-add-chat-list-personal',
+                    method: 'POST',
+                    data: data,
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(){
+                    }
+                })
+                //cái này là group
+            }else if (!sender){
+                var data = {
+                    idRoom: idRoom,
+                    isShowReceiver: true,
+                }
+                $.ajax({
+                    url: '/set-updatedAt-group-chat', 
+                    method: 'POST',
+                    data: JSON.stringify(data),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(){
+                    }
+                })
+            }
+        }    
+    }
+
+    async function checkRoomAndUser(){
+
         var roomNearest = await getIdRoomNearest();
         var currentIdRoom = getCurrentIdRoom();
         var currentUser = await getCurrentUser();
-        console.log(currentIdRoom);
         var usersInRoom = await getUserInRoom(currentIdRoom);
 
-        console.log('room Nearest', roomNearest);   
+        var container = $('#list-chat-user').find(`.list-chat-user-item[data-id=${currentIdRoom}]`);
+        var notificationEle = container.find('.text-unread');
         if (Number.parseInt(roomNearest) <= 0){
             handleDialogCreatePersonalChats();
         }
@@ -2096,26 +2149,36 @@ $(document).ready(()=>{
             return user.username == currentUser.username;
         })
         if (!isUserInRoom){
-            console.log('run here')
             renderMessageCantFind();
         }else{
             activeAndRenderMessageReceiver() //doi mau nguoi dang chat
             showListMessage()
         }
-        
+        if (notificationEle.length == 1){
+            socket.emit('set unread field', {receiver: currentUser.username, idRoom: currentIdRoom, inIncrase: false});
+            notificationEle.remove();
+        }
+    }
+    //hàm chính để sử lý
+    async function main(){
+        await renderCheckedRoom() //block ben trai
+        renderTotalUser() //block ben phai
+        checkRoomAndUser();
         scrollChatList() //scroll thanh chat xuong
         emitNewUserOnline()
         closeDialogByOverlay();
-        sendMessage() //sy ly khi gui tinh nhan
+        eventSendMessage() //sy ly khi gui tinh nhan
         hideChatList() //su ly khi nhan vao Ẩn
         addChatListGroup()
         handleDialogCreateGroup() //su ly khi nhan vao
         handleDialogAddUserToGroups()
         handleDialogListUser()
         handleDialogAddUsersToGroup()
-
         handleClickReceiver() //
-        handleHoverListReceiver()
+
+        handleEventMouseTotalList()
+        handleEventMouseListReceiver()
+
         addChatListUser() //su ly khi nhan vao them
         filterListTotalUser()
         filterCheckedList()
@@ -2144,16 +2207,21 @@ $(document).ready(()=>{
     socket.on('add chat list', async function({isActive, idRoom, nickname, receiver, groupName, avatar, isPersonal}){
         var container = $(`.list-chat-user-item[data-id=${idRoom}]`);
         var firstChild = $('#list-chat-user .list-chat-user-item:first-child');
+        var option = $('#filter-checked-list').find('.dialog__option-container.active').data('option')
         var data;
+        var roomOnline
+        var isOnline
+        var html
         console.log({isActive, idRoom, nickname, receiver, groupName, avatar, isPersonal})
+        
         if (container.length > 0){
             firstChild.before(container);
-        }else{
-            var roomOnline = await getIdRoomOnline();
-            var isOnline = $.inArray(Number.parseInt(idRoom), roomOnline) != -1;
-            var html;
+        }else if (option == 'all' || option == 'personal' && isPersonal == 1 || option == 'group' && isPersonal == 0){
+            roomOnline = await getIdRoomOnline();
+            isOnline = $.inArray(Number.parseInt(idRoom), roomOnline) != -1;
+            html;
             if (isPersonal){
-                data = {username: receiver, nickname, idRoom, avatar}
+                data = {username: receiver, nickname, id: idRoom, avatar}
                 html = await htmlCheckedUser(data, isOnline)
             }else{
                 data = {name: groupName, id: idRoom, avatar};
@@ -2162,7 +2230,6 @@ $(document).ready(()=>{
             $('#list-chat-user').prepend(html)
         }
         if (isActive){
-            console.log("RUN EHRE")
             window.history.pushState("", "", `/chat/${idRoom}`)
             showListMessage()
             activeAndRenderMessageReceiver()
@@ -2183,14 +2250,28 @@ $(document).ready(()=>{
     //khi mà sender send message thì sẽ hiện lên trên màng hình của sender
     socket.on('server send message', async ({message, sender, idRoom})=>{
         console.log({message, sender, idRoom})
-        if (getCurrentIdRoom() === idRoom){
-            var date = new Date();
-            var isTimeLine = 1;//1 is true in sql
-            var isShowTime = true;
-            var html = '';
+        var html = ''
+        var isCurrentUserAtRoom = getCurrentIdRoom() === idRoom
+        var currentUser = await getCurrentUser()
+        var date
+        var isTimeLine
+        var isShowTime
+        var messageNearest
+        var infoSender
+
+
+        var containerEle = $('#list-chat-user').find(`.list-chat-user-item[data-id=${idRoom}]`)
+        var unreadEle = containerEle.find('.text-unread')
+        var menuEle = containerEle.find('.menu-container');
+        var value = parseInt(unreadEle.text()) + 1 || 1;
+
+        if (isCurrentUserAtRoom){
+            date = new Date();
+            isTimeLine = 1;//1 is true in sql
+            isShowTime = true;
             //becausee new send message is already insert in db should be we set index at 1
-            var messageNearest = await getMessageAtIndex(idRoom, 1);
-            var infoSender = await getUserInRoomByUsernameIdRoom(sender, idRoom);
+            messageNearest = await getMessageAtIndex(idRoom, 1);
+            infoSender = await getUserInRoomByUsernameIdRoom(sender, idRoom);
 
             if (messageNearest){
                 //if two dates are equal. time line should be dont display. so it set is 0 
@@ -2208,8 +2289,15 @@ $(document).ready(()=>{
             $('#list-chat-user').find(`.list-chat-user-item[data-id=${idRoom}]`).find('.text-message').text(message)
             $('#list-message').append(html)
             scrollChatList()
+            socket.emit('set unread field', {value: 0, idRoom, receiver: currentUser.username})
         }else{
-
+           
+            if (unreadEle.length == 0){
+                html = htmlUnread()
+                menuEle.append(html);
+            }else{
+                unreadEle.text(value);
+            }
         }
     })
 

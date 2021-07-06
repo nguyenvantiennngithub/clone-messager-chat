@@ -46,7 +46,7 @@ class functionClass{
             var sql = `select * from messages where idRoom=${idRoom} order by updatedAt DESC`
             db.query(sql, (err, result)=>{
                 if (err) rej(err);
-                console.log(result)
+                // console.log(result)
                 res(result[0])
             })
         })
@@ -151,7 +151,7 @@ class functionClass{
     getInfoSenderInRoom(sender, idRoom){
         return new Promise(
             function (resolve, reject){
-                var sql = `select nickname from rooms where username='${sender}' AND id=${idRoom}`
+                var sql = `select nickname, countUnRead from rooms where username='${sender}' AND id=${idRoom}`
                 db.query(sql, (err, result)=>{
                     if (err) return reject(err)
                     resolve(result[0]);
@@ -187,7 +187,7 @@ class functionClass{
     getUserInRoomByUsernameIdRoom(username, idRoom){
         return new Promise(
             function (res, rej){
-                var sql = `select isHost, nickname from rooms
+                var sql = `select isHost, nickname, countUnRead from rooms
                 where username='${username}' AND id=${idRoom}`
                 db.query(sql, (err, result)=>{
                     if (err) rej(err);
@@ -195,6 +195,8 @@ class functionClass{
                 })
             })
     }
+
+    
 
     setUpdatedAt(username, idRoom, isShow){
         //và update lại cái isShow cho nó bằng 1 là hiển thị
@@ -228,6 +230,26 @@ class functionClass{
         var sql = `update rooms
             set isHost=${isHost}
             where username='${username}' AND id=${idRoom}`
+        db.query(sql, (err, result)=>{
+            if (err) throw err;
+        })
+    }
+
+    setUnRead({idRoom, receiver, isIncrease}){
+        if (isIncrease){
+            var sql = `
+            update rooms 
+            set countUnRead=countUnRead+1
+            where id='${idRoom}' AND username='${receiver}'
+            `    
+        }else{
+            var sql = `
+            update rooms 
+            set countUnRead=0
+            where id='${idRoom}' AND username='${receiver}'
+            `
+        }
+        
         db.query(sql, (err, result)=>{
             if (err) throw err;
         })

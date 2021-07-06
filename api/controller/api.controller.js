@@ -48,7 +48,7 @@ class apiController{
         
         //sql này dùng dể lấy những username có cùng rooms với currentUser và ko lấy currentUser     
         var getUserInRoomsSql = `
-            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.isPersonal, receiver.name, user.avatar
+            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.isPersonal, receiver.name, user.avatar, r.countUnRead
             from rooms r, (
                 select * from rooms 
                 where id in (select id from rooms where username='${currentUser}' AND isShow=1) AND username != '${currentUser}')
@@ -67,7 +67,8 @@ class apiController{
     checkedGroup(req, res){
         const currentUser = res.locals.username;
         var getGroupSql = `
-            select name, updatedAt, id, isPersonal, avatar from rooms where username='${currentUser}' AND isShow=1 AND isPersonal=0 
+            select name, updatedAt, id, isPersonal, avatar, countUnRead 
+            from rooms where username='${currentUser}' AND isShow=1 AND isPersonal=0 
         `
         db.query(getGroupSql, (err, result)=>{
             if (err) throw err

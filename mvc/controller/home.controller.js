@@ -42,11 +42,10 @@ class homeController{
             receiver = [receiver]
         }
 
-        console.log(receiver, req.body, req.body.receivers);
+        // console.log(receiver, req.body, req.body.receivers);
         var infoSender = await sqlHelper.getInfoUser(currentUser);
         var infoReceiver;
 
-        var isShowReceiver = req.body.isShowReceiver ? 1 : 0; 
         // console.log("addChatList", {currentUser, receiver})
         for (const user of receiver){
             // get thông tin của sender và receier 
@@ -54,15 +53,14 @@ class homeController{
             // console.log("==infoReceiver", infoReceiver, user);
             var getIdRoom = await sqlHelper.getIdRoom(currentUser, user);
             var maxIdRoom = await sqlHelper.getMaxIdRoom() + 1;//để insert vào db
-
             var idRoom = (getIdRoom > 0) ? getIdRoom : maxIdRoom;
             //get room của 2 người này 
             //nếu lớn hơn 0 tức là đã có room thì update
             if (getIdRoom > 0){
                 //set updatedAt của sender 
                 sqlHelper.setUpdatedAt(currentUser, idRoom, 1)
-                sqlHelper.setUpdatedAt(user, idRoom, isShowReceiver)
-            }else{//conf ko thì là chưa có room
+                sqlHelper.setUpdatedAt(user, idRoom, 1)
+            }else{//conf ko thì là chưa có room\
                 // insert vào db cho sender và receiver
                 sqlHelper.insertAddChatListPersonal(currentUser, idRoom, 1, infoSender.nickname);//insert cho sender
                 sqlHelper.insertAddChatListPersonal(user, idRoom, 0, infoReceiver.nickname);//insert cho receiver 
@@ -158,7 +156,7 @@ class homeController{
                     isPersonal: false,
                     avatar: infoGroup.avatar,
                 }
-                console.log(data, infoGroup);
+                // console.log(data, infoGroup);
                 sqlHelper.insertAddChatListGroup(username, idRoom, 1, infoGroup.name, 0, infoGroup.avatar)
                 sqlHelper.emit(username, 'add chat list', data, io)
             }

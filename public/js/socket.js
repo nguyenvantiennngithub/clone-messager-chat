@@ -24,11 +24,12 @@ function socket(io){
         
         socket.on('sender send message', async ({sender, message, idRoom})=>{ // {sender, message, idRoom}
             var isShowTimeMessageNearest = false;//thoi gian duoi message cua message gan nhat trong room
-            var date = new Date();
-            var isTimeLine = 1;//time line truoc block message, 1 is true in sql
             var usersInGroup = await sqlHelper.getUserInRoom(idRoom)
             var messageNearest = await sqlHelper.getMessageNearest(idRoom);
+            var isTimeLine = 1;//time line truoc block message, 1 is true in sql
+
             var date = new Date();
+
 
             if (messageNearest){
                 isTimeLine = functionHelper.compareDate(date, messageNearest.updatedAt) === true ? 0 : 1
@@ -36,8 +37,9 @@ function socket(io){
             }
 
             sqlHelper.insertMessage(sender, idRoom, message, isTimeLine);
-            
+
             usersInGroup.forEach((user)=>{
+                sqlHelper.setUnRead({idRoom, receiver: user, isIncrease: true});
                 sqlHelper.emit(user, 'server send message', {message, idRoom, sender}, io)
             })
 
@@ -45,6 +47,11 @@ function socket(io){
                 sqlHelper.setIsShowTimeByMessageId(messageNearest.id);
             }
         })
+
+        socket.on('set unread field', function(data){
+            sqlHelper.setUnRead(data);
+        })
+
     });
 }
 
