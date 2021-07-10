@@ -1,0 +1,39 @@
+.container-video{
+    width: 400px;
+    margin-right: 64px;
+}
+
+.text-displayName{
+    text-align: center;
+}
+
+.avatar{
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+
+#container-user{
+    display: flex;
+    justify-content: center;
+}
+
+#app{
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.container-info{
+    display: flex;
+    justify-content: center;
+    align-content: flex-end;
+    align-items: center;
+    margin-top: 16px;
+}
+
+.text-displayName{
+    font-size: 22px;
+    font-weight: 800;
+    margin-left: 8px;
+}

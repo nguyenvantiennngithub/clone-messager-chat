@@ -12,7 +12,6 @@ function loginFacebook(passport, io){
     
 
     passport.serializeUser(function(user, done) {
-        console.log('user',user)
         done(null, user);
     });
     
@@ -50,7 +49,6 @@ function loginFacebook(passport, io){
         callbackURL: "http://localhost:8080/auth/google/login"
       },
     async function(accessToken, refreshToken, profile, done) {
-        console.log(profile)
         var user = {
             username: profile._json.sub,
             nickname: profile._json.name, 

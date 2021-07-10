@@ -1,21 +1,26 @@
 const sqlHelper = require('../../helpers/sqlHelper');
 const functionHelper = require('../../helpers/functionHelper')
+var peers = {}
 function socket(io){
     
     io.on('connection', (socket) => {
+        socket.emit('hello new user', peers);
+
+
         //khi có user mới thì tạo room cho user đó bằn socket trong db
         socket.on('join socket id new user online', async (currentUser)=>{ //socketId
-            socket.join(currentUser.username)
+            console.log("currentUser", currentUser)
+            await socket.join(currentUser.username)
             socket.username = currentUser.username;
-            // console.log(io.sockets.adapter.rooms)
             var listRoomOnline = await functionHelper.filterAndGetRoomOnline(io.sockets.adapter.rooms, currentUser);
+
+            sqlHelper.emit(currentUser.username, 'everything ok', '', io);
             io.emit('new user connect', listRoomOnline);
-            
         })
 
         socket.on('disconnect', async ()=>{
             var listRoomOnline = await functionHelper.filterAndGetRoomOnline(io.sockets.adapter.rooms, {username: socket.username});
-            console.log("user disconnect", listRoomOnline);
+            // console.log("user disconnect", io.sockets.adapter.rooms);
             socket.broadcast.emit('user disconnect', listRoomOnline);
         })
         //lay message gan nhat trong room roi so sanh (updatedAt, currentDateTime. sender voi currentUser)
@@ -48,11 +53,46 @@ function socket(io){
             }
         })
 
+
+        socket.on('client request video call', async function(data){
+            var usersInGroup = await sqlHelper.getUserInRoom(data.idRoom);
+
+            usersInGroup = usersInGroup.filter(user=>{
+                return user !== data.currentUser;
+            })
+            usersInGroup.forEach((user)=>{
+                console.log("EMIT +", user)
+                sqlHelper.emit(user, 'server request video call', data, io)
+
+            })
+        })
+
         socket.on('set unread field', function(data){
             sqlHelper.setUnRead(data);
         })
 
+
+        socket.on('sender send video call', async function({sender, idRoom}){
+            var usersInGroup = await sqlHelper.getUserInRoom(idRoom)
+            usersInGroup.forEach((user)=>{
+                if (user !== sender){
+                    sqlHelper.emit(user, 'server send video call', {idRoom}, io);
+                }
+            })
+        })
+
+        socket.on('new user connect room', async function({peerId, idRoom, user}){
+            socket.join(idRoom);
+            peers[peerId] = user;
+            socket.to(idRoom).broadcast.emit('user connected', {remotePeerId: peerId, user});
+            console.log(io.sockets.adapter.rooms)
+        })
+
+        
+       
     });
+
+
 }
 
 module.exports = socket;

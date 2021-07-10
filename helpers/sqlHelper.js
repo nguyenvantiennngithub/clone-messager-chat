@@ -85,7 +85,7 @@ class functionClass{
                     if (err) return reject(err)
                     // console.log('getIdRoomNearest', result)
                     if (result.length > 0){
-                        console.log(result);
+                        // console.log(result);
                         resolve(result[0].id);
                     }
                     resolve(0)
@@ -139,7 +139,7 @@ class functionClass{
     getInfoUserByUsername(username){
         return new Promise(
             function (resolve, reject){
-                var sql = `select nickname, username from users
+                var sql = `select nickname, username, avatar from users
                     where username='${username}'`
                 db.query(sql, (err, result)=>{
                     if (err) return reject(err)

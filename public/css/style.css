@@ -97,6 +97,10 @@
     margin: auto;
 }
 
+#icon-video-call{
+    margin-top: 16px;
+}
+
 .dialog__option-container{
     min-height: 28px;
     white-space: nowrap;
@@ -302,7 +306,6 @@
 .avatar-16{
     width: 28px;
     height: 28px;
-    
 }
 
 #dialogListUser{
@@ -429,3 +432,6 @@
     margin: auto;
     font-size: 12px;
 }
+
+
+

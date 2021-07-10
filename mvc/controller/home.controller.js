@@ -32,6 +32,13 @@ class homeController{
         res.render("chat", {infoCurrentUser, idRoom, avatar})
     }
 
+    async videoCall(req, res){
+        var currentUser = res.locals.username;
+        var infoCurrentUser = await sqlHelper.getInfoUserByUsername(currentUser);
+
+        res.render('video', {currentUser: infoCurrentUser});
+    }
+
     async createOrAddChatListPersonal(req, res, next){
 
         const io = req.app.get('socketio') //lay socket

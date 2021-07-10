@@ -8,6 +8,7 @@ const router = express.Router()
 
 router.get('/', middleware.isLogin, homeController.home)
 router.get('/chat', middleware.checkAuth, homeController.chat)
+router.get('/video-call/:idRoom', middleware.checkAuth, homeController.videoCall)
 router.get('/chat/:idroom', middleware.checkAuth, homeController.chat)
 router.post('/change-name', middleware.checkAuth, homeController.changeNameThreadChat)
 router.post('/appoint-admin-group', middleware.checkAuth, homeController.appointGroupAdmin)

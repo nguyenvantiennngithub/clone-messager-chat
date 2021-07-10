@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/video.css">
+    <title>Document</title>
+</head>
+<body>
+
+    <h2>
+        <center>
+            Welcome to video call<br>
+            <div data-username=<%-currentUser.username%> id="container-user">
+                <img src=<%-currentUser.avatar%> class="avatar" alt="">
+                <span><%-currentUser.nickname%></span>
+            </div>
+        </center>
+    </h2>
+
+    <div id="app">
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/jquery.js"></script>
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+    <script src="/js/peer.js"></script>
+</body>
+</html>

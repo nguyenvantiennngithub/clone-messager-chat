@@ -14,7 +14,7 @@ class functionHelper{
     async filterAndGetRoomOnline(listRoomRough, currentUser){
         //Username represent room
         var listRoomOnline = await this.filterListRoomRough(listRoomRough);
-        console.log('function/filterAndGetRoomOnline', listRoomOnline)
+        // console.log('function/filterAndGetRoomOnline', listRoomOnline)
         var result = await sqlHelper.getRoomOnlineBySocket(listRoomOnline, currentUser);
         result = result.map((room)=>{
             return room.id;

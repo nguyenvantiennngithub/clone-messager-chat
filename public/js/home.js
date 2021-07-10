@@ -1,6 +1,8 @@
 var socket = io();
 var page = 1;
 var isIncreasePage = true;
+var username = $('#username').data('name');
+
 //============================================================================================================
 //---------------------------------------Function store html code-------------------------------------------------
 //============================================================================================================
@@ -277,11 +279,20 @@ function htmlGroupAddUserToGroups(name, idRoom, avatar, isDisable){
 function htmlThreadChatPersonal(name, avatar){
     return `
         <h3 id="name-room">
-            <img class="avatar avatar-32" src="${avatar}">
-            <span>${name}</span>
-            <span id="edit-name" class="edit-name click">
-                <i class="fas fa-user-edit"></i>
-            </span>
+            <div class="d-flex justify-content-between">
+                <div>
+                    <img class="avatar avatar-32" src="${avatar}">
+                    <span>${name}</span>
+                    <span id="edit-name" class="edit-name click">
+                        <i class="fas fa-user-edit"></i>
+                    </span>
+                </div>
+
+                <div class="click" id="icon-video-call">
+                    <i class="fas fa-video"></i>
+                </div>    
+            
+            </div>
         </h3>
 
         <div id="container-change-name" hidden>
@@ -305,8 +316,15 @@ function htmlThreadChatGroup(name, count, avatar){
                         <i class="fas fa-user-edit"></i>
                     </span>
                 </div>
-                <div class="click" id="icon-setting">
-                    <i class="fas fa-cog "></i>
+
+                <div class="d-flex justify-content-between" style="width: 50px">
+                    <div class="click" id="icon-video-call">
+                        <i class="fas fa-video"></i>
+                    </div>
+
+                    <div class="click" id="icon-setting">
+                        <i class="fas fa-cog "></i>
+                    </div>
                 </div>
             </div>
         </h3>
@@ -320,6 +338,7 @@ function htmlThreadChatGroup(name, count, avatar){
         <span>${count} thành viên</span>
          `
 }
+
 
 function htmlInputChangeName(){
     return `
@@ -2049,7 +2068,6 @@ $(document).ready(()=>{
         var userHost
         var currentUser
         var isHost
-        
         $(document).on('click', '#icon-setting', async function(){
             showDialogListUser();
             idRoom = getCurrentIdRoom();
@@ -2067,6 +2085,7 @@ $(document).ready(()=>{
             leaveGroupListUser();
         })
     }
+
 
     async function eventSendMessage(){
         $('#btn-send-message').on('click', function(){
@@ -2159,31 +2178,48 @@ $(document).ready(()=>{
             notificationEle.remove();
         }
     }
+
+    function handleClickVideoCall(){
+        $(document).on('click', '#icon-video-call', async function(){
+            var currentIdRoom = getCurrentIdRoom()
+            var currentUser = await getCurrentUser()
+            window.open('/video-call/' + currentIdRoom, '_blank');
+            socket.emit('sender send video call', {idRoom: currentIdRoom, sender: currentUser.username});            
+        })
+    }
+
     //hàm chính để sử lý
-    async function main(){
-        await renderCheckedRoom() //block ben trai
-        renderTotalUser() //block ben phai
-        checkRoomAndUser();
-        scrollChatList() //scroll thanh chat xuong
-        emitNewUserOnline()
-        closeDialogByOverlay();
-        eventSendMessage() //sy ly khi gui tinh nhan
-        hideChatList() //su ly khi nhan vao Ẩn
-        addChatListGroup()
-        handleDialogCreateGroup() //su ly khi nhan vao
-        handleDialogAddUserToGroups()
-        handleDialogListUser()
-        handleDialogAddUsersToGroup()
-        handleClickReceiver() //
+    function main(){
+        emitNewUserOnline() 
 
-        handleEventMouseTotalList()
-        handleEventMouseListReceiver()
+        socket.on('everything ok',async function(){
+            await renderCheckedRoom() //block ben trai
+            renderTotalUser() //block ben phai
+            checkRoomAndUser();
+            scrollChatList() //scroll thanh chat xuong
+            closeDialogByOverlay();
+            eventSendMessage() //sy ly khi gui tinh nhan
+            hideChatList() //su ly khi nhan vao Ẩn
+            addChatListGroup()
+            handleDialogCreateGroup() //su ly khi nhan vao
+            handleDialogAddUserToGroups()
+            handleDialogListUser()
+            handleDialogAddUsersToGroup()
+            handleClickReceiver() //
+            handleClickVideoCall()
 
-        addChatListUser() //su ly khi nhan vao them
-        filterListTotalUser()
-        filterCheckedList()
-        changeName()
-        appendChatListRoll()
+            handleEventMouseTotalList()
+            handleEventMouseListReceiver()
+    
+    
+            addChatListUser() //su ly khi nhan vao them
+            filterListTotalUser()
+            filterCheckedList()
+            changeName()
+            appendChatListRoll()
+        })
+
+        
 
 
     }
@@ -2322,6 +2358,10 @@ $(document).ready(()=>{
             }
         })
     })
+
+    socket.on('server send video call', (({idRoom})=>{
+        window.open('/video-call/' + idRoom, '_blank');
+    }))
 
     socket.on('test room online', (listRoomOnline)=>{
         console.log("list room online", listRoomOnline);
