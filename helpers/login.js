@@ -4,6 +4,9 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const db = require('../db/connect.db')
 const sqlHelper = require('./sqlHelper')
+const got = require('got');
+const md5 = require('md5')
+const fs = require('fs');
 // var passport = require('passport')
 var FacebookStrategy = require('passport-facebook').Strategy;
 var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
@@ -34,10 +37,8 @@ function loginFacebook(passport, io){
                 nickname: profile._json.name, 
                 avatar: profile._json.picture.data.url
             }
-            var result = await sqlHelper.checkIsExistsUserByUsername(user.username);
-            if (result.length == 0){
-                sqlHelper.insertUser(user.username, user.nickname, '', user.avatar);
-            }
+
+            await sqlHelper.checkUserAndInsertLogin(user);
 
             return cb(false, user);
         }
@@ -55,11 +56,7 @@ function loginFacebook(passport, io){
             avatar: profile._json.picture,
             passport: '',
         }
-        var result = await sqlHelper.checkIsExistsUserByUsername(user.username);
-        if (result.length == 0){
-            sqlHelper.insertUser(user.username, user.nickname, '', user.avatar)
-        }
-
+        await sqlHelper.checkUserAndInsertLogin(user);
         return done(false, user)
 }
 

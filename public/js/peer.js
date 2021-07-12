@@ -11,6 +11,18 @@ function openStream(){
     return navigator.mediaDevices.getUserMedia({audio: false, video: true})
 }
 
+// When sender call to receiver 
+//on sender we will create a windown and await receiver
+//on receiver we will create a alert 
+//if receiver click ok we will create a windown and answer sender
+//if receiver and isPersonal==1 click cancle we will emit to sender and close tab
+//if isPersonal==0 we will await 10s after that we will close this tab
+
+//when call by url we will check user in room
+//if false we will alert and return
+
+
+
 function renderContainerVideo(streamId, user){
     var html = `
     <div class="container-video" data-username="${streamId}">

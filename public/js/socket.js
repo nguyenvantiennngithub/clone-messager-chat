@@ -23,16 +23,13 @@ function socket(io){
             // console.log("user disconnect", io.sockets.adapter.rooms);
             socket.broadcast.emit('user disconnect', listRoomOnline);
         })
-        //lay message gan nhat trong room roi so sanh (updatedAt, currentDateTime. sender voi currentUser)
-        //time line = updatedAt(DMY) == currentDateTime,
-        //MessageNearest sua lai showDate khi message.sender==sender && timeLine== false
         
         socket.on('sender send message', async ({sender, message, idRoom})=>{ // {sender, message, idRoom}
             var isShowTimeMessageNearest = false;//thoi gian duoi message cua message gan nhat trong room
             var usersInGroup = await sqlHelper.getUserInRoom(idRoom)
             var messageNearest = await sqlHelper.getMessageNearest(idRoom);
             var isTimeLine = 1;//time line truoc block message, 1 is true in sql
-
+            
             var date = new Date();
 
 
@@ -61,16 +58,13 @@ function socket(io){
                 return user !== data.currentUser;
             })
             usersInGroup.forEach((user)=>{
-                console.log("EMIT +", user)
                 sqlHelper.emit(user, 'server request video call', data, io)
-
             })
         })
 
         socket.on('set unread field', function(data){
             sqlHelper.setUnRead(data);
         })
-
 
         socket.on('sender send video call', async function({sender, idRoom}){
             var usersInGroup = await sqlHelper.getUserInRoom(idRoom)
@@ -87,9 +81,6 @@ function socket(io){
             socket.to(idRoom).broadcast.emit('user connected', {remotePeerId: peerId, user});
             console.log(io.sockets.adapter.rooms)
         })
-
-        
-       
     });
 
 

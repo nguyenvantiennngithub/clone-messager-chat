@@ -1,6 +1,8 @@
 const db = require('../db/connect.db')
 const bcrypt = require('bcryptjs')
-
+const got = require('got')
+const md5 = require('md5')
+const fs = require('fs')
 class functionClass{
     //ham nay nhan vao 1 cai username 
     // async getSocketId(username){
@@ -287,6 +289,23 @@ class functionClass{
 
     async emit(username, event, data, io){
         io.in(username.toString()).emit(event, data)
+    }
+    
+    async checkUserAndInsertLogin(user){
+        var respose = await got(user.avatar, { responseType: 'buffer' });
+        user.buffer = respose.body;
+        user.md5 = md5(user.avatar);
+        user.avatarDB = '/uploads/' + user.md5;
+        user.avatarServer = 'public/uploads/' + user.md5;
+        
+        var result = await this.checkIsExistsUserByUsername(user.username);
+
+        if (result.length == 0){
+            this.insertUser(user.username, user.nickname, '', user.avatarDB);
+            fs.writeFile(user.avatarServer, user.buffer, function(err){
+                if (err) throw err
+            });
+        }
     }
 
     checkIsExistsUserByUsername(username){

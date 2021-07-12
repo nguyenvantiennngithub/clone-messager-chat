@@ -12,6 +12,6 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 router.get('/google/login', passport.authenticate('google', { failureRedirect: '/' }), authController.checkLoginSocial);
 
 router.get('/facebook', passport.authenticate('facebook'))
-router.get('/facebook/login', passport.authenticate('facebook', { failureRedirect: '/home'}), authController.checkLoginSocial)
+router.get('/facebook/login', passport.authenticate('facebook', { failureRedirect: '/'}), authController.checkLoginSocial)
 module.exports = router
 

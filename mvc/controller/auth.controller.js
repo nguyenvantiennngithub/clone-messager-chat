@@ -30,6 +30,7 @@ class authController{
     checkLoginSocial(req, res){
         req.session.username = req.user.username
         req.session.isAuth = true;
+        
         res.redirect('/chat');
     }
 
@@ -52,7 +53,7 @@ class authController{
         const hashPsw = bcrypt.hashSync(password, saltRounds);
         const uploads = "./public/uploads/" + avatar.md5;
         const avatarDB = "/uploads/" + avatar.md5;
-
+        console.log(avatar)
         var isExistsUser = await sqlHelper.isExistsUser(username)
         if (!isExistsUser){
 
