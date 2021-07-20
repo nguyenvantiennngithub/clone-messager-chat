@@ -37,3 +37,39 @@
     font-weight: 800;
     margin-left: 8px;
 }
+
+.setting-video{
+    display: flex;
+    justify-content: center;
+}
+
+.setting-call-mic, .setting-call-video, .setting-leave-room{
+    height: 50px;
+    width: 50px;
+    background-color: rgb(77, 71, 71);
+    border-radius: 50%;
+    cursor: pointer;
+    margin: 0 4px 0 4px;
+}
+
+.setting-call-mic-middle, .setting-call-video-middle, .setting-leave-room-middle{
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.setting-call-mic.muted, .setting-call-video.muted, .setting-leave-room.muted{
+    background-color: #d93025;
+}
+
+.fas.fa-microphone-alt, .fas.fa-video, .fas.fa-phone{
+    font-size: 24px;
+    color: white;
+}
+
+.setting-call{
+    display: flex;
+    justify-content: center;
+}

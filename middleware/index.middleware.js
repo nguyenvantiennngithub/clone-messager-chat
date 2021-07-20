@@ -1,4 +1,5 @@
 const db = require('../db/connect.db')
+const sqlHelper = require('../helpers/sqlHelper')
 
 class indexMiddleware{
     checkAuth(req, res, next){
@@ -22,6 +23,16 @@ class indexMiddleware{
         }
     }
 
+    async checkUserInRoom(req, res, next){
+        const idRoom = req.params.idRoom    
+        const username = res.locals.username
+        var userInRoom = await sqlHelper.getUserInRoomByUsernameIdRoom(username, idRoom)
+        if (userInRoom){
+            return next()
+        }
+        return res.end("You cant join in this room");
+    }
+
     isLogin(req, res, next){
         if (req.session.isAuth){
             res.locals.username = req.session.username
@@ -33,9 +44,8 @@ class indexMiddleware{
                 if (err) throw err
                 res.locals.nickname = result[0].nickname
             })
-            // console.log("middle/idx/checkauth", req.session.username)
         }
-        next()
+        return next()
     }
     //dùng để redirect tới trang chat khi 
     //mà customer đã login nhưng lại ở trang home

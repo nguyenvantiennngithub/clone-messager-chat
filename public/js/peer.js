@@ -1,32 +1,46 @@
-var username = $('#container-user').data('username');
-var displayName = $('#container-user').text();
-var avatar = $('#container-user').find('img').attr('src')
-var idRoom = window.location.pathname.split('/')[2];
-
 var myPeer = new Peer();
 var socket = io();
 var peers = {}
 var listUser = {};
+console.log(myPeer);
+
 function openStream(){
-    return navigator.mediaDevices.getUserMedia({audio: false, video: true})
+    return navigator.mediaDevices.getUserMedia({audio: true, video:  { width: 1280, height: 720}})
 }
 
-// When sender call to receiver 
-//on sender we will create a windown and await receiver
-//on receiver we will create a alert 
-//if receiver click ok we will create a windown and answer sender
-//if receiver and isPersonal==1 click cancle we will emit to sender and close tab
-//if isPersonal==0 we will await 10s after that we will close this tab
-
-//when call by url we will check user in room
-//if false we will alert and return
-
-
-
-function renderContainerVideo(streamId, user){
+async function renderContainerVideo(user, isMute){
     var html = `
-    <div class="container-video" data-username="${streamId}">
-        <video src="" class="video" width="400px"></video>
+    <div class="container-video" data-stream="${user.peerId}">
+        <video src="" class="video" width="400px" height="225px" `
+    if (isMute){
+        html += `muted="true"`;
+    }
+    html +=                                      `>
+        </video>
+        <div class="setting-call">
+            <div class="setting-call-mic">
+                    <div class="setting-call-mic-middle">
+                        <i class="fas fa-microphone-alt"></i>
+                    </div>
+                </div>`
+    if (isMute){
+        html +=
+            `
+            <div class="setting-call-video" id="off-cam">
+                <div class="setting-call-video-middle">
+                    <i class="fas fa-video"></i>
+                </div>
+            </div>
+            <div class="setting-leave-room muted" id="leave-room">
+                <div class="setting-leave-room-middle">
+                    <i class="fas fa-phone"></i>
+                </div>
+            </div>
+            `
+    }        
+    html+=
+            `
+        </div>
         <div class="container-info">
             <img class="avatar" src="${user.avatar}">
             <span class="text-displayName">${user.displayName}</span>
@@ -36,83 +50,96 @@ function renderContainerVideo(streamId, user){
     return;
 }
 
-function addVideo(stream, user){
-    renderContainerVideo(stream.id, user);
-    var video = $(`.container-video[data-username="${stream.id}"]`).find('video')[0];
+async function addVideo(stream, user, isMute){
+    var checkExistsVideo = $(`.container-video[data-stream="${user.peerId}"]`)
+    if (checkExistsVideo.length == 1){
+        console.log("return")
+        return;
+    }
+    await renderContainerVideo(user, isMute);
+    var video = $(`.container-video[data-stream="${user.peerId}"]`).find('video')[0];
+    console.log(video)
     video.srcObject = stream;
     video.play();
     return;
-
 }
+
+
+
 socket.on('hello new user', function(_listUser){
    listUser = _listUser;
 })
 
-$(document).ready(async ()=>{
-    var myStream = await openStream();
-    var user = {username, displayName, avatar}
+var username = $('#container-user').data('username');
+var displayName = $('#container-user').text();
+var avatar = $('#container-user').find('img').attr('src')
+var idRoom = window.location.pathname.split('/')[2];
 
-    myPeer.on('open', async function(peerId){        
-        addVideo(myStream, user);
+openStream().then(async function(myStream){
+    await myPeer.on('open', function(peerId){ 
 
-        socket.emit('new user connect room', {peerId, idRoom, user});
+    })
+    if (myPeer.id == null){
+        alert("NULLLLLLLLLL")
+    }
 
-        socket.on('user connected', function(data){//remotePeerId, user
-            var call = myPeer.call(data.remotePeerId, myStream);
-            peers[data.remotePeerId] = call;
-            listUser[data.remotePeerId] = data.user;
-            console.log(myStream, user)
-            console.log("CALL")
-            
-            call.on('stream', function(remoteStream){
-                console.log("CALL STREAM");
-                var remotePeerId = call.peer
-                addVideo(remoteStream, listUser[remotePeerId]);
-            })
+    var user = {username, displayName, avatar, peerId: myPeer.id}
+    console.log("user prepare", user);
+    addVideo(myStream, user, true);//just mute myseft
+    socket.emit('new user connect room', {user, idRoom});
+    
+    myPeer.on('call', function(call){
+        call.answer(myStream);
+        call.on('stream', function(remoteStream){
+            var remotePeerId = call.peer;
+            addVideo(remoteStream, listUser[remotePeerId], false);
+        })
+    }) 
+
+    //remote user
+    socket.on('user connected', function(remoteUser){
+        console.log("CALL", remoteUser);
+        var call = myPeer.call(remoteUser.user.peerId, myStream);
+       
+        peers[remoteUser.user.peerId] = call;
+        listUser[remoteUser.user.peerId] = remoteUser.user;
+ 
+        call.on('stream', function(remoteStream){
+            console.log("STREAM CALL", call)
+            var remotePeerId = call.peer    
+            addVideo(remoteStream, listUser[remotePeerId], false);
         })
 
-        myPeer.on('call', function(call){
-            call.answer(myStream);
+    })
+    socket.on('someone left room', function(remotePeerId){
+        $(document).find(`.container-video[data-stream=${remotePeerId}]`).remove();
+    })
 
-            call.on('stream', function(remoteStream){
-                var remotePeerId = call.peer;
-                addVideo(remoteStream, listUser[remotePeerId]);
-            })
-        })
+    $(document).on('click', '.setting-call-mic', function(){
+        var streamId = $(this).closest('.container-video').data('stream');
+        //if is qmyself
+        if (streamId == myStream.id){
+            myStream.getAudioTracks()[0].enabled = !(myStream.getAudioTracks()[0].enabled);
+        }else{
+            var video = $(this).closest('.setting-call').siblings('.video')
+            video.prop('muted', !video.prop('muted')); //true is muted
+        }
+        $(this).toggleClass('muted')
+    })
+
+    $(document).on('click', '#off-cam', function(){
+        myStream.getVideoTracks()[0].enabled = !(myStream.getVideoTracks()[0].enabled);
+        $(this).toggleClass('muted')
     })
     
-    
-
-
-
-
-
-
-
-
-    // peer.on('open', async function(peerId){
-    //     console.log(peerId)
-    //     var stream = await openStream();
-    //     stream.username = username
-    //     socket.emit('new user connect room', {peerId, idRoom})
-        
-    //     socket.on('user connected', function(peerIdRemote){
-    //         peers[peerIdRemote] = stream;
-    //         var call = peer.call(peerIdRemote, stream);
-    //         addVideo(stream)
-            
-    //         call.on('stream', function(remoteStream){
-    //             addVideo(remoteStream)
-    //         })
-    //     })
-
-    //     peer.on('call', function(call){
-    //         call.answer(stream);
-    //         addVideo(stream)
-
-    //         call.on('stream', function(remoteStream){
-    //             addVideo(remoteStream)
-    //         })
-    //     })
-    // })
+    $(document).on('click', '#leave-call', function(){
+        window.close();
+    })
 })
+
+
+
+
+
+
+

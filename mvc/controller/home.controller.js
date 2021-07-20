@@ -10,7 +10,7 @@ class homeController{
             return res.redirect(`chat/${idRoom}`)
         }
 
-        res.render('home', {
+        return res.render('home', {
             messageError: '',
             username: '',
             password: '',

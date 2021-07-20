@@ -2181,10 +2181,16 @@ $(document).ready(()=>{
 
     function handleClickVideoCall(){
         $(document).on('click', '#icon-video-call', async function(){
+            
             var currentIdRoom = getCurrentIdRoom()
             var currentUser = await getCurrentUser()
-            window.open('/video-call/' + currentIdRoom, '_blank');
-            socket.emit('sender send video call', {idRoom: currentIdRoom, sender: currentUser.username});            
+            window.open('/video-call/' + currentIdRoom, '', 'width=1280px, height=1024px');
+            socket.emit('client request room is calling', {idRoom: currentIdRoom, sender: currentUser.username})
+            socket.on('server respose room is calling', function(isCalling){            
+                if (!isCalling){
+                    socket.emit('sender send video call', {idRoom: currentIdRoom, sender: currentUser.username});
+                }                
+            })
         })
     }
 
@@ -2218,10 +2224,6 @@ $(document).ready(()=>{
             changeName()
             appendChatListRoll()
         })
-
-        
-
-
     }
     main()
     
@@ -2327,7 +2329,6 @@ $(document).ready(()=>{
             scrollChatList()
             socket.emit('set unread field', {value: 0, idRoom, receiver: currentUser.username})
         }else{
-           
             if (unreadEle.length == 0){
                 html = htmlUnread()
                 menuEle.append(html);
@@ -2359,8 +2360,12 @@ $(document).ready(()=>{
         })
     })
 
-    socket.on('server send video call', (({idRoom})=>{
-        window.open('/video-call/' + idRoom, '_blank');
+    socket.on('server send video call', (async ({idRoom, sender})=>{
+        var infoSender = await getUserByUsername(sender);
+        var isReply = await alertHasButton(`You have a call from ${infoSender.nickname}`)
+        if (isReply){
+            window.open('/video-call/' + idRoom, '', 'width=1280px, height=1024px');
+        }
     }))
 
     socket.on('test room online', (listRoomOnline)=>{
