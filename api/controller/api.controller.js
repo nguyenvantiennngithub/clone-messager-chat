@@ -48,7 +48,7 @@ class apiController{
         
         //sql này dùng dể lấy những username có cùng rooms với currentUser và ko lấy currentUser     
         var getUserInRoomsSql = `
-            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.isPersonal, receiver.name, user.avatar, r.countUnRead
+            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.isPersonal, receiver.name, user.avatar, r.countUnRead, receiver.nickname as nicknameRoom
             from rooms r, (
                 select * from rooms 
                 where id in (select id from rooms where username='${currentUser}' AND isShow=1) AND username != '${currentUser}')

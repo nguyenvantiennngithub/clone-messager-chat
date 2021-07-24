@@ -70,13 +70,16 @@ function calcDateTimeStamp(date1, date2){
 }
 
 //code html render ra li ben trai cho user
-async function htmlCheckedUser({username, nickname, id, avatar, countUnRead}, isOnline){ //bên trái
+async function htmlCheckedUser({username, nicknameRoom, id, avatar, countUnRead = ''}, isOnline){ //bên trái
     var messageNearest = await getMessageAtIndex(id, 0);
     var message = (messageNearest) ? messageNearest.message : ""
     var date = new Date();
     var time = calcDateTimeStamp(messageNearest.updatedAt, date)
+    if (countUnRead > 5){
+        countUnRead = "5+";
+    }
     if (message == "") time = ""
-    var html = `<li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-name="${username}" data-id="${id}" data-nickname="${nickname}">
+    var html = `<li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-name="${username}" data-id="${id}" data-nickname="${nicknameRoom}">
         <div class="container-avatar-checked">`
     if (isOnline){
         html += `<i class="fas fa-circle circle online"></i>`;
@@ -87,7 +90,7 @@ async function htmlCheckedUser({username, nickname, id, avatar, countUnRead}, is
             <img class="avatar avatar-32" src="${avatar}">
         </div>
         <div class="content-container">
-            <span class="text-nickname">${nickname}</span>
+            <span class="text-nickname">${nicknameRoom}</span>
             <div class="container-text">
                 <span class="text-message">${message}</span>
                 <span class="text-time">${time}</span>
@@ -100,20 +103,22 @@ async function htmlCheckedUser({username, nickname, id, avatar, countUnRead}, is
                 <button class="create-group-chat dropdown-item" type="button">Tạo nhóm chat</button>
                 <button class="add-group-chat dropdown-item" type="button">Thêm thành viên</button>
             </div>`
-    html += (countUnRead > 0) ? `<span class="text-unread">${countUnRead}</span>` : `` 
+    html += (countUnRead <= 0) ? `` :  `<span class="text-unread">${countUnRead}</span>` 
     html +=`</div>
     </li>`
     return html;
 }
 
 //render thẻ li bên trái cho group
-async function htmlCheckedGroup({name, id, avatar, countUnRead}, isOnline){ //bên trái
+async function htmlCheckedGroup({name, id, avatar, countUnRead = ''}, isOnline){ //bên trái
     var messageNearest = await getMessageAtIndex(id, 0);
     var message = (messageNearest) ? messageNearest.message : ""
     var date = new Date();
     var time = calcDateTimeStamp(messageNearest.updatedAt, date)
     if (message == "") time = ""
-
+    if (countUnRead > 5){
+        countUnRead = '5+'
+    }
     var html = 
     `<li class="list-chat-user-item list-group-item list-group-item-info d-flex" data-id="${id}" data-nickname="${name}">
         <div class="container-avatar-checked">`
@@ -139,7 +144,7 @@ async function htmlCheckedGroup({name, id, avatar, countUnRead}, isOnline){ //b�
                 <button class="add-users-to-group dropdown-item" type="button">Thêm thành viên</button>
             </div>`
 
-    html += (countUnRead > 0) ? `<span class="text-unread">${countUnRead}</span>` : `` 
+    html += (countUnRead <= 0) ? `` : `<span class="text-unread">${countUnRead}</span>` 
     html += `</div>
         </li>
     `
@@ -605,6 +610,8 @@ async function renderCheckedRoom(){
     //render ra html 
     var promises = result.map(async (user)=>{ //{sender, receiver, updatedAt, id}
         if (user.isPersonal){//kiểm tra nếu personal thì reder theo personal
+            console.log(user)
+            
             return htmlCheckedUser(user, false)
         }else{//còn group thì render theo group
             return htmlCheckedGroup(user, false)
@@ -905,7 +912,9 @@ async function getTotalGroup(){
 async function getCheckedUser(){
     return await axios.get('/api/checked-user')
     .then((response)=>{
+        console.log(response.data)
         return response.data
+
     })
 }
 
@@ -1474,7 +1483,7 @@ function submitDialogAddUserToGroups(userAdd){
 
         //sau đó gọi ajax xuống backed sử lý
         $.ajax({
-            url: '/add-user-to-groups', 
+            url: '/add-users-to-groups', 
             method: 'POST',
             data: {
                 username: userAdd,
@@ -1606,7 +1615,7 @@ function submitDialogAddUsersToGroup(){
 
 
         $.ajax({
-            url: '/add-user-to-groups',
+            url: '/add-users-to-groups',
             data: data,
             method: 'POST',
             success: function(){
@@ -1659,7 +1668,7 @@ async function addChatListInDialogListUser(){
         var data = JSON.stringify({
             idRoom, 
             receiver,
-            isShowReceiver: true,
+            isShowReceiver: false,
         })
 
         $.ajax({
@@ -1816,7 +1825,7 @@ function handleEventMouseListReceiver(){
         //remove notification
         if (unreadEle.length == 1){
             unreadEle.remove();
-            socket.emit('set unread field', {idRoom, sender: currentUser.username, inIncrase: false})
+            socket.emit('set unread field', {idRoom, username: currentUser.username, inIncrase: false})
         }
 
     })
@@ -1900,7 +1909,7 @@ $(document).ready(()=>{
 //==============================================================================================================
     
     //functuon emit to server socket id of new user login
-    function emitNewUserOnline(){
+    async function emitNewUserOnline(){
         getCurrentUser() //[{nickname, username, socketid}]
             .then((data)=>{
                 //emit về server để add socketid
@@ -1939,11 +1948,10 @@ $(document).ready(()=>{
             var container = $(this).closest('.list-group-item')
             var idRoom = container.data('idroom')
             $.ajax({
-                url: '/set-updatedAt-group-chat', 
+                url: '/add-chat-list-group', 
                 method: 'POST',
                 data: JSON.stringify({
                     idRoom,
-                    isShowReceiver: false,
                 }),
                 contentType: 'application/json',
                 dataType: 'json',
@@ -2122,7 +2130,7 @@ $(document).ready(()=>{
             if (sender){
                 var data = JSON.stringify({
                     receiver: sender,
-                    isShowReceiver: false,//add 2 phia
+                    isShowReceiver: true,//add 2 phia
                 })
                 $.ajax({
                     url: '/create-or-add-chat-list-personal',
@@ -2140,7 +2148,7 @@ $(document).ready(()=>{
                     isShowReceiver: true,
                 }
                 $.ajax({
-                    url: '/set-updatedAt-group-chat', 
+                    url: '/send-message', 
                     method: 'POST',
                     data: JSON.stringify(data),
                     contentType: 'application/json',
@@ -2174,7 +2182,7 @@ $(document).ready(()=>{
             showListMessage()
         }
         if (notificationEle.length == 1){
-            socket.emit('set unread field', {receiver: currentUser.username, idRoom: currentIdRoom, inIncrase: false});
+            socket.emit('set unread field', {username: currentUser.username, idRoom: currentIdRoom, inIncrase: false});
             notificationEle.remove();
         }
     }
@@ -2184,7 +2192,7 @@ $(document).ready(()=>{
             
             var currentIdRoom = getCurrentIdRoom()
             var currentUser = await getCurrentUser()
-            window.open('/video-call/' + currentIdRoom, '', 'width=1280px, height=1024px');
+            window.open('/video-call/' + currentIdRoom, '', 'width=400px, height=1024px');
             socket.emit('client request room is calling', {idRoom: currentIdRoom, sender: currentUser.username})
             socket.on('server respose room is calling', function(isCalling){            
                 if (!isCalling){
@@ -2195,35 +2203,33 @@ $(document).ready(()=>{
     }
 
     //hàm chính để sử lý
-    function main(){
-        emitNewUserOnline() 
+    async function main(){
+        await renderCheckedRoom() //block ben trai
 
-        socket.on('everything ok',async function(){
-            await renderCheckedRoom() //block ben trai
-            renderTotalUser() //block ben phai
-            checkRoomAndUser();
-            scrollChatList() //scroll thanh chat xuong
-            closeDialogByOverlay();
-            eventSendMessage() //sy ly khi gui tinh nhan
-            hideChatList() //su ly khi nhan vao Ẩn
-            addChatListGroup()
-            handleDialogCreateGroup() //su ly khi nhan vao
-            handleDialogAddUserToGroups()
-            handleDialogListUser()
-            handleDialogAddUsersToGroup()
-            handleClickReceiver() //
-            handleClickVideoCall()
+        await emitNewUserOnline() 
 
-            handleEventMouseTotalList()
-            handleEventMouseListReceiver()
-    
-    
-            addChatListUser() //su ly khi nhan vao them
-            filterListTotalUser()
-            filterCheckedList()
-            changeName()
-            appendChatListRoll()
-        })
+        renderTotalUser() //block ben phai
+        checkRoomAndUser();
+        scrollChatList() //scroll thanh chat xuong
+        closeDialogByOverlay();
+        eventSendMessage() //sy ly khi gui tinh nhan
+        hideChatList() //su ly khi nhan vao Ẩn
+        addChatListGroup()
+        handleDialogCreateGroup() //su ly khi nhan vao
+        handleDialogAddUserToGroups()
+        handleDialogListUser()
+        handleDialogAddUsersToGroup()
+        handleClickReceiver() //
+        handleClickVideoCall()
+        handleEventMouseTotalList()
+        handleEventMouseListReceiver()
+
+
+        addChatListUser() //su ly khi nhan vao them
+        filterListTotalUser()
+        filterCheckedList()
+        changeName()
+        appendChatListRoll()
     }
     main()
     
@@ -2242,7 +2248,7 @@ $(document).ready(()=>{
         console.log(userOnline)
     })
 
-    socket.on('add chat list', async function({isActive, idRoom, nickname, receiver, groupName, avatar, isPersonal}){
+    socket.on('add chat list', async function({isActive, idRoom, nicknameRoom, receiver, groupName, avatar, isPersonal, countUnRead}){
         var container = $(`.list-chat-user-item[data-id=${idRoom}]`);
         var firstChild = $('#list-chat-user .list-chat-user-item:first-child');
         var option = $('#filter-checked-list').find('.dialog__option-container.active').data('option')
@@ -2250,7 +2256,6 @@ $(document).ready(()=>{
         var roomOnline
         var isOnline
         var html
-        console.log({isActive, idRoom, nickname, receiver, groupName, avatar, isPersonal})
         
         if (container.length > 0){
             firstChild.before(container);
@@ -2259,10 +2264,10 @@ $(document).ready(()=>{
             isOnline = $.inArray(Number.parseInt(idRoom), roomOnline) != -1;
             html;
             if (isPersonal){
-                data = {username: receiver, nickname, id: idRoom, avatar}
+                data = {username: receiver, nicknameRoom, id: idRoom, avatar, countUnRead}
                 html = await htmlCheckedUser(data, isOnline)
             }else{
-                data = {name: groupName, id: idRoom, avatar};
+                data = {name: groupName, id: idRoom, avatar, countUnRead};
                 html = await htmlCheckedGroup(data, isOnline);
             }
             $('#list-chat-user').prepend(html)
@@ -2285,24 +2290,33 @@ $(document).ready(()=>{
     })
 
 
-    //khi mà sender send message thì sẽ hiện lên trên màng hình của sender
+    function getValueUnread(pastNotification){
+        if (!pastNotification) return 1;
+        if ((parseInt(pastNotification) < 5) == false) return "5+";
+        return parseInt(pastNotification) + 1;
+    }
+
+
+    //render message in chat list, render message, time, unRead in list user item when send message  
     socket.on('server send message', async ({message, sender, idRoom})=>{
         console.log({message, sender, idRoom})
-        var html = ''
-        var isCurrentUserAtRoom = getCurrentIdRoom() === idRoom
+        var html = '' //html code to render message
+        var isCurrentUserAtRoom = getCurrentIdRoom() === idRoom //check is user in room
         var currentUser = await getCurrentUser()
         var date
-        var isTimeLine
-        var isShowTime
+        var isTimeLine//time line on message
+        var isShowTime//time in message
         var messageNearest
         var infoSender
-
-
-        var containerEle = $('#list-chat-user').find(`.list-chat-user-item[data-id=${idRoom}]`)
-        var unreadEle = containerEle.find('.text-unread')
+        var containerEle = $('#list-chat-user').find(`.list-chat-user-item[data-id=${idRoom}]`)//list user item
+        var unreadEle = containerEle.find('.text-unread')//
         var menuEle = containerEle.find('.menu-container');
-        var value = parseInt(unreadEle.text()) + 1 || 1;
+        var value;
+        
+        //check to add notification in list user chat item
+        value = getValueUnread(unreadEle.text());
 
+        //if receiver in room
         if (isCurrentUserAtRoom){
             date = new Date();
             isTimeLine = 1;//1 is true in sql
@@ -2311,24 +2325,29 @@ $(document).ready(()=>{
             messageNearest = await getMessageAtIndex(idRoom, 1);
             infoSender = await getUserInRoomByUsernameIdRoom(sender, idRoom);
 
+            //if there is a message
             if (messageNearest){
                 //if two dates are equal. time line should be dont display. so it set is 0 
                 isTimeLine = compareDate(date, messageNearest.updatedAt) === true ? 0 : 1
                 isShowTime = (sender == messageNearest.sender && isTimeLine == false);
             }
             
+            
             if (isShowTime){
+                //remove avatar and time of message above
                 $('#list-message li').last().find('img.avatar').remove()
                 $('#list-message li').last().find('.message__content-time').remove()
             }
             // console.log(isTimeLine, renderTimeLine())
             html += (isTimeLine) ? htmlTimeLine() : ''; 
             html += await htmlMessage(sender, infoSender.nickname, message, date, true)
-            $('#list-chat-user').find(`.list-chat-user-item[data-id=${idRoom}]`).find('.text-message').text(message)
+            console.log($('#list-chat-user').find(`.list-chat-user-item[data-id=${idRoom}]`))
             $('#list-message').append(html)
             scrollChatList()
-            socket.emit('set unread field', {value: 0, idRoom, receiver: currentUser.username})
-        }else{
+            //emit to set unRead equal zero
+            console.log("set unread", {idRoom, receiver: currentUser.username, inIncrase: true})
+            socket.emit('set unread field', {idRoom, username: currentUser.username, inIncrase: true})
+        }else{//receiver not in room
             if (unreadEle.length == 0){
                 html = htmlUnread()
                 menuEle.append(html);
@@ -2336,12 +2355,15 @@ $(document).ready(()=>{
                 unreadEle.text(value);
             }
         }
+        //add message in list user item
+        containerEle.find('.text-message').text(message)
+        containerEle.find('.text-time').text('1m')
     })
 
     socket.on('new user connect', (listRoomOnline)=>{
         console.log('newUserConnetOnlySender', listRoomOnline);
         var userOnline = $('#list-chat-user').find('.list-chat-user-item').toArray();
-        
+        console.log(userOnline)
         userOnline.forEach((user)=>{
             if ($.inArray($(user).data('id'), listRoomOnline) != -1){
                 $(user).find('.circle').addClass('online');
@@ -2364,13 +2386,9 @@ $(document).ready(()=>{
         var infoSender = await getUserByUsername(sender);
         var isReply = await alertHasButton(`You have a call from ${infoSender.nickname}`)
         if (isReply){
-            window.open('/video-call/' + idRoom, '', 'width=1280px, height=1024px');
+            window.open('/video-call/' + idRoom, '', 'width=400px, height=1024px');
         }
     }))
-
-    socket.on('test room online', (listRoomOnline)=>{
-        console.log("list room online", listRoomOnline);
-    })
     
     socket.on('error cant send message', (text)=>{
         alertHasButton(text);

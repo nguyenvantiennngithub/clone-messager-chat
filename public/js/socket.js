@@ -19,8 +19,6 @@ function socket(io){
             var listRoomOnline = await functionHelper.filterAndGetRoomOnline(io.sockets.adapter.rooms, {username: socket.username});
             socket.broadcast.emit('user disconnect', listRoomOnline);
             
-
-
             //handle video call when user leave room
             console.log("disconnect", socket.idRoom, socket.peerId)
             socket.to(socket.idRoom).broadcast.emit('someone left room', socket.peerId);
@@ -43,7 +41,7 @@ function socket(io){
             sqlHelper.insertMessage(sender, idRoom, message, isTimeLine);
 
             usersInGroup.forEach((user)=>{
-                sqlHelper.setUnRead({idRoom, receiver: user, isIncrease: true});
+                sqlHelper.setUnRead({idRoom, username: user, isIncrease: true});
                 sqlHelper.emit(user, 'server send message', {message, idRoom, sender}, io)
             })
 
@@ -65,6 +63,7 @@ function socket(io){
         })
 
         socket.on('set unread field', function(data){
+            console.log(data)
             sqlHelper.setUnRead(data);
         })
 

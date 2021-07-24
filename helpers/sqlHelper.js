@@ -237,18 +237,18 @@ class functionClass{
         })
     }
 
-    setUnRead({idRoom, receiver, isIncrease}){
+    setUnRead({idRoom, username, isIncrease}){
         if (isIncrease){
             var sql = `
             update rooms 
             set countUnRead=countUnRead+1
-            where id='${idRoom}' AND username='${receiver}'
+            where id='${idRoom}' AND username='${username}'
             `    
         }else{
             var sql = `
             update rooms 
             set countUnRead=0
-            where id='${idRoom}' AND username='${receiver}'
+            where id='${idRoom}' AND username='${username}'
             `
         }
         

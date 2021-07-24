@@ -13,10 +13,11 @@ router.get('/chat/:idroom', middleware.checkAuth, homeController.chat)
 router.post('/change-name', middleware.checkAuth, homeController.changeNameThreadChat)
 router.post('/appoint-admin-group', middleware.checkAuth, homeController.appointGroupAdmin)
 router.post('/create-or-add-chat-list-personal', middleware.checkAuth, homeController.createOrAddChatListPersonal)
-router.post('/add-user-to-groups', middleware.checkAuth, homeController.addUserToGroups)
+router.post('/add-users-to-groups', middleware.checkAuth, homeController.addUsersToGroups)
 router.post('/hide-chat-list', middleware.checkAuth, homeController.hideChatList)
 router.post('/kick-out-group', middleware.checkAuth, homeController.kickOutGroup)
 router.post('/create-group-chat', middleware.checkAuth, homeController.createGroupChat)
-router.post('/set-updatedAt-group-chat', middleware.checkAuth, homeController.setUpdatedGroupChat)
+router.post('/send-message', middleware.checkAuth, homeController.sendMessage)
+router.post('/add-chat-list-group', middleware.checkAuth, homeController.addChatListGroup)
 
 module.exports = router

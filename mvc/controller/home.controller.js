@@ -43,12 +43,13 @@ class homeController{
 
         const io = req.app.get('socketio') //lay socket
         const currentUser = res.locals.username
+        var nickname;
         //nhận data tùy vào add 1 user hoặc add nhiều user
         var receiver = req.body.receiver || req.body['receivers[]'] || req.body.receivers
         if (!Array.isArray(receiver)){
             receiver = [receiver]
         }
-
+        const {isShowReceiver} = req.body
         // console.log(receiver, req.body, req.body.receivers);
         var infoSender = await sqlHelper.getInfoUser(currentUser);
         var infoReceiver;
@@ -56,6 +57,7 @@ class homeController{
         // console.log("addChatList", {currentUser, receiver})
         for (const user of receiver){
             // get thông tin của sender và receier 
+
             infoReceiver = await sqlHelper.getInfoUser(user);
             // console.log("==infoReceiver", infoReceiver, user);
             var getIdRoom = await sqlHelper.getIdRoom(currentUser, user);
@@ -67,17 +69,21 @@ class homeController{
                 //set updatedAt của sender 
                 sqlHelper.setUpdatedAt(currentUser, idRoom, 1)
                 sqlHelper.setUpdatedAt(user, idRoom, 1)
+                var infoReceiverRoom = await sqlHelper.getUserInRoomByUsernameIdRoom(user, idRoom);
+                nickname = infoReceiverRoom.nickname;
+
             }else{//conf ko thì là chưa có room\
                 // insert vào db cho sender và receiver
                 sqlHelper.insertAddChatListPersonal(currentUser, idRoom, 1, infoSender.nickname);//insert cho sender
-                sqlHelper.insertAddChatListPersonal(user, idRoom, 0, infoReceiver.nickname);//insert cho receiver 
+                sqlHelper.insertAddChatListPersonal(user, idRoom, 0, infoReceiver.nickname);//insert cho receiver
+                nickname = infoReceiver.nickname
             }
             // emit tới sender nên đưa thông tin của receiver để render  
             // isActive là khi bên client bắt đc sk thì nó add class active vào cho nó để nó nổi bật lên ko
             var dataReceiver = {
                 receiver: currentUser, 
                 idRoom: idRoom, 
-                nickname: infoSender.nickname, 
+                nicknameRoom: infoSender.nickname, 
                 avatar: infoSender.avatar,
                 isActive: false, 
                 isPersonal: true
@@ -86,13 +92,15 @@ class homeController{
             var dataSender = {
                 receiver: receiver, 
                 idRoom: idRoom,
-                nickname: infoReceiver.nickname,
+                nicknameRoom: nickname,
                 avatar: infoReceiver.avatar,
-                isActive: req.body.isShowReceiver, 
+                isActive: isShowReceiver, 
                 isPersonal: true
             }
 
-            sqlHelper.emit(user, 'add chat list', dataReceiver, io)
+            if (isShowReceiver){
+                sqlHelper.emit(user, 'add chat list', dataReceiver, io)
+            }
             sqlHelper.emit(currentUser, 'add chat list', dataSender, io)
         }
         var response = {"status" : 200} 
@@ -138,7 +146,7 @@ class homeController{
 
 
 
-    async addUserToGroups(req, res, next){
+    async addUsersToGroups(req, res, next){
         const io = req.app.get('socketio')
         var usernames = req.body.username || req.body['usernames[]'];
         var idRooms = req.body.idRoom || req.body['idRooms[]']
@@ -159,7 +167,7 @@ class homeController{
                 var data = {
                     groupName: infoGroup.name, 
                     idRoom: idRoom, 
-                    isActive: true, 
+                    isActive: false, 
                     isPersonal: false,
                     avatar: infoGroup.avatar,
                 }
@@ -172,10 +180,10 @@ class homeController{
     }
 
     //khi mà có tinh nhắn
-    async setUpdatedGroupChat(req, res, next){
+    async sendMessage(req, res, next){
+        console.log(req.body)
         const io = req.app.get('socketio')
-        const {isShowReceiver, idRoom} = req.body;
-        var isShowReceiverNumber = isShowReceiver ? 1 : 0;
+        const {idRoom} = req.body;
         const currentUser = res.locals.username
         const usernames = await sqlHelper.getUserInRoom(idRoom)
         const infoGroup = await sqlHelper.getInfoGroupByUsernameIdRoom(currentUser, idRoom);
@@ -184,24 +192,38 @@ class homeController{
             return sqlHelper.emit(currentUser, 'error cant send message', 'You are not in the room', io)
         }
 
-
         var data = {
             groupName: infoGroup.name, 
             idRoom: idRoom, 
             avatar: infoGroup.avatar,
             isPersonal: false,
             isActive: false,
+            countUnRead: 1,
         }
 
         usernames.forEach((user)=>{
-            sqlHelper.setUpdatedAt(user, idRoom, isShowReceiverNumber);
-            if (isShowReceiver || user == currentUser){
-                sqlHelper.emit(user, 'add chat list', data, io)
-            }
+            sqlHelper.setUpdatedAt(user, idRoom, 1);
+            sqlHelper.emit(user, 'add chat list', data, io)
         })
 
 
         res.end();
+    }
+
+    async addChatListGroup(req, res, next){
+        var {idRoom} = req.body;
+        const io = req.app.get('socketio')
+        const currentUser = res.locals.username;
+        const infoGroup = await sqlHelper.getInfoGroupByUsernameIdRoom(currentUser, idRoom);
+        var data = {
+            groupName: infoGroup.name, 
+            idRoom: idRoom, 
+            avatar: infoGroup.avatar,
+            isPersonal: false,
+            isActive: true,
+        }
+        sqlHelper.setUpdatedAt(currentUser, idRoom, 1);
+        sqlHelper.emit(currentUser, 'add chat list', data, io)
     }
 
     hideChatList(req, res, next){ //ham an chat list
