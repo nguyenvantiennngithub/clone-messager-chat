@@ -94,13 +94,11 @@ class homeController{
                 idRoom: idRoom,
                 nicknameRoom: nickname,
                 avatar: infoReceiver.avatar,
-                isActive: isShowReceiver, 
+                isActive: false, 
                 isPersonal: true
             }
 
-            if (isShowReceiver){
-                sqlHelper.emit(user, 'add chat list', dataReceiver, io)
-            }
+            sqlHelper.emit(user, 'add chat list', dataReceiver, io)
             sqlHelper.emit(currentUser, 'add chat list', dataSender, io)
         }
         var response = {"status" : 200} 

@@ -18,8 +18,6 @@ const port = process.env.PORT || 8080
 const passport = require('passport')
 const login = require('./helpers/login')
 
-
-
 app.use(express.static('./public'))
 app.set('view engine', 'ejs')
 app.set('views', './mvc/views')
@@ -28,7 +26,6 @@ app.use(fileupload())
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(cookieParser())
-
 
 // run local
 var options = {
@@ -40,7 +37,7 @@ var options = {
 };
 var sessionStore = new MySQLStore(options);
 var sess = {
-    secret: 'this is secret',
+    secret: process.env.SESSION_SECRET,
 	store: sessionStore,
 	resave: false,
     saveUninitialized: false,
