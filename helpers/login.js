@@ -27,7 +27,7 @@ function loginFacebook(passport, io){
     passport.use(new FacebookStrategy({
         clientID: process.env.CLIENT_ID_FB,
         clientSecret: process.env.CLIENT_SECRET_FB,
-        callbackURL: "http://localhost:8080/auth/facebook/login",
+        callbackURL: process.env.DOMAIN + "/auth/facebook/login",
         profileFields: ['displayName','photos']
     },
         //store username=id nickname=displayName, avatar=photos.value, password=""
@@ -47,7 +47,7 @@ function loginFacebook(passport, io){
     passport.use(new GoogleStrategy({
         clientID: process.env.CLIENT_ID_GG,
         clientSecret: process.env.CLIENT_SECRET_GG,
-        callbackURL: "http://localhost:8080/auth/google/login"
+        callbackURL: process.env.DOMAIN + "/auth/google/login"
       },
     async function(accessToken, refreshToken, profile, done) {
         var user = {
