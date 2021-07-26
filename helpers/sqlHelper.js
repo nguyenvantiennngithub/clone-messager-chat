@@ -1,3 +1,4 @@
+const cloudinary = require('cloudinary').v2
 const db = require('../db/connect.db')
 const bcrypt = require('bcryptjs')
 const got = require('got')
@@ -293,18 +294,27 @@ class functionClass{
     
     async checkUserAndInsertLogin(user){
         var respose = await got(user.avatar, { responseType: 'buffer' });
-        user.buffer = respose.body;
+        var result;
         user.md5 = md5(user.avatar);
-        user.avatarDB = '/uploads/' + user.md5;
+        user.avatarDB = process.env.IS_LOCAL == 'TRUE' ? '/uploads/' + user.md5 : respose.requestUrl;
         user.avatarServer = 'public/uploads/' + user.md5;
         
-        var result = await this.checkIsExistsUserByUsername(user.username);
-
+        result = await this.checkIsExistsUserByUsername(user.username);
         if (result.length == 0){
+            
             this.insertUser(user.username, user.nickname, '', user.avatarDB);
-            fs.writeFile(user.avatarServer, user.buffer, function(err){
-                if (err) throw err
-            });
+
+            if (process.env.IS_LOCAL == 'TRUE'){
+                fs.writeFile(user.avatarServer, respose.buffer, function(err){
+                    if (err) throw err
+                });
+            }else{
+                cloudinary.uploader.upload(respose.requestUrl, function(err, result){
+                    if (err) throw err
+                })
+            }
+            
+
         }
     }
 
