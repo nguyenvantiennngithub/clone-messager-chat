@@ -52,14 +52,20 @@ class authController{
         const avatar = req.files.avatar;
         const hashPsw = bcrypt.hashSync(password, saltRounds);
         const uploads = "./public/uploads/" + avatar.md5;
-        const avatarDB = "/uploads/" + avatar.md5;
+        const avatarDB = process.env.IS_LOCAL == 'TRUE' ? "/uploads/" + avatar.md5 : avatar.tempFilePath;
+        console.log('avatar', avatar)
         console.log(avatar)
         var isExistsUser = await sqlHelper.isExistsUser(username)
         if (!isExistsUser){
-
-            avatar.mv(uploads, function(err){
-                if (err) throw err;
-            })
+            if (process.env.IS_LOCAL == 'TRUE'){
+                avatar.mv(uploads, function(err){
+                    if (err) throw err;
+                })
+            }else{
+                cloudinary.uploader.upload(avatar.tempFilePath, function(err, result){
+                    if (err) throw err
+                })
+            }
 
             sqlHelper.insertUser(username, nickname, hashPsw, avatarDB);
             io.emit('new user', {username, nickname})
