@@ -1,6 +1,7 @@
 const db = require('../../db/connect.db')
 const bcrypt = require('bcryptjs')
 const sqlHelper = require('../../helpers/sqlHelper')
+const cloudinary = require('cloudinary').v2
 
 
 
