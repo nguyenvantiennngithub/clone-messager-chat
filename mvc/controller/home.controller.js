@@ -49,7 +49,6 @@ class homeController{
         if (!Array.isArray(receiver)){
             receiver = [receiver]
         }
-        const {isShowReceiver} = req.body
         // console.log(receiver, req.body, req.body.receivers);
         var infoSender = await sqlHelper.getInfoUser(currentUser);
         var infoReceiver;
@@ -72,7 +71,7 @@ class homeController{
                 var infoReceiverRoom = await sqlHelper.getUserInRoomByUsernameIdRoom(user, idRoom);
                 nickname = infoReceiverRoom.nickname;
 
-            }else{//conf ko thì là chưa có room\
+            }else{//conf ko thì là chưa có room
                 // insert vào db cho sender và receiver
                 sqlHelper.insertAddChatListPersonal(currentUser, idRoom, 1, infoSender.nickname);//insert cho sender
                 sqlHelper.insertAddChatListPersonal(user, idRoom, 0, infoReceiver.nickname);//insert cho receiver
