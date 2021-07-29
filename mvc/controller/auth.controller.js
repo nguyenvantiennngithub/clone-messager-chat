@@ -53,7 +53,8 @@ class authController{
         const avatar = req.files.avatar;
         const hashPsw = bcrypt.hashSync(password, saltRounds);
         const uploads = "./public/uploads/" + avatar.md5;
-        const avatarDB = process.env.IS_LOCAL == 'TRUE' ? "/uploads/" + avatar.md5 : avatar.tempFilePath;
+        // const href = (process.env.IS_LOCAL == 'TRUE') ? "/uploads/" : 'https://res.cloudinary.com/vantiennn/image/upload/v1627528384/uploads/'
+        const href = "https://res.cloudinary.com/vantiennn/image/upload/v1627528384/uploads/"
         console.log('avatar', avatar)
         console.log(avatar)
         var isExistsUser = await sqlHelper.isExistsUser(username)
@@ -63,12 +64,12 @@ class authController{
                     if (err) throw err;
                 })
             }else{
-                cloudinary.uploader.upload(avatar.tempFilePath, function(err, result){
+                cloudinary.uploader.upload(avatar.tempFilePath, {public_id: href + avatar.md5}, function(err, result){
                     if (err) throw err
                 })
             }
 
-            sqlHelper.insertUser(username, nickname, hashPsw, avatarDB);
+            sqlHelper.insertUser(username, nickname, hashPsw, href + avatar.md5);
             io.emit('new user', {username, nickname})
             return res.redirect("/")
         }else{ 

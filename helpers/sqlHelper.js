@@ -295,26 +295,25 @@ class functionClass{
     async checkUserAndInsertLogin(user){
         var respose = await got(user.avatar, { responseType: 'buffer' });
         var result;
-        user.md5 = md5(user.avatar);
-        user.avatarDB = process.env.IS_LOCAL == 'TRUE' ? '/uploads/' + user.md5 : respose.requestUrl;
+        var index = respose.url.indexOf('&height')
+        var url = respose.url.slice(0, index)
+        user.md5 = md5(url);
+        user.avatarDB = process.env.IS_LOCAL == 'TRUE' ? '/uploads/' : 'https://res.cloudinary.com/vantiennn/image/upload/v1627528384/uploads/' 
         user.avatarServer = 'public/uploads/' + user.md5;
-        
         result = await this.checkIsExistsUserByUsername(user.username);
+
         if (result.length == 0){
-            
-            this.insertUser(user.username, user.nickname, '', user.avatarDB);
+            this.insertUser(user.username, user.nickname, '', user.avatarDB + user.md5);
 
             if (process.env.IS_LOCAL == 'TRUE'){
                 fs.writeFile(user.avatarServer, respose.buffer, function(err){
                     if (err) throw err
                 });
             }else{
-                cloudinary.uploader.upload(respose.requestUrl, function(err, result){
+                cloudinary.uploader.upload(respose.requestUrl, {public_id: avatarDB + user.md5},function(err, result){
                     if (err) throw err
                 })
             }
-            
-
         }
     }
 
