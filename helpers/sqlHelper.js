@@ -37,7 +37,10 @@ class functionClass{
             var getIdSql = `select max(id) as 'maxId' from rooms `
             db.query(getIdSql, function (err, result){
                 if (err) return reject(err);
-                resolve(result[0].maxId)
+                if (result.length == 0){
+                    return resolve(0);
+                }
+                return resolve(result[0].maxId)
                 // console.log("Function/getMaxIdRoom", result[0].maxId);
 
             })

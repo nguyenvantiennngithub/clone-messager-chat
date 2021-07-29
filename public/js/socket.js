@@ -33,21 +33,24 @@ function socket(io){
             
             var date = new Date();
 
+            
+
             if (messageNearest){
                 isTimeLine = functionHelper.compareDate(date, messageNearest.updatedAt) === true ? 0 : 1
                 isShowTimeMessageNearest = (sender == messageNearest.sender && isTimeLine == false);
             }
-
+            if (isShowTimeMessageNearest){
+                sqlHelper.setIsShowTimeByMessageId(messageNearest.id);
+            }
             sqlHelper.insertMessage(sender, idRoom, message, isTimeLine);
-
+           
             usersInGroup.forEach((user)=>{
                 sqlHelper.setUnRead({idRoom, username: user, isIncrease: true});
                 sqlHelper.emit(user, 'server send message', {message, idRoom, sender}, io)
             })
+            
 
-            if (isShowTimeMessageNearest){
-                sqlHelper.setIsShowTimeByMessageId(messageNearest.id);
-            }
+            
         })
 
 

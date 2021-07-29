@@ -94,6 +94,7 @@ async function htmlCheckedUser({username, nicknameRoom, id, avatar, countUnRead 
             <div class="container-text">
                 <span class="text-message">${message}</span>
                 <span class="text-time">${time}</span>
+
             </div>
         </div>
         <div class="dropdown ml-auto menu-container">
@@ -135,6 +136,7 @@ async function htmlCheckedGroup({name, id, avatar, countUnRead = ''}, isOnline){
             <div class="container-text">
                 <span class="text-message">${message}</span>
                 <span class="text-time">${time}</span>
+
             </div>
         </div>
         <div class="dropdown ml-auto menu-container">
@@ -171,7 +173,7 @@ function htmlTimeLine(date){
 async function htmlMessage(sender, nickname, message, date, isShowTime){
     var currentUser = await getCurrentUser();
     var username = await getUserByUsername(sender)
-    console.log(sender, nickname, message, date, isShowTime)
+    
     date = formatDate(date);
 
     var minutes = date.getMinutes();
@@ -179,13 +181,14 @@ async function htmlMessage(sender, nickname, message, date, isShowTime){
 
     var html = '';
 
-    html += (currentUser.username !== sender) ? '<li class="message">' : '<li class="message message--reverse">';
+    html += (currentUser.username !== sender) ? `<li class="message" data-sender="${sender}">` : `<li class="message message--reverse" data-sender="${sender}">`;
     html += `<div class="message__avatar">`
     html += (isShowTime) ? `<img src="${username.avatar}" alt="" class="avatar avatar-16">` : '';
     html += `</div>
             <div class="message__content">
                 <span class="message__content-name ">${nickname}</span>
-                <span class="message__content-message">${message}</span>`
+                <span class="message__content-message">${message}</span>
+                <input class="message__content-date" type="hidden" value="${date.getDate()}-${date.getMonth()}-${date.getFullYear()}">`
     html += (isShowTime) ? `<span class="message__content-time">${date.getHours()}:${minutes}</span>` : '';
     html += ' </div></li>'
     
@@ -1834,7 +1837,7 @@ function handleEventMouseListReceiver(){
         //remove notification
         if (unreadEle.length == 1){
             unreadEle.remove();
-            socket.emit('set unread field', {idRoom, username: currentUser.username, inIncrase: false})
+            socket.emit('set unread field', {idRoom, username: currentUser.username, isIncrase: false})
         }
 
     })
@@ -2195,7 +2198,7 @@ $(document).ready(()=>{
             showListMessage()
         }
         if (notificationEle.length == 1){
-            socket.emit('set unread field', {username: currentUser.username, idRoom: currentIdRoom, inIncrase: false});
+            socket.emit('set unread field', {username: currentUser.username, idRoom: currentIdRoom, isIncrase: false});
             notificationEle.remove();
         }
     }
@@ -2320,49 +2323,43 @@ $(document).ready(()=>{
         var html = '' //html code to render message
         var isCurrentUserAtRoom = getCurrentIdRoom() === idRoom //check is user in room
         var currentUser = await getCurrentUser()
-        var date
-        var isTimeLine//time line on message
-        var isShowTime//time in message
-        var messageNearest
         var infoSender
         var containerEle = $('#list-chat-user').find(`.list-chat-user-item[data-id=${idRoom}]`)//list user item
         var unreadEle = containerEle.find('.text-unread')//
         var menuEle = containerEle.find('.menu-container');
         var value;
-        
-        //check to add notification in list user chat item
-        value = getValueUnread(unreadEle.text());
+        var isTimeLine;
 
+        
+        value = getValueUnread(unreadEle.text());
         //if receiver in room
         if (isCurrentUserAtRoom){
-            date = new Date();
-            isTimeLine = 1;//1 is true in sql
-            isShowTime = true;
-            //becausee new send message is already insert in db should be we set index at 1
-            messageNearest = await getMessageAtIndex(idRoom, 1);
+
+            var lastMessage = $('#list-message').find('.message').last();
+            var isRemoveTime = sender == $(lastMessage).data('sender')
+            var now = new Date();
+            //get date of last message 0: day 1:month 2:year
+            var dateLastMessage = $(lastMessage).find('.message__content-date').val().split('-')
             infoSender = await getUserInRoomByUsernameIdRoom(sender, idRoom);
 
-            //if there is a message
-            if (messageNearest){
-                //if two dates are equal. time line should be dont display. so it set is 0 
-                isTimeLine = compareDate(date, messageNearest.updatedAt) === true ? 0 : 1
-                isShowTime = (sender == messageNearest.sender && isTimeLine == false);
+            if (dateLastMessage[0] == now.getDate() && dateLastMessage[1] == now.getMonth() && dateLastMessage[2] == now.getFullYear() ){
+                isTimeLine = false;
+            }else{
+                isTimeLine = true;
             }
             
-            
-            if (isShowTime){
+            if (isRemoveTime){
                 //remove avatar and time of message above
                 $('#list-message li').last().find('img.avatar').remove()
                 $('#list-message li').last().find('.message__content-time').remove()
             }
             html += (isTimeLine) ? htmlTimeLine() : ''; 
-            html += await htmlMessage(sender, infoSender.nickname, message, date, true)
+            html += await htmlMessage(sender, infoSender.nickname, message, now, true)
             console.log($('#list-chat-user').find(`.list-chat-user-item[data-id=${idRoom}]`))
             $('#list-message').append(html)
             scrollChatList()
             //emit to set unRead equal zero
-            console.log("set unread", {idRoom, receiver: currentUser.username, inIncrase: true})
-            socket.emit('set unread field', {idRoom, username: currentUser.username, inIncrase: true})
+            socket.emit('set unread field', {idRoom, username: currentUser.username, isIncrase: true})
         }else{//receiver not in room
             if (unreadEle.length == 0){
                 html = htmlUnread()
