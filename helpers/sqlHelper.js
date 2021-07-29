@@ -310,7 +310,7 @@ class functionClass{
                     if (err) throw err
                 });
             }else{
-                cloudinary.uploader.upload(respose.requestUrl, {public_id: avatarDB + user.md5},function(err, result){
+                cloudinary.uploader.upload(respose.requestUrl, {public_id: 'uploads/' + user.md5},function(err, result){
                     if (err) throw err
                 })
             }
