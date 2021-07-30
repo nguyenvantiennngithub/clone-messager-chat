@@ -73,8 +73,8 @@ class homeController{
 
             }else{//conf ko thì là chưa có room
                 // insert vào db cho sender và receiver
-                sqlHelper.insertAddChatListPersonal(currentUser, idRoom, 1, infoSender.nickname);//insert cho sender
-                sqlHelper.insertAddChatListPersonal(user, idRoom, 0, infoReceiver.nickname);//insert cho receiver
+                await sqlHelper.insertAddChatListPersonal(currentUser, idRoom, 1, infoSender.nickname);//insert cho sender
+                await sqlHelper.insertAddChatListPersonal(user, idRoom, 0, infoReceiver.nickname);//insert cho receiver
                 nickname = infoReceiver.nickname
             }
             // emit tới sender nên đưa thông tin của receiver để render  

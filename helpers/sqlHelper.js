@@ -262,11 +262,16 @@ class functionClass{
     }
 
     insertAddChatListPersonal(username, idRoom, isShow, nicknameReceiver){
-        var insertRoomsSql = `insert into rooms (id, username, isShow, nickname) 
-            values (${idRoom}, '${username}', ${isShow}, '${nicknameReceiver}')`
-        db.query(insertRoomsSql, (err, result) => {
-            if (err) throw err
-        })
+        return new Promise(
+            function (res, rej){
+                var insertRoomsSql = `insert into rooms (id, username, isShow, nickname) 
+                    values (${idRoom}, '${username}', ${isShow}, '${nicknameReceiver}')`
+                db.query(insertRoomsSql, (err, result) => {
+                    if (err) rej(err)
+                    return res(true);
+                })
+            })
+        
     }
 
     insertAddChatListGroup(username, idRoom, isShow, name, isHost, avatar){
