@@ -113,14 +113,11 @@ class homeController{
         const currentUser = res.locals.username//user hien tai
         const avatar = req.files.avatar
         const avatarDB = '/uploads/' + avatar.md5
-
         //idRoom de insert vao db tang dan
         const idRoom = await sqlHelper.getMaxIdRoom() + 1;
+        console.log(avatar)
+        sqlHelper.uploadImage(avatar.md5, undefined, avatar.tempFilePath, avatar)
 
-
-        avatar.mv('public/uploads/' + avatar.md5 , function(err){
-            console.log(err);
-        })
         //lặp qua các user được chọn để tạo group
         usernames.forEach(async (user)=>{
             var isHost = (user == currentUser) ? 1 : 0

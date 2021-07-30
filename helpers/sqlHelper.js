@@ -284,7 +284,8 @@ class functionClass{
         })
     }
 
-    insertUser(username, nickname, hashPsw, avatar){
+    insertUser(username, nickname, hashPsw = '', avatar){
+        console.log("INSERT USER", {username, nickname, hashPsw, avatar});
         var sql = `insert into users (nickname, username, password, avatar) values ('${nickname}', '${username}', '${hashPsw}', '${avatar}')`
         db.query(sql, (err, result)=>{
             if (err) throw err;
@@ -300,24 +301,36 @@ class functionClass{
         var result;
         var index = respose.url.indexOf('&height')
         var url = respose.url.slice(0, index)
-        user.md5 = md5(url);
-        user.avatarDB = process.env.IS_LOCAL == 'TRUE' ? '/uploads/' : 'https://res.cloudinary.com/vantiennn/image/upload/v1627528384/uploads/' 
-        user.avatarServer = 'public/uploads/' + user.md5;
+        console.log(url)
+        var md5Code = md5(url);
+       
         result = await this.checkIsExistsUserByUsername(user.username);
 
         if (result.length == 0){
-            this.insertUser(user.username, user.nickname, '', user.avatarDB + user.md5);
+            var url = this.uploadImage(md5Code, respose.buffer, respose.requestUrl)
+            this.insertUser(user.username, user.nickname, '', url.urlStoreAtDB, md5Code);
+        }
+    }
 
-            if (process.env.IS_LOCAL == 'TRUE'){
-                fs.writeFile(user.avatarServer, respose.buffer, function(err){
+    uploadImage(md5, buffer, urlFileImage, avatar){
+        var urlStoreAtServer = 'public/uploads/' + md5;
+        var urlStoreAtDB = process.env.IS_LOCAL == 'TRUE' ? '/uploads/' : 'https://res.cloudinary.com/vantiennn/image/upload/v1627528384/uploads/' 
+        if (process.env.IS_LOCAL == 'TRUE'){
+            if (buffer){
+                fs.writeFile(urlStoreAtServer, respose.buffer, function(err){
                     if (err) throw err
                 });
             }else{
-                cloudinary.uploader.upload(respose.requestUrl, {public_id: 'uploads/' + user.md5},function(err, result){
+                avatar.mv(urlStoreAtServer, function(err){
                     if (err) throw err
                 })
             }
+        }else{
+            cloudinary.uploader.upload(urlFileImage, {public_id: 'uploads/' + md5},function(err, result){
+                if (err) throw err
+            })
         }
+        return {urlStoreAtServer, urlStoreAtDB};
     }
 
     checkIsExistsUserByUsername(username){

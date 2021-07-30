@@ -59,15 +59,7 @@ class authController{
         console.log(avatar)
         var isExistsUser = await sqlHelper.isExistsUser(username)
         if (!isExistsUser){
-            // if (process.env.IS_LOCAL == 'TRUE'){
-            //     avatar.mv(uploads, function(err){
-            //         if (err) throw err;
-            //     })
-            // }else{
-                cloudinary.uploader.upload(avatar.tempFilePath, {public_id: 'uploads/' + avatar.md5}, function(err, result){
-                    if (err) throw err
-                })
-            // }
+            sqlHelper.uploadImage(avatar.md5, undefined, avatar.tempFilePath, avatar)
 
             sqlHelper.insertUser(username, nickname, hashPsw, href + avatar.md5);
             io.emit('new user', {username, nickname})
