@@ -2137,6 +2137,7 @@ $(document).ready(()=>{
                 idRoom: idRoom,
                 message: text
             }
+            console.log('emit send message')
             $('#input-send-message').val('')
             socket.emit('sender send message', dataMessage)
 
@@ -2171,6 +2172,7 @@ $(document).ready(()=>{
                     }
                 })
             }
+            console.log('Send message 2')
         }    
     }
 
@@ -2319,7 +2321,7 @@ $(document).ready(()=>{
 
     //render message in chat list, render message, time, unRead in list user item when send message  
     socket.on('server send message', async ({message, sender, idRoom})=>{
-        console.log({message, sender, idRoom})
+        console.log("Message", {message, sender, idRoom})
         var html = '' //html code to render message
         var isCurrentUserAtRoom = getCurrentIdRoom() === idRoom //check is user in room
         var currentUser = await getCurrentUser()
@@ -2328,7 +2330,7 @@ $(document).ready(()=>{
         var unreadEle = containerEle.find('.text-unread')//
         var menuEle = containerEle.find('.menu-container');
         var value;
-        var isTimeLine;
+        var isTimeLine = true;
 
         
         value = getValueUnread(unreadEle.text());
@@ -2339,15 +2341,18 @@ $(document).ready(()=>{
             var isRemoveTime = sender == $(lastMessage).data('sender')
             var now = new Date();
             //get date of last message 0: day 1:month 2:year
-            var dateLastMessage = $(lastMessage).find('.message__content-date').val().split('-')
+            var dateLastMessage = $(lastMessage).find('.message__content-date').val()
+            var day, month, year;
+            if (dateLastMessage){
+                [day, month, year] = dateLastMessage.split('-')
+                if (day == now.getDate() && month == now.getMonth() && year == now.getFullYear() ){
+                    isTimeLine = false;
+                }else{
+                    isTimeLine = true;
+                }
+            }
             infoSender = await getUserInRoomByUsernameIdRoom(sender, idRoom);
 
-            if (dateLastMessage[0] == now.getDate() && dateLastMessage[1] == now.getMonth() && dateLastMessage[2] == now.getFullYear() ){
-                isTimeLine = false;
-            }else{
-                isTimeLine = true;
-            }
-            
             if (isRemoveTime){
                 //remove avatar and time of message above
                 $('#list-message li').last().find('img.avatar').remove()
