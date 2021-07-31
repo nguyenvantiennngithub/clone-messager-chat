@@ -116,6 +116,7 @@ class homeController{
         //idRoom de insert vao db tang dan
         const idRoom = await sqlHelper.getMaxIdRoom() + 1;
         console.log(avatar)
+        console.log(process.env.IS_LOCAL)
         sqlHelper.uploadImage(avatar.md5, undefined, avatar.tempFilePath, avatar)
 
         //lặp qua các user được chọn để tạo group

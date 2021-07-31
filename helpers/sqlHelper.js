@@ -320,6 +320,7 @@ class functionClass{
     uploadImage(md5, buffer, urlFileImage, avatar){
         var urlStoreAtServer = 'public/uploads/' + md5;
         var urlStoreAtDB = process.env.IS_LOCAL == 'TRUE' ? '/uploads/' : 'https://res.cloudinary.com/vantiennn/image/upload/v1627528384/uploads/' 
+        console.log(process.env.IS_LOCAL)
         if (process.env.IS_LOCAL == 'TRUE'){
             if (buffer){
                 fs.writeFile(urlStoreAtServer, respose.buffer, function(err){
