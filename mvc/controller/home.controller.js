@@ -117,7 +117,7 @@ class homeController{
         const idRoom = await sqlHelper.getMaxIdRoom() + 1;
         console.log(avatar)
         console.log(process.env.IS_LOCAL)
-        sqlHelper.uploadImage(avatar.md5, undefined, avatar.tempFilePath, avatar)
+        var url = sqlHelper.uploadImage(avatar.md5, undefined, avatar.tempFilePath, avatar)
 
         //lặp qua các user được chọn để tạo group
         usernames.forEach(async (user)=>{
@@ -131,8 +131,8 @@ class homeController{
                 isHost: isHost,
                 avatar: avatarDB
             }
-
-            sqlHelper.insertAddChatListGroup(user, idRoom, 1, name, isHost, avatarDB)
+            
+            sqlHelper.insertAddChatListGroup(user, idRoom, 1, name, isHost, url.urlStoreAtDB)
             sqlHelper.emit(user, 'add chat list', data, io)
             
         })
