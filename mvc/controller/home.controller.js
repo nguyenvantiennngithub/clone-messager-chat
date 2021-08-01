@@ -129,7 +129,7 @@ class homeController{
                 isActive: isActive, 
                 isPersonal: false,
                 isHost: isHost,
-                avatar: avatarDB
+                avatar: avatarDB + avatar.md5
             }
             
             sqlHelper.insertAddChatListGroup(user, idRoom, 1, name, isHost, url.urlStoreAtDB + avatar.md5)
