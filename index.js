@@ -19,7 +19,11 @@ const login = require('./helpers/login')
 const cloudinary = require('cloudinary').v2
 const redis = require("redis");
 
-const client = redis.createClient(process.env.REDIS_URL);
+const client = redis.createClient({
+	host: process.env.REDIS_HOST,
+	port: process.env.PORT,
+	password: process.env.PASS
+});
 client.on('connect', function(){
     console.log("Connect redis")
 })
