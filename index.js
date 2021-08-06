@@ -17,7 +17,7 @@ const port = process.env.PORT || 8080
 const passport = require('passport')
 const login = require('./helpers/login')
 const cloudinary = require('cloudinary').v2
-const redis = require('./db/index.redis')
+// const redis = require('./db/index.redis')
 
 app.use(express.static('./public'))
 app.set('view engine', 'ejs')
@@ -61,7 +61,7 @@ app.use(session(sess));
 app.use(passport.initialize());
 app.use(passport.session());
 
-redis();
+// redis();
 login(passport, io);
 socket(io)
 connect()
