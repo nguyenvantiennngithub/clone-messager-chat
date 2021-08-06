@@ -2,7 +2,6 @@ var socket = io();
 var page = 1;
 var isIncreasePage = true;
 var username = $('#username').data('name');
-var messageStoreClinet = {};
 //============================================================================================================
 //---------------------------------------Function store html code-------------------------------------------------
 //============================================================================================================
@@ -668,12 +667,9 @@ function compareDate(date1, date2){
 async function renderMessage(idRoom, type){
     console.log("render message")
     var messages;
-    if (!messageStoreClinet[idRoom]){
+    
         messages = await getMessage(idRoom, page);
-        messageStoreClinet[idRoom] = messages;
-    }
-    messages = messageStoreClinet[idRoom];
-    console.log(messageStoreClinet);
+   
     var html;
     var promises = messages.reverse().map(async (message, index)=>{
         if (message.isTimeLine){
@@ -1018,6 +1014,7 @@ async function getMessageAtIndex(idRoom, index){
             return response.data;
         })
 }
+
 
 //============================================================================================================
 //---------------------------------------Function show hide dialog -------------------------------------------------
@@ -1919,6 +1916,10 @@ function submitChangeName(){
 
 $(document).ready(()=>{
     
+$('#test').click( async function(){
+    var a = await getCurrentUser()
+    console.log(a)
+})
 //==============================================================================================================
 //---------------------------------------Function handle event -------------------------------------------------
 //==============================================================================================================

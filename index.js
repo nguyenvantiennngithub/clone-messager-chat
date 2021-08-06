@@ -17,11 +17,18 @@ const port = process.env.PORT || 8080
 const passport = require('passport')
 const login = require('./helpers/login')
 const cloudinary = require('cloudinary').v2
+const redis = require("redis");
+const client = redis.createClient();
+
+client.on('connect', function(){
+    console.log("Connect redis")
+})
 
 app.use(express.static('./public'))
 app.set('view engine', 'ejs')
 app.set('views', './mvc/views')
 app.set('socketio', io) //export socket io to a global
+// app.set('redis', client) //export redis io to a global
 app.use(fileupload({
 	useTempFiles: true
 }))
@@ -55,7 +62,7 @@ var sess = {
     saveUninitialized: false,
     
     cookie:{
-        maxAge: 1000 * 60 * 60 * 24,
+        maxAge: 100 * 60 * 60 * 24,
     },
 }
 

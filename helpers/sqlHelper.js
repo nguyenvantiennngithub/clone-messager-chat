@@ -4,6 +4,9 @@ const bcrypt = require('bcryptjs')
 const got = require('got')
 const md5 = require('md5')
 const fs = require('fs')
+
+const redis = require("redis");
+const client = redis.createClient();
 class functionClass{
     //ham nay nhan vao 1 cai username 
     // async getSocketId(username){
@@ -198,6 +201,20 @@ class functionClass{
                 db.query(sql, (err, result)=>{
                     if (err) rej(err);
                     res(result[0]);
+                })
+            })
+    }
+
+    getCurrentUserAndCache(username){
+        console.log("getCurrentUserAndCache")
+        return new Promise(
+            function (res, rej){
+                var sql = `select nickname, username, avatar from users u where u.username='${username}'`
+                db.query(sql, (err, result)=>{
+                    if (err) rej(err)
+                    console.log("result", result)
+                    // client.set(`currentUser[${username}]`, JSON.stringify(result), 'EX', 1);
+                    return res(result);
                 })
             })
     }

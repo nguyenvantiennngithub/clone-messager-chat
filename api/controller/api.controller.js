@@ -2,6 +2,10 @@
 const db = require('../../db/connect.db')
 const sqlHelper = require('../../helpers/sqlHelper');
 const functionHelper = require('../../helpers/functionHelper');
+const redis = require("redis");
+const client = redis.createClient();
+const util = require('util');
+client.get = util.promisify(client.get);
 class apiController{
     //[GET] /api/users
     //lấy tất cả user
@@ -26,13 +30,55 @@ class apiController{
     //[GET] /api/users
     //lấy current user
     async currentUser(req, res, next){
+        console.log("run here")
+
         const username = res.locals.username
         const socketid = req.session.id
-        var sql = `select nickname, username, avatar from users u, sessions s where s.session_id='${socketid}' AND u.username='${username}'`
-        db.query(sql, (err, result)=>{
-            if (err) throw err
-            res.json(result)
+        var start = new Date();
+        var result;
+        client.keys('*', function(err, keys){
+            console.log(keys)
         })
+        
+        var data = await client.get(`currentUser[${username}]`);
+        console.log("DATA", data)
+        if (data){
+            console.log("CACHE")
+            result = JSON.parse(data);
+        }else{
+            console.log("API")
+            result = await sqlHelper.getCurrentUserAndCache(username);
+        }
+        var end = new Date()
+        console.log(result, );
+        res.json({...result, time: end.getTime() - start.getTime()});
+
+        // client.get(`curren   tUser[${username}]`, function(err, result){
+        //     if (err) throw err
+
+        // })
+
+
+
+        // client.get(`currentUser[${username}]`, function(err, reply){
+        //     if (err) throw err
+        //     var source;
+        //     var result;
+        //     if (reply){
+        //         console.log(reply)
+        //         source = 'CACHE';
+        //         result = reply;
+        //     }else{
+        //         
+        //     }
+        //     var end = new Date()
+        //     console.log(result)
+        //     res.json({...JSON.parse(result), time: end.getTime()-start.getTime(), source});
+
+        // })
+     
+
+        
     }
 
     async userByUsername(req, res, next){

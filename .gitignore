@@ -3,3 +3,4 @@ node_modules/
 public/uploads
 README
 tmp
+redis-6.2.5
