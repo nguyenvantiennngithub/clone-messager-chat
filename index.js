@@ -19,7 +19,7 @@ const login = require('./helpers/login')
 const cloudinary = require('cloudinary').v2
 const url = require('url');
 const redis = require("redis");
-console.log(process.env.REDISCLOUD_URL)
+console.log(process.env.REDIS_TLS_URL)
 // const client = redis.createClient(process.env.REDIS_URL, {
 // 	host: process.env.REDIS_HOST,
 // 	port: process.env.REDIS_PORT,
@@ -27,7 +27,7 @@ console.log(process.env.REDISCLOUD_URL)
 // });
 
 
-var redisURL = url.parse(process.env.REDISCLOUD_URL);
+var redisURL = url.parse(process.env.REDIS_TLS_URL);
 var client = redis.createClient(redisURL.port, redisURL.hostname, {no_ready_check: true});
 client.auth(redisURL.auth.split(":")[1]);
 
