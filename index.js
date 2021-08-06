@@ -19,8 +19,6 @@ const login = require('./helpers/login')
 const cloudinary = require('cloudinary').v2
 const redis = require('./db/connect.redis')
 
-
-
 app.use(express.static('./public'))
 app.set('view engine', 'ejs')
 app.set('views', './mvc/views')
@@ -32,15 +30,11 @@ app.use(fileupload({
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 app.use(cookieParser())
-console.log(process.env.CLIENT_CLOUD_NAME
-	,process.env.CLIENT_API_KEY
-	,process.env.CLIENT_API_SECRET)
-// if (process.env.IS_LOCAL == 'FALSE'){
-	cloudinary.config({
-		cloud_name: process.env.CLIENT_CLOUD_NAME,
-		api_key: process.env.CLIENT_API_KEY,
-		api_secret: process.env.CLIENT_API_SECRET
-	})
+cloudinary.config({
+	cloud_name: process.env.CLIENT_CLOUD_NAME,
+	api_key: process.env.CLIENT_API_KEY,
+	api_secret: process.env.CLIENT_API_SECRET
+})
 // }
 
 // run local
