@@ -17,24 +17,9 @@ const port = process.env.PORT || 8080
 const passport = require('passport')
 const login = require('./helpers/login')
 const cloudinary = require('cloudinary').v2
-const url = require('url');
-const redis = require("redis");
-console.log(process.env.REDIS_TLS_URL)
-// const client = redis.createClient(process.env.REDIS_URL, {
-// 	host: process.env.REDIS_HOST,
-// 	port: process.env.REDIS_PORT,
-// 	pass: process.env.REDIS_PASS
-// });
+const redis = require('./db/connect.redis')
 
 
-var redisURL = url.parse(process.env.REDIS_TLS_URL);
-console.log(redisURL.port, redisURL.hostname)
-var client = redis.createClient(redisURL.port, redisURL.hostname, {no_ready_check: true});
-client.auth(redisURL.auth.split(":")[1]);
-
-// client.on('connect', function(){
-//     console.log("Connect redis")
-// })
 
 app.use(express.static('./public'))
 app.set('view engine', 'ejs')
@@ -82,15 +67,12 @@ app.use(session(sess));
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-
+redis();
 login(passport, io);
 socket(io)
 connect()
 api(app)
 router(app)
-
-
 
 http.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)

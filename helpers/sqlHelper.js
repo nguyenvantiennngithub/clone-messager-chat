@@ -5,8 +5,8 @@ const got = require('got')
 const md5 = require('md5')
 const fs = require('fs')
 
-const redis = require("redis");
-const client = redis.createClient();
+
+const client = require('../db/connect.redis');
 class functionClass{
     //ham nay nhan vao 1 cai username 
     // async getSocketId(username){

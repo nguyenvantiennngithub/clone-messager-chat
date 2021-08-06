@@ -5,7 +5,6 @@ function connect(){
         if (err) {
             throw err;
         }
-
         console.log("connect success")
     });
 

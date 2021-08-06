@@ -2,8 +2,7 @@
 const db = require('../../db/connect.db')
 const sqlHelper = require('../../helpers/sqlHelper');
 const functionHelper = require('../../helpers/functionHelper');
-const redis = require("redis");
-const client = redis.createClient();
+const client = require('../../db/connect.redis')
 const util = require('util');
 client.get = util.promisify(client.get);
 class apiController{
