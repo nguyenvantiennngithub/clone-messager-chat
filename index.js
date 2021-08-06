@@ -19,6 +19,8 @@ const login = require('./helpers/login')
 const cloudinary = require('cloudinary').v2
 const redis = require("redis");
 
+console.log(process.env.REDIS_URL, process.env.PORT, process.env.HOST, process.env.PASS)
+
 const client = redis.createClient(process.env.REDIS_URL, {
     tls: {
         rejectUnauthorized: false
