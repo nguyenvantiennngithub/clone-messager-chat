@@ -1,10 +1,11 @@
 
-const redis = require('redis')
-const client = redis.createClient(process.env.REDIS_TLS_URL, {
-	tls: {
-		rejectUnauthorized: false
-	}	
-});
+const client = require('./index.redis');
 
-module.exports = client
+function connectRedis(){
+    client.connect(function(err){
+        if (err) throw err
+        console.log("Connect success")
+    })
+}
 
+module.exports = connectRedis
