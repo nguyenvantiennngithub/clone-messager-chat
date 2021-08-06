@@ -18,8 +18,8 @@ const passport = require('passport')
 const login = require('./helpers/login')
 const cloudinary = require('cloudinary').v2
 const redis = require("redis");
-console.log(process.env.REDIS_HOST,process.env.REDIS_PORT,process.env.REDIS_PASS)
-const client = redis.createClient({
+console.log(process.env.REDIS_URL, process.env.REDIS_HOST,process.env.REDIS_PORT,process.env.REDIS_PASS)
+const client = redis.createClient(process.env.REDIS_URL, {
 	host: process.env.REDIS_HOST,
 	port: process.env.REDIS_PORT,
 	pass: process.env.REDIS_PASS
