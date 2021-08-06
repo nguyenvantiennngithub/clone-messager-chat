@@ -19,7 +19,8 @@ const login = require('./helpers/login')
 const cloudinary = require('cloudinary').v2
 const redis = require("redis");
 const client = redis.createClient({
-	host: process.env.DOMAIN || 'https://clone-messager-vantiennn.herokuapp.com',
+	host: process.env.REDIS_HOST,
+	port: process.env.REDIS_PORT,
 });
 
 client.on('connect', function(){
