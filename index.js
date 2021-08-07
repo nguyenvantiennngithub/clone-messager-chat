@@ -17,13 +17,11 @@ const port = process.env.PORT || 8080
 const passport = require('passport')
 const login = require('./helpers/login')
 const cloudinary = require('cloudinary').v2
-// const redis = require('./db/index.redis')
 
 app.use(express.static('./public'))
 app.set('view engine', 'ejs')
 app.set('views', './mvc/views')
 app.set('socketio', io) //export socket io to a global
-// app.set('redis', client) //export redis io to a global
 app.use(fileupload({
 	useTempFiles: true
 }))
@@ -61,7 +59,6 @@ app.use(session(sess));
 app.use(passport.initialize());
 app.use(passport.session());
 
-// redis();
 login(passport, io);
 socket(io)
 connect()
@@ -71,19 +68,4 @@ router(app)
 http.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

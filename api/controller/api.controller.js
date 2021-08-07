@@ -51,33 +51,6 @@ class apiController{
         var end = new Date()
         console.log(result, );
         res.json({...result, time: end.getTime() - start.getTime()});
-
-        // client.get(`curren   tUser[${username}]`, function(err, result){
-        //     if (err) throw err
-
-        // })
-
-
-
-        // client.get(`currentUser[${username}]`, function(err, reply){
-        //     if (err) throw err
-        //     var source;
-        //     var result;
-        //     if (reply){
-        //         console.log(reply)
-        //         source = 'CACHE';
-        //         result = reply;
-        //     }else{
-        //         
-        //     }
-        //     var end = new Date()
-        //     console.log(result)
-        //     res.json({...JSON.parse(result), time: end.getTime()-start.getTime(), source});
-
-        // })
-     
-
-        
     }
 
     async userByUsername(req, res, next){

@@ -213,7 +213,7 @@ class functionClass{
                 db.query(sql, (err, result)=>{
                     if (err) rej(err)
                     console.log("result", result)
-                    // client.set(`currentUser[${username}]`, JSON.stringify(result), 'EX', 1);
+                    client.set(`currentUser[${username}]`, JSON.stringify(result), 'EX', 360);
                     return res(result);
                 })
             })
