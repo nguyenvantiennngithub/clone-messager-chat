@@ -9,12 +9,12 @@ class apiController{
     //[GET] /api/users
     //lấy tất cả user
     async totalUser(req, res, next){
-        var totalUserCache = await client.get('total-user');
-        console.log("apiController/totalUser", totalUserCache);
-        if (totalUserCache != null){
-            res.json(JSON.parse(totalUserCache));
-            return;
-        }
+        // var totalUserCache = await client.get('total-user');
+        // console.log("apiController/totalUser", totalUserCache);
+        // if (totalUserCache != null){
+        //     res.json(JSON.parse(totalUserCache));
+        //     return;
+        // }
         var sql = `select nickname, username, avatar from users`
         db.query(sql, (err, result)=>{
             if (err) throw err
