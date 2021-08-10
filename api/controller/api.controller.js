@@ -9,9 +9,16 @@ class apiController{
     //[GET] /api/users
     //lấy tất cả user
     async totalUser(req, res, next){
+        var totalUserCache = await client.get('total-user');
+        console.log("apiController/totalUser", totalUserCache);
+        if (totalUserCache != null){
+            res.json(JSON.parse(totalUserCache));
+            return;
+        }
         var sql = `select nickname, username, avatar from users`
         db.query(sql, (err, result)=>{
             if (err) throw err
+            client.set('total-user', JSON.stringify(result));
             res.json(result)
         })
     }
@@ -29,28 +36,18 @@ class apiController{
     //[GET] /api/users
     //lấy current user
     async currentUser(req, res, next){
-        console.log("run here")
-
         const username = res.locals.username
         const socketid = req.session.id
-        var start = new Date();
-        var result;
-        client.keys('*', function(err, keys){
-            console.log(keys)
-        })
-        
-        var data = await client.get(`currentUser[${username}]`);
-        console.log("DATA", data)
-        if (data){
-            console.log("CACHE")
-            result = JSON.parse(data);
-        }else{
-            console.log("API")
-            result = await sqlHelper.getCurrentUserAndCache(username);
+      
+        var currentUserCache = await client.get(`current-user[${username}]`);
+        if (currentUserCache){
+            res.json(JSON.parse(currentUserCache));
+            return;
         }
-        var end = new Date()
-        console.log(result, );
-        res.json({...result, time: end.getTime() - start.getTime()});
+        var currentUserAPI = await sqlHelper.getCurrentUser(username);
+        client.set(`current-user[${username}]`, JSON.stringify(currentUserAPI), 'EX', 60*60*24);
+
+        res.json(currentUserAPI);
     }
 
     async userByUsername(req, res, next){
@@ -61,9 +58,13 @@ class apiController{
 
     //[GET] /api/user-chat-list
     //lấy user được add
-    checkedUser(req, res, next){
+    async checkedUser(req, res, next){
         const currentUser = res.locals.username
-        
+        var checkedUserCache = await client.get(`checked-user[${currentUser}]`);
+        if (checkedUserCache != null){
+            res.json(JSON.parse(checkedUserCache))
+            return;
+        }
         //sql này dùng dể lấy những username có cùng rooms với currentUser và ko lấy currentUser     
         var getUserInRoomsSql = `
             select receiver.id, receiver.username, r.updatedAt, user.nickname, r.isPersonal, receiver.name, user.avatar, r.countUnRead, receiver.nickname as nicknameRoom
@@ -76,6 +77,7 @@ class apiController{
 
         db.query(getUserInRoomsSql, (err, result)=>{
             if (err) throw err
+            client.set(`checked-user[${currentUser}]`, JSON.stringify(result));
             res.json(result)
         })
     }
@@ -98,19 +100,21 @@ class apiController{
     //[GET] /api/message
     message(req, res, next){
         const idRoom = req.params.id
+        const page = req.params.page
         const currentUser = res.locals.username
         var getMessageSql = `
-            select currentUserRoom.id, mess.sender, mess.updatedAt, mess.message, mess.isShowTime, mess.isTimeLine, senderRoom.nickname
+            select mess.id as idAT, currentUserRoom.id, mess.sender, mess.updatedAt, mess.message, mess.isShowTime, mess.isTimeLine, senderRoom.nickname
             from messages mess, rooms currentUserRoom , rooms senderRoom
             where mess.idRoom='${idRoom}' AND 
                 currentUserRoom.username='${currentUser}' AND
                 mess.idRoom=currentUserRoom.id AND
                 senderRoom.id=currentUserRoom.id AND
                 senderRoom.username=mess.sender
-                order by mess.updatedAt DESC
+                order by mess.updatedAt DESC LIMIT 20 OFFSET ${(page-1)*20} 
         `
         db.query(getMessageSql, (err, result)=>{
             if (err) throw err
+            console.log(result)
             res.json(result)
         })
     }

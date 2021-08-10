@@ -1,5 +1,8 @@
-const db = require('../../db/connect.db')
+const db = require('../../db/connect.db');
 const sqlHelper = require('../../helpers/sqlHelper')
+const client = require('../../db/connect.redis')
+const util = require('util');
+client.get = util.promisify(client.get);
 class homeController{
     //[GET] /
     async home(req, res){
@@ -217,6 +220,12 @@ class homeController{
             isPersonal: false,
             isActive: true,
         }
+        
+        var userCheckedCache = await client.get(`checked-user[${currentUser}]`);
+        if (userCheckedCache != null){
+            userCheckedCache = JSON.parse(userCheckedCache);
+        }
+        
         sqlHelper.setUpdatedAt(currentUser, idRoom, 1);
         sqlHelper.emit(currentUser, 'add chat list', data, io)
     }

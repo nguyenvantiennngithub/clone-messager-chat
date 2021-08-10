@@ -2,7 +2,9 @@ const db = require('../../db/connect.db')
 const bcrypt = require('bcryptjs')
 const sqlHelper = require('../../helpers/sqlHelper')
 const cloudinary = require('cloudinary').v2
-
+const client = require('../../db/connect.redis')
+const util = require('util');
+client.get = util.promisify(client.get);
 
 
 class authController{
@@ -54,15 +56,20 @@ class authController{
         const hashPsw = bcrypt.hashSync(password, saltRounds);
         const uploads = "./public/uploads/" + avatar.md5;
         const href = (process.env.IS_LOCAL == 'TRUE') ? "/uploads/" : 'https://res.cloudinary.com/vantiennn/image/upload/v1627528384/uploads/'
-        // const href = "https://res.cloudinary.com/vantiennn/image/upload/v1627528384/uploads/"
         console.log('avatar', avatar)
         console.log(avatar)
         var isExistsUser = await sqlHelper.isExistsUser(username)
         if (!isExistsUser){
             sqlHelper.uploadImage(avatar.md5, undefined, avatar.tempFilePath, avatar)
 
-            sqlHelper.insertUser(username, nickname, hashPsw, href + avatar.md5);
-            io.emit('new user', {username, nickname})
+            // sqlHelper.insertUser(username, nickname, hashPsw, href + avatar.md5);
+            // io.emit('new user', {username, nickname})
+            var totalUserCache = await client.get('total-user');
+            if (totalUserCache != null){
+                totalUserCache = JSON.parse(totalUserCache)
+                totalUserCache.push({nickname, username, avatar: href + avatar.md5})
+                client.set('total-user', JSON.stringify(totalUserCache))
+            }
             return res.redirect("/")
         }else{ 
             return res.render('register', {

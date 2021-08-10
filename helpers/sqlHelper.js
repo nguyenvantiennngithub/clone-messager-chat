@@ -205,15 +205,14 @@ class functionClass{
             })
     }
 
-    getCurrentUserAndCache(username){
-        console.log("getCurrentUserAndCache")
+    getCurrentUser(username){
+        console.log("getCurrentUser")
         return new Promise(
             function (res, rej){
                 var sql = `select nickname, username, avatar from users u where u.username='${username}'`
                 db.query(sql, (err, result)=>{
                     if (err) rej(err)
-                    console.log("result", result)
-                    client.set(`currentUser[${username}]`, JSON.stringify(result), 'EX', 360);
+
                     return res(result);
                 })
             })

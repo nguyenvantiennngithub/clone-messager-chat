@@ -2,6 +2,14 @@ var socket = io();
 var page = 1;
 var isIncreasePage = true;
 var username = $('#username').data('name');
+var messageStore = {}
+const currentUser = {
+    avatar: $('#avatar').attr('src'),
+    username: $('#username').text(),
+    nickname: $('#username').data('name')
+}
+
+console.log(currentUser)
 //============================================================================================================
 //---------------------------------------Function store html code-------------------------------------------------
 //============================================================================================================
@@ -170,7 +178,6 @@ function htmlTimeLine(date){
 
 //render message
 async function htmlMessage(sender, nickname, message, date, isShowTime){
-    var currentUser = await getCurrentUser();
     var username = await getUserByUsername(sender)
     
     date = formatDate(date);
@@ -198,9 +205,8 @@ async function htmlMessage(sender, nickname, message, date, isShowTime){
 
 //render item cho user ở dưới trong dialog craete group
 async function htmlUserDialog(name, nickname, avatar, isChecked, isDisable){
-    var {username} = await getCurrentUser();
     var html = '';
-    if (name != username){//khong render ra chin minh
+    if (name != currentUser.username){//khong render ra chin minh
         html += `<div class="dialog__choose-item">
                     <input type="checkbox" name="" id="" class="dialog__choose-item-input" data-name="${name}"`
         
@@ -218,9 +224,9 @@ async function htmlUserDialog(name, nickname, avatar, isChecked, isDisable){
 
 //render ra user đã chọn ở trên dialog create group
 async function htmlCheckedUserDialog(name, nickname, avatar){
-    var {username} = await getCurrentUser();
     
-    if (name === username){//khong render dau X
+    
+    if (name === currentUser.username){//khong render dau X
         return `
         <div class="dialog__choose-checked-item" data-name="${name}">
             <div class="fake-padding">
@@ -359,7 +365,6 @@ function htmlInputChangeName(){
 }
 
 async function htmlUserInRoom({username, nickname, avatar, isHost}, isCurrentUserHost){
-    var currentUser = await getCurrentUser()
     var html = `
         <div class="list-user-item" data-name="${username}">
             <div>
@@ -631,7 +636,7 @@ async function renderCheckedRoom(){
 async function renderTotalUser(){
     // [{nickname, username, socketid}, ....]
     var totalUsers = await getTotalUser();
-    var currentUser = await getCurrentUser();
+  
     var html;
     totalUsers = totalUsers.filter((user)=>{
         return user.username != currentUser.username
@@ -666,27 +671,42 @@ function compareDate(date1, date2){
 //render ra tinh nhắn
 async function renderMessage(idRoom, type){
     console.log("render message")
+    var html = [];
     var messages;
-    
+    if (!messageStore[idRoom]){
+        messageStore[idRoom] = {}
+    }
+    if (messageStore[idRoom].html && messageStore[idRoom].page >= page){
+        console.log("iffffffffffffffffffffffffff");
+        html = messageStore[idRoom].html;
+    }else{
+        console.log("elseeeeeeeeeeeeeeeeeeeeeeee");
         messages = await getMessage(idRoom, page);
+        console.log(messages.length)
+
+        var promises = messages.reverse().map(async (message, index)=>{
+            if (message.isTimeLine){
+                return htmlTimeLine(message.updatedAt) + await htmlMessage(message.sender, message.nickname, message.message, message.updatedAt, message.isShowTime);
+            }else{
+                return htmlMessage(message.sender, message.nickname, message.message, message.updatedAt, message.isShowTime)
+            }
+        })
+        html = await Promise.all(promises)
+        messageStore[idRoom].html = (messageStore[idRoom].html) ? html + messageStore[idRoom].html : html
+        messageStore[idRoom].page = page;
+    }
+    console.log(idRoom, messageStore, html)
+
    
-    var html;
-    var promises = messages.reverse().map(async (message, index)=>{
-        if (message.isTimeLine){
-            return htmlTimeLine(message.updatedAt) + await htmlMessage(message.sender, message.nickname, message.message, message.updatedAt, message.isShowTime);
-        }else{
-            return htmlMessage(message.sender, message.nickname, message.message, message.updatedAt, message.isShowTime)
-        }
-    })
-    html = await Promise.all(promises)
     if (type == 'inner'){
         $('#list-message').html(html)
     }else{
         $('#list-message').prepend(html);
     }
-
-    if (messages.length < 10 && messages.length > 0){
-        isIncreasePage = false;
+    if (messages){
+        if (messages.length < 20 && messages.length >= 0){
+            isIncreasePage = false;
+        }
     }
     scrollChatList()
 }
@@ -792,7 +812,7 @@ function renderNumberSelectedAddUserToGroups(){
 }
 
 async function renderUserDialog(container, isFilter, input){
-    var users = await getTotalUser();
+    var users = await getCheckedUser();
     var idRoom = getCurrentIdRoom();
     var text = $(input).val();
 
@@ -844,11 +864,11 @@ async function renderMessageCantFind(){
 
 async function renderContainerChat(){
     var idRoom = getCurrentIdRoom();
+    console.log("IDROOM", idRoom)
     var infoRoom = await getUserInGroup(idRoom);
     page = 1;
     isIncreasePage = true;
     if (infoRoom){
-        console.log("RUN HERE")
         renderMessage(idRoom, 'inner');
     }else{
         htmlMessageCantFind();
@@ -925,13 +945,9 @@ async function getCheckedUser(){
 
 //lay ra cac message cua 2 user or group chat
 async function getMessage(idRoom, page){
-    return await axios.get(`/api/messages/${idRoom}`)
+    return await axios.get(`/api/messages/${idRoom}/${page}`)
     .then((response)=>{
-        //lấy mổi lần 10 item
-        var lengthPerPage = 10;
-        var begin = (page - 1) * lengthPerPage;
-        var end = (page - 1) * lengthPerPage + lengthPerPage;
-        return response.data.slice(begin, end)
+        return response.data
     })
 }
 
@@ -1243,17 +1259,20 @@ function checkBtnSubmit(container, lengthRequire){
 
 function appendChatListRoll(){
     var scrollTop;
-    var heightContainer = $('#list-message').height();
+    var listMessages = $('#list-message')
+    var heightContainer = listMessages.height();
+    var countMessages = listMessages.length;
     var idRoom = getCurrentIdRoom();
     $('#list-message').on('scroll', async function(){
 
         scrollTop = $('#list-message').scrollTop()
-        console.log(scrollTop)
-
+        console.log(scrollTop, countMessages)
+        
         if (scrollTop === 0){//nếu scroll đến đỉnh thì append thêm
-
+            console.log(isIncreasePage)
             if (isIncreasePage){
                 page++;
+                console.log("SCROLL AND PREPEND");
                 await renderMessage(idRoom, 'prepend');
                 $('#list-message').scrollTop(heightContainer+50)
             }
@@ -1274,6 +1293,7 @@ function alertHasButton(text){
 
 function scrollChatList(){
     var listMessageElement = document.querySelector('#list-message')
+    console.log("SCROLL")
     listMessageElement.scrollTop = 9999999
 }
 
@@ -1423,7 +1443,7 @@ function submitDialogCreateGroup(){
 async function getFirstUserCheckedCreateGroup(ele){
     var container = $(ele).closest('.list-chat-user-item')
     var containerAvatar = container.find('img.avatar').attr('src')
-    var currentUser = await getCurrentUser();
+
 
     $('#userCreateGroup')
         .find('.dialog__choose-item-input[data-name=' + container.data('name') + ']')
@@ -1739,7 +1759,6 @@ function leaveGroupListUser(){
         var currentIdRoom = getCurrentIdRoom();
         var eleRemove = $('#list-chat-user').find('.list-chat-user-item[data-id=' + currentIdRoom + ']')
         var idRoom = getCurrentIdRoom();
-        var currentUser = await getCurrentUser()
         var user = await getUserInRoomByUsernameIdRoom(currentUser.username, idRoom);
         if (user.isHost){
             alertHasButton('You are the admin, you need to remove the admin before leaving the group');
@@ -1822,7 +1841,6 @@ function handleEventMouseListReceiver(){
     })
 
     $('#list-chat-user').on('click', '.list-chat-user-item',async function(){
-        var currentUser = await getCurrentUser()
         var unreadEle = $(this).find('.text-unread')
         var idRoom = $(this).data('id');
 
@@ -1916,26 +1934,14 @@ function submitChangeName(){
 
 $(document).ready(()=>{
     
-$('#test').click( async function(){
-    var a = await getCurrentUser()
-    console.log(a)
-})
 //==============================================================================================================
 //---------------------------------------Function handle event -------------------------------------------------
 //==============================================================================================================
     
     //functuon emit to server socket id of new user login
     async function emitNewUserOnline(){
-        getCurrentUser() //[{nickname, username, socketid}]
-            .then((data)=>{
-                //emit về server để add socketid
-                // socket.id = data.socketid
-                socket.username = data.username
-                socket.emit('join socket id new user online', data)
-            })
-            .catch((err)=>{
-                throw err
-            })
+        socket.username = currentUser.username
+        socket.emit('join socket id new user online', currentUser)
     }
     
     //add a user to chat list
@@ -2096,7 +2102,6 @@ $('#test').click( async function(){
             showDialogListUser();
             idRoom = getCurrentIdRoom();
             userHost = await getUserHostInRoom(idRoom);
-            currentUser = await getCurrentUser();
             isHost = userHost.username === currentUser.username;
 
             renderNumberUserDialogListUser();
@@ -2127,7 +2132,6 @@ $('#test').click( async function(){
     async function sendMessage(){
         var text = $('#input-send-message').val();
         var idRoom = getCurrentIdRoom();
-        var currentUser = await getCurrentUser();
         var sender = $(`.list-chat-user-item[data-id=${idRoom}]`).data('name')
     
         // console.log(sender)
@@ -2181,7 +2185,6 @@ $('#test').click( async function(){
         console.log('checkRoomAndUser')
         var roomNearest = await getIdRoomNearest();
         var currentIdRoom = getCurrentIdRoom();
-        var currentUser = await getCurrentUser();
         var usersInRoom = await getUserInRoom(currentIdRoom);
 
         var container = $('#list-chat-user').find(`.list-chat-user-item[data-id=${currentIdRoom}]`);
@@ -2210,7 +2213,6 @@ $('#test').click( async function(){
         $(document).on('click', '#icon-video-call', async function(){
             
             var currentIdRoom = getCurrentIdRoom()
-            var currentUser = await getCurrentUser()
             window.open('/video-call/' + currentIdRoom, '', 'width=400px, height=1024px');
             socket.emit('client request room is calling', {idRoom: currentIdRoom, sender: currentUser.username})
             socket.on('server respose room is calling', function(isCalling){            
@@ -2325,8 +2327,7 @@ $('#test').click( async function(){
         console.log("Message", {message, sender, idRoom})
         var html = '' //html code to render message
         var isCurrentUserAtRoom = getCurrentIdRoom() === idRoom //check is user in room
-        var currentUser = await getCurrentUser()
-        var infoSender
+            var infoSender
         var containerEle = $('#list-chat-user').find(`.list-chat-user-item[data-id=${idRoom}]`)//list user item
         var unreadEle = containerEle.find('.text-unread')//
         var menuEle = containerEle.find('.menu-container');

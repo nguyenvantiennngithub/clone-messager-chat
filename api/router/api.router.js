@@ -17,7 +17,7 @@ function api(app){
     app.get('/api/user-host-room/:id', middlewareController.checkAuth, apiController.hostUserInRoom)
     app.get('/api/user-in-group/:id', middlewareController.checkAuth, apiController.userInRoom);
     app.get('/api/total-group/:receiver', middlewareController.checkAuth, apiController.totalGroupByUsername)
-    app.get('/api/messages/:id', middlewareController.checkAuth, apiController.message)
+    app.get('/api/messages/:id/:page', middlewareController.checkAuth, apiController.message)
     app.get('/api/group/:id', middlewareController.checkAuth, apiController.groupCurrentUserByIdRoom)
     app.get('/api/length-group/:id', middlewareController.checkAuth, apiController.getLengthGroupByIdRoom)
     app.get('/api/user-in-room/:username/:id', middlewareController.checkAuth, apiController.getUserInRoomByUsernameIdRoom)
