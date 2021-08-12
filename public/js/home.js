@@ -2155,7 +2155,7 @@ $(document).ready(()=>{
             console.log('emit send message')
             $('#input-send-message').val('')
             socket.emit('sender send message', dataMessage)
-
+            return;
             //nếu là personal
             if (sender){
                 var data = JSON.stringify({
@@ -2187,7 +2187,6 @@ $(document).ready(()=>{
                     }
                 })
             }
-            console.log('Send message 2')
         }    
     }
 

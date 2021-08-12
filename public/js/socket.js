@@ -30,11 +30,8 @@ function socket(io){
             var usersInGroup = await sqlHelper.getUserInRoom(idRoom)
             var messageNearest = await sqlHelper.getMessageNearest(idRoom);
             var isTimeLine = 1;//time line truoc block message, 1 is true in sql
-            
             var date = new Date();
-
             
-
             if (messageNearest){
                 isTimeLine = functionHelper.compareDate(date, messageNearest.updatedAt) === true ? 0 : 1
                 isShowTimeMessageNearest = (sender == messageNearest.sender && isTimeLine == false);
@@ -48,9 +45,6 @@ function socket(io){
                 sqlHelper.setUnRead({idRoom, username: user, isIncrease: true});
                 sqlHelper.emit(user, 'server send message', {message, idRoom, sender}, io)
             })
-            
-
-            
         })
 
 
