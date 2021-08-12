@@ -5,8 +5,10 @@ const got = require('got')
 const md5 = require('md5')
 const fs = require('fs')
 
+const client = require('../db/connect.redis')
+const util = require('util');
+client.get = util.promisify(client.get);
 
-const client = require('../db/connect.redis');
 class functionClass{
     //ham nay nhan vao 1 cai username 
     // async getSocketId(username){
@@ -20,6 +22,38 @@ class functionClass{
     //     })
     // }
     
+
+    getTotalUser(){
+        return new Promise( async(res, rej)=>{
+            var totalUserCache = await client.get('total-user');
+            console.log("apiController/totalUser", totalUserCache);
+            if (totalUserCache != null){
+                return res(JSON.parse(totalUserCache))
+            }
+
+
+            var sql = `select nickname, username, avatar from users`
+            db.query(sql, (err, result)=>{
+                if (err) rej(err)
+                client.set('total-user', JSON.stringify(result));
+                return res(result)
+            })
+        })
+    }
+
+    getTotalGroup(username){
+        return new Promise( async(res, rej)=>{
+            // const username = res.locals.username
+            var getGroupSql = `select * from rooms where username='${username}' AND isPersonal=0`
+            db.query(getGroupSql, (err, result)=>{
+                if (err) rej(err)
+                res(result)
+            })
+        })
+        
+    }
+
+
     async getInfoGroupByUsernameIdRoom(username, idRoom){
         // console.log("function/getGroupName", {username, idRoom})
         return new Promise((res, rej)=>{

@@ -15,10 +15,10 @@ function api(app){
 
     app.get('/api/user-by-username/:username', middlewareController.checkAuth, apiController.userByUsername);
     app.get('/api/user-host-room/:id', middlewareController.checkAuth, apiController.hostUserInRoom)
-    app.get('/api/user-in-group/:id', middlewareController.checkAuth, apiController.userInRoom);
+    app.get('/api/user-in-room/:id', middlewareController.checkAuth, apiController.userInRoom);
     app.get('/api/total-group/:receiver', middlewareController.checkAuth, apiController.totalGroupByUsername)
     app.get('/api/messages/:id/:page', middlewareController.checkAuth, apiController.message)
-    app.get('/api/group/:id', middlewareController.checkAuth, apiController.groupCurrentUserByIdRoom)
+    app.get('/api/group-current-user/:id', middlewareController.checkAuth, apiController.groupCurrentUserByIdRoom)
     app.get('/api/length-group/:id', middlewareController.checkAuth, apiController.getLengthGroupByIdRoom)
     app.get('/api/user-in-room/:username/:id', middlewareController.checkAuth, apiController.getUserInRoomByUsernameIdRoom)
 

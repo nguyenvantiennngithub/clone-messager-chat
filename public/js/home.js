@@ -5,8 +5,8 @@ var username = $('#username').data('name');
 var messageStore = {}
 const currentUser = {
     avatar: $('#avatar').attr('src'),
-    username: $('#username').text(),
-    nickname: $('#username').data('name')
+    username: $('#username').data('name'),
+    nickname: $('#username').text(),
 }
 
 console.log(currentUser)
@@ -17,7 +17,7 @@ console.log(currentUser)
 //code html render ra li ben phai cho user
 function htmlTotalUser(username, nickname, avatar){ //bên phải
     return `
-     <li class="list-group-item list-group-item-info d-flex" data-name="${username}">
+    <li class="list-group-item list-group-item-info d-flex" data-name="${username}">
         <img class="avatar avatar-32" src="${avatar}">
          <span class="text-nickname">${nickname}</span>
          <div class="dropdown ml-auto">
@@ -179,7 +179,6 @@ function htmlTimeLine(date){
 //render message
 async function htmlMessage(sender, nickname, message, date, isShowTime){
     var username = await getUserByUsername(sender)
-    
     date = formatDate(date);
 
     var minutes = date.getMinutes();
@@ -618,7 +617,6 @@ async function renderCheckedRoom(){
     var promises = result.map(async (user)=>{ //{sender, receiver, updatedAt, id}
         if (user.isPersonal){//kiểm tra nếu personal thì reder theo personal
             console.log(user)
-            
             return htmlCheckedUser(user, false)
         }else{//còn group thì render theo group
             return htmlCheckedGroup(user, false)
@@ -669,21 +667,22 @@ function compareDate(date1, date2){
 }
 
 //render ra tinh nhắn
-async function renderMessage(idRoom, type){
+async function renderMessage(type){
     console.log("render message")
+    var idRoom = getCurrentIdRoom();
     var html = [];
     var messages;
+    //init if undefined
     if (!messageStore[idRoom]){
         messageStore[idRoom] = {}
     }
+    //if stored
     if (messageStore[idRoom].html && messageStore[idRoom].page >= page){
-        console.log("iffffffffffffffffffffffffff");
         html = messageStore[idRoom].html;
-    }else{
-        console.log("elseeeeeeeeeeeeeeeeeeeeeeee");
+    }else{//if not
         messages = await getMessage(idRoom, page);
-        console.log(messages.length)
-
+        var userInRoom = await getGroupCurrentUserByIdRoom(idRoom)
+        console.log("userInRoom", userInRoom)
         var promises = messages.reverse().map(async (message, index)=>{
             if (message.isTimeLine){
                 return htmlTimeLine(message.updatedAt) + await htmlMessage(message.sender, message.nickname, message.message, message.updatedAt, message.isShowTime);
@@ -692,10 +691,10 @@ async function renderMessage(idRoom, type){
             }
         })
         html = await Promise.all(promises)
-        messageStore[idRoom].html = (messageStore[idRoom].html) ? html + messageStore[idRoom].html : html
+        messageStore[idRoom].html = (messageStore[idRoom].html) ? html.concat(messageStore[idRoom].html) : html
         messageStore[idRoom].page = page;
     }
-    console.log(idRoom, messageStore, html)
+    console.log(idRoom, messageStore)
 
    
     if (type == 'inner'){
@@ -713,17 +712,23 @@ async function renderMessage(idRoom, type){
 
 function filterUserByInputCreateGroup(){
     $('#filterCreateGroup').on('input', function(){
-        var option = $('#filter-user-create-group')
-            .find('.dialog__option-container.active')
-            .data('option')
-        renderUserByOptionCreateGroup(option)
+        //filter .dialog__choose-item
+        var text = $('#filterCreateGroup').val();
+        $('#userCreateGroup').find('.dialog__choose-item-label').each(function(){
+            var container = $(this).closest('.dialog__choose-item')
+            if ($(this).text().includes(text)){
+                container.removeAttr('hidden')
+            }else{
+                container.attr('hidden', 'hidden')
+            }
+        })
     })
 }
 function getUserCheckedCreateGroup(){
     var listUserChecked = $('#selectedCreateGroup')
         .find('.dialog__choose-checked-item[data-name != ' + $('#username').data('name') + ']')
         .map(function(){
-            return $(this).data('name');
+            return String($(this).data('name'));
         }).toArray()
     return listUserChecked
 }
@@ -737,30 +742,22 @@ async function renderUserByOptionCreateGroup(option){
     //lay date theo option
     var users = await getUserByOptionCreateGroup(option)
     var listUserChecked = await getUserCheckedCreateGroup()
-    var text = $('#filterCreateGroup').val();
-
-    if (text){
-        users = users.filter(function(user){
-            return user.nickname.includes(text);
-        })
-    }
 
     console.log(listUserChecked)
     var promises = users.map((user)=>{
         //kiem tra user da check chua
-        if ($.inArray(user.username, listUserChecked) != -1){
+        console.log(listUserChecked.includes(user.username), user.username, listUserChecked)
+        if (listUserChecked.includes(user.username)){
             isChecked = true;
         }else{
             isChecked = false;
         }
-        
         return htmlUserDialog(user.username, user.nickname, user.avatar, isChecked)
     })
     html = await Promise.all(promises)
     $('#userCreateGroup').html(html)
     return;
 }
-
 
 //render ra số lượng người đã đc check trong phần dialog
 function renderNumberSelectedCreateGroup(){
@@ -800,9 +797,23 @@ async function renderThreadChat({id, nickname, name, isPersonal, avatar}){
 function renderTotalUserByOption(option){
     // console.log('renderTotalUserByOption', option)
     if (option == 'personal'){
-        renderTotalUser();
+        $('#list-total-user').find('.list-group-item').each(function(){
+            if ($(this).data('type') == 'personal'){
+                $(this).addClass('d-flex').removeAttr('hidden');
+            }else if ($(this).data('type') == 'group'){
+                $(this).removeClass('d-flex').attr('hidden', 'hidden');
+            }
+        })
+        // renderTotalUser();
     }else if (option == 'group'){
-        renderTotalGroup();
+        $('#list-total-user').find('.list-group-item').each(function(){
+            if ($(this).data('type') == 'personal'){
+                $(this).removeClass('d-flex').attr('hidden', 'hidden');
+            }else if ($(this).data('type') == 'group'){
+                $(this).addClass('d-flex').removeAttr('hidden');
+            }
+        })
+        // renderTotalGroup();
     }
 } 
 //đếm xem có bao nhiêu group đã đc chọn
@@ -820,29 +831,29 @@ async function renderUserDialog(container, isFilter, input){
     var isChecked;
     var userInRoom;
     var html
+
+    //get user checked
     var checkedUsers = $('#selectedCreatePersonalChat')
         .find('.dialog__choose-checked-item')
         .map(function(){
             return $(this).data('name')
         })
         .toArray()
-    
     if (text){
         users = users.filter(function(user){
             return user.username.includes(text);
         })
     }
-
+    userInRoom = await getUserInRoom(idRoom);
     var promises = users.map(async (user)=>{
         isDisable = false;
         isChecked = false
         if (isFilter){
-            userInRoom = await getUserInRoom(idRoom);
-            userInRoom = userInRoom.map(function(user){
+
+            var usernameInRoom = userInRoom.map(function(user){
                 return user.username
             })
-
-            isDisable = userInRoom.includes(user.username);
+            isDisable = usernameInRoom.includes(user.username);
         }
         isChecked = checkedUsers.includes(user.username);
 
@@ -865,11 +876,11 @@ async function renderMessageCantFind(){
 async function renderContainerChat(){
     var idRoom = getCurrentIdRoom();
     console.log("IDROOM", idRoom)
-    var infoRoom = await getUserInGroup(idRoom);
+    var infoRoom = await getGroupCurrentUserByIdRoom(idRoom);
     page = 1;
     isIncreasePage = true;
     if (infoRoom){
-        renderMessage(idRoom, 'inner');
+        renderMessage('inner');
     }else{
         htmlMessageCantFind();
     }
@@ -976,15 +987,15 @@ async function getLengthGroupByIdRoom(idRoom){
 }
 
 //get info group
-async function getUserInGroup(idRoom){
-    return await axios.get(`/api/group/${idRoom}`)
+async function getGroupCurrentUserByIdRoom(idRoom){
+    return await axios.get(`/api/group-current-user/${idRoom}`)
     .then((response)=>{
         return response.data
     })
 }
 
 async function getUserInRoom(idRoom){
-    return await axios.get(`/api/user-in-group/${idRoom}`)
+    return await axios.get(`/api/user-in-room/${idRoom}`)
         .then((response)=>{
             return response.data;
         })
@@ -1205,44 +1216,45 @@ function filterByOption(container, renderCallBack){
 }
 
 async function getCheckedListByOption(option){
+    console.log("CLICK", option)
+    var listUserChecked = $('#list-chat-user').find('.list-chat-user-item')
     switch(option){
         case 'personal':{
-            var checkedUsers = await getCheckedUser();
-            return sortByUpdatedAt(checkedUsers)
+            listUserChecked.each(function(idx){
+                if ($(this).data('name') != undefined){//personal
+                    $(this).addClass('d-flex').show();
+                    
+                }else{
+                    $(this).removeClass('d-flex').hide();
+                }
+            })
+            break;
+           
         }
         case 'group':{
-            var checkedGroups = await getCheckedGroup();
-            return sortByUpdatedAt(checkedGroups)
+            listUserChecked.each(function(idx){
+                if ($(this).data('name') != undefined){
+                    $(this).removeClass('d-flex').hide();
+                }else{
+                    $(this).addClass('d-flex').show();
+                }
+            })
+            break;
+
         }
         case 'all':{
-            var checkedUsers = await getCheckedUser();
-            var checkedGroups = await getCheckedGroup();
-            var result = checkedUsers.concat(checkedGroups)
-            return sortByUpdatedAt(result)
+            listUserChecked.each(function(idx){
+                if ($(this).data('name') != undefined){
+                    $(this).addClass('d-flex').show();
+                }else{
+                    $(this).addClass('d-flex').show();
+                }
+            })
+            break;
         }
     }
 }
 
-async function renderCheckedListByOption(option){
-    console.log('renderCheckedListByOption')
-    var result = await getCheckedListByOption(option);
-    var roomOnline = await getIdRoomOnline();
-    var html;
-    var promises = result.map((user)=>{ //{sender, receiver, updatedAt, id}
-        var isOnline = $.inArray(Number.parseInt(user.id), roomOnline) != -1;
-
-        if (user.isPersonal){//kiểm tra nếu personal thì reder theo personal
-            return htmlCheckedUser(user, isOnline)
-        }else{//còn group thì render theo group
-            return htmlCheckedGroup(user, isOnline)
-        }
-    })
-    html = await Promise.all(promises);
-    
-    $('#list-chat-user').html(html) 
-        
-    activeAndRenderMessageReceiver()
-}
 
 function checkBtnSubmit(container, lengthRequire){
     var length = $(container).find('.dialog__choose-checked-item').length
@@ -1262,7 +1274,6 @@ function appendChatListRoll(){
     var listMessages = $('#list-message')
     var heightContainer = listMessages.height();
     var countMessages = listMessages.length;
-    var idRoom = getCurrentIdRoom();
     $('#list-message').on('scroll', async function(){
 
         scrollTop = $('#list-message').scrollTop()
@@ -1273,7 +1284,7 @@ function appendChatListRoll(){
             if (isIncreasePage){
                 page++;
                 console.log("SCROLL AND PREPEND");
-                await renderMessage(idRoom, 'prepend');
+                await renderMessage('prepend');
                 $('#list-message').scrollTop(heightContainer+50)
             }
         }
@@ -1858,7 +1869,7 @@ function handleEventMouseListReceiver(){
     })
 }
 function filterCheckedList(){
-    filterByOption('#filter-checked-list', renderCheckedListByOption)
+    filterByOption('#filter-checked-list', getCheckedListByOption)
 }
 
 
@@ -1923,7 +1934,7 @@ function submitChangeName(){
             data: data,
             method: 'POST',
             success: async function(){
-                var infoRoom = await getUserInGroup(idRoom); 
+                var infoRoom = await getGroupCurrentUserByIdRoom(idRoom); 
                 renderThreadChat(infoRoom)                    
             }
         })
@@ -2096,7 +2107,6 @@ $(document).ready(()=>{
     async function handleDialogListUser(){
         var idRoom
         var userHost
-        var currentUser
         var isHost
         $(document).on('click', '#icon-setting', async function(){
             showDialogListUser();
@@ -2228,7 +2238,7 @@ $(document).ready(()=>{
         await renderCheckedRoom() //block ben trai
 
         await emitNewUserOnline() 
-        renderTotalUser() //block ben phai
+        // renderTotalUser() //block ben phai
         checkRoomAndUser();
         scrollChatList() //scroll thanh chat xuong
         closeDialogByOverlay();

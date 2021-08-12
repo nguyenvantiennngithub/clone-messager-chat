@@ -72,6 +72,31 @@
           </div>
         </div>
         <ul class="list-group" id="list-total-user">
+          <% totalUsers.forEach(function(user){ %>
+            <li class="list-group-item list-group-item-info d-flex" data-type="personal" data-name="<%- user.username %>">
+              <img class="avatar avatar-32" src="<%- user.avatar %>">
+              <span class="text-nickname"><%- user.nickname %></span>
+              <div class="dropdown ml-auto">
+                  <button class="btn btn-secondary dropdown-toggle" type="button" id="right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                  <div class="dropdown-menu" aria-labelledby="right">
+                      <button class="add-chat-list dropdown-item" type="button">Thêm</button>
+                  </div>
+              </div>
+            </li>
+          <% }); %>
+          <% totalGroups.forEach(function(group){ %>
+            <li class="list-group-item list-group-item-info" data-type="group" hidden data-idRoom=<%- group.idRoom %>>
+              <img class="avatar avatar-32" src="<%- group.avatar %>">
+              <span class="text-nickname"><%- group.name %></span>
+              <div class="dropdown ml-auto">
+                  <button class="btn btn-secondary dropdown-toggle" type="button" id="right" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                  <div class="dropdown-menu" aria-labelledby="right">
+                      <button class="add-chat-list-group dropdown-item" type="button">Thêm</button>
+                  </div>
+              </div>
+            </li>
+          <% }); %>
+
         </ul>
       </div>
     </div>

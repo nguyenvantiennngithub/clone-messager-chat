@@ -9,28 +9,15 @@ class apiController{
     //[GET] /api/users
     //lấy tất cả user
     async totalUser(req, res, next){
-        // var totalUserCache = await client.get('total-user');
-        // console.log("apiController/totalUser", totalUserCache);
-        // if (totalUserCache != null){
-        //     res.json(JSON.parse(totalUserCache));
-        //     return;
-        // }
-        var sql = `select nickname, username, avatar from users`
-        db.query(sql, (err, result)=>{
-            if (err) throw err
-            client.set('total-user', JSON.stringify(result));
-            res.json(result)
-        })
+        var totalUsers = await sqlHelper.getTotalUser();
+        res.json(totalUsers)
     }
     //[GET] /api/groups
     //lấy tất cả group của curentUser
     async totalGroup(req, res, next){
-        const username = res.locals.username
-        var getGroupSql = `select * from rooms where username='${username}' AND isPersonal=0`
-        db.query(getGroupSql, (err, result)=>{
-            if (err) throw err
-            res.json(result)
-        })
+        var currentUser = res.locals.username
+        var totalGroups = await sqlHelper.getTotalGroup(currentUser)
+        res.json(totalGroups)
     }
 
     //[GET] /api/users
@@ -60,11 +47,12 @@ class apiController{
     //lấy user được add
     async checkedUser(req, res, next){
         const currentUser = res.locals.username
-        var checkedUserCache = await client.get(`checked-user[${currentUser}]`);
-        if (checkedUserCache != null){
-            res.json(JSON.parse(checkedUserCache))
-            return;
-        }
+        // var checkedUserCache = await client.get(`checked-user[${currentUser}]`);
+        // if (checkedUserCache != null){
+        //     console.log("CheckedUserCache", checkedUserCache)
+        //     res.json(JSON.parse(checkedUserCache))
+        //     return;
+        // }
         //sql này dùng dể lấy những username có cùng rooms với currentUser và ko lấy currentUser     
         var getUserInRoomsSql = `
             select receiver.id, receiver.username, r.updatedAt, user.nickname, r.isPersonal, receiver.name, user.avatar, r.countUnRead, receiver.nickname as nicknameRoom
@@ -77,7 +65,7 @@ class apiController{
 
         db.query(getUserInRoomsSql, (err, result)=>{
             if (err) throw err
-            client.set(`checked-user[${currentUser}]`, JSON.stringify(result));
+            // client.set(`checked-user[${currentUser}]`, JSON.stringify(result));
             res.json(result)
         })
     }
@@ -172,7 +160,8 @@ class apiController{
         const idRoom = req.params.id;
         console.log("userInRoom", idRoom)
         var getUserInRoomsSql = `
-            select user.username, user.nickname, room.isHost, user.avatar from rooms room, users user
+            select user.username, user.nickname, room.isHost, user.avatar 
+            from rooms room, users user
             where room.username=user.username AND room.id=${idRoom}
         `
         db.query(getUserInRoomsSql, (err, result)=>{
@@ -185,7 +174,10 @@ class apiController{
         const currentUser = res.locals.username;
         const idRoom = req.params.id;
         // console.log('groupCurrentUserByIdRoom', {currentUser, idRoom})
-        var getInfoRoom = `select distinct username, id, name, isPersonal, avatar, nickname from rooms where id=${idRoom} AND username!='${currentUser}'`
+        var getInfoRoom = `
+            select distinct username, id, name, isPersonal, avatar, nickname 
+            from rooms 
+            where id=${idRoom} AND username!='${currentUser}'`
         db.query(getInfoRoom,async (err, result)=>{
             if (err) throw err
             // console.log('groupCurrentUserByIdRoom', result);

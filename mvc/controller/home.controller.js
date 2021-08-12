@@ -29,10 +29,18 @@ class homeController{
         
         if (!idRoom){
             idRoom = await sqlHelper.getIdRoomNearest(currentUser)
-           res.redirect('/chat/' + idRoom);
-           return;
+            res.redirect('/chat/' + idRoom);
+            return;
         }
-        res.render("chat", {infoCurrentUser, idRoom, avatar})
+
+        var totalUsers = await sqlHelper.getTotalUser();
+        totalUsers = totalUsers.filter((user)=>{
+            return user.username != currentUser
+        })
+        var totalGroups = await sqlHelper.getTotalGroup(currentUser);
+
+
+        res.render("chat", {infoCurrentUser, idRoom, avatar, totalUsers, totalGroups})
     }
 
     async videoCall(req, res){
