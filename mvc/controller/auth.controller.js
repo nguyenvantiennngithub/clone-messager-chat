@@ -62,7 +62,7 @@ class authController{
         if (!isExistsUser){
             sqlHelper.uploadImage(avatar.md5, undefined, avatar.tempFilePath, avatar)
 
-            // sqlHelper.insertUser(username, nickname, hashPsw, href + avatar.md5);
+            sqlHelper.insertUser(username, nickname, hashPsw, href + avatar.md5);
             // io.emit('new user', {username, nickname})
             var totalUserCache = await client.get('total-user');
             if (totalUserCache != null){
