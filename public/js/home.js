@@ -2155,38 +2155,7 @@ $(document).ready(()=>{
             console.log('emit send message')
             $('#input-send-message').val('')
             socket.emit('sender send message', dataMessage)
-            return;
-            //nếu là personal
-            if (sender){
-                var data = JSON.stringify({
-                    receiver: sender,
-                    isShowReceiver: true,//add 2 phia
-                })
-                $.ajax({
-                    url: '/create-or-add-chat-list-personal',
-                    method: 'POST',
-                    data: data,
-                    contentType: 'application/json',
-                    dataType: 'json',
-                    success: function(){
-                    }
-                })
-                //cái này là group
-            }else if (!sender){
-                var data = {
-                    idRoom: idRoom,
-                    isShowReceiver: true,
-                }
-                $.ajax({
-                    url: '/send-message', 
-                    method: 'POST',
-                    data: JSON.stringify(data),
-                    contentType: 'application/json',
-                    dataType: 'json',
-                    success: function(){
-                    }
-                })
-            }
+           
         }    
     }
 
@@ -2279,7 +2248,7 @@ $(document).ready(()=>{
     socket.on('user online', (userOnline)=>{
         console.log(userOnline)
     })
-
+    
     socket.on('add chat list', async function({isActive, idRoom, nicknameRoom, receiver, groupName, avatar, isPersonal, countUnRead}){
         var container = $(`.list-chat-user-item[data-id=${idRoom}]`);
         var firstChild = $('#list-chat-user .list-chat-user-item:first-child');
@@ -2305,7 +2274,6 @@ $(document).ready(()=>{
             $('#list-chat-user').prepend(html)
         }
         if (isActive){
-            console.log("FJSAKHFJASJFKLSJFSAKLJFKLS")
             window.history.pushState("", "", `/chat/${idRoom}`)
             activeAndRenderMessageReceiver()
             renderContainerChat()
@@ -2336,14 +2304,22 @@ $(document).ready(()=>{
         console.log("Message", {message, sender, idRoom})
         var html = '' //html code to render message
         var isCurrentUserAtRoom = getCurrentIdRoom() === idRoom //check is user in room
-            var infoSender
+        var infoSender
         var containerEle = $('#list-chat-user').find(`.list-chat-user-item[data-id=${idRoom}]`)//list user item
         var unreadEle = containerEle.find('.text-unread')//
         var menuEle = containerEle.find('.menu-container');
         var value;
         var isTimeLine = true;
 
-        
+        var container = $(`.list-chat-user-item[data-id=${idRoom}]`);
+        var firstChild = $('#list-chat-user .list-chat-user-item:first-child');
+
+        //swap room chat
+        if (container.length >= 1){
+            firstChild.before(container);
+        }
+
+
         value = getValueUnread(unreadEle.text());
         //if receiver in room
         if (isCurrentUserAtRoom){

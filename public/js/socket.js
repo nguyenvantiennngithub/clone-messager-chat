@@ -31,7 +31,7 @@ function socket(io){
             var messageNearest = await sqlHelper.getMessageNearest(idRoom);
             var isTimeLine = 1;//time line truoc block message, 1 is true in sql
             var date = new Date();
-            
+
             if (messageNearest){
                 isTimeLine = functionHelper.compareDate(date, messageNearest.updatedAt) === true ? 0 : 1
                 isShowTimeMessageNearest = (sender == messageNearest.sender && isTimeLine == false);
@@ -43,10 +43,10 @@ function socket(io){
            
             usersInGroup.forEach((user)=>{
                 sqlHelper.setUnRead({idRoom, username: user, isIncrease: true});
+                sqlHelper.setUpdatedAt(user, idRoom, 1)
                 sqlHelper.emit(user, 'server send message', {message, idRoom, sender}, io)
             })
         })
-
 
         socket.on('client request video call', async function(data){
             var usersInGroup = await sqlHelper.getUserInRoom(data.idRoom);
