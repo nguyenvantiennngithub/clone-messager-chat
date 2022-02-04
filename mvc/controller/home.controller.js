@@ -140,7 +140,7 @@ class homeController{
                 isActive: isActive, 
                 isPersonal: false,
                 isHost: isHost,
-                avatar: avatarDB + avatar.md5
+                avatar: avatarDB
             }
             
             sqlHelper.insertAddChatListGroup(user, idRoom, 1, name, isHost, url.urlStoreAtDB + avatar.md5)
@@ -149,8 +149,6 @@ class homeController{
         })
         res.end();
     }
-
-
 
     async addUsersToGroups(req, res, next){
         const io = req.app.get('socketio')

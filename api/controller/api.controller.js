@@ -55,12 +55,13 @@ class apiController{
         // }
         //sql này dùng dể lấy những username có cùng rooms với currentUser và ko lấy currentUser     
         var getUserInRoomsSql = `
-            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.isPersonal, receiver.name, user.avatar, r.countUnRead, receiver.nickname as nicknameRoom
+            select receiver.id, receiver.username, r.updatedAt, user.nickname, r.isPersonal, receiver.name, 
+                user.avatar, r.countUnRead, receiver.nickname as nicknameRoom
             from rooms r, (
                 select * from rooms 
                 where id in (select id from rooms where username='${currentUser}' AND isShow=1) AND username != '${currentUser}')
                 as receiver, users user
-            where r.id=receiver.id AND r.username='${currentUser}' AND user.username= receiver.username AND r.isPersonal = 1
+            where r.id=receiver.id AND r.username='${currentUser}' AND user.username=receiver.username AND r.isPersonal = 1
         `
 
         db.query(getUserInRoomsSql, (err, result)=>{
@@ -187,8 +188,6 @@ class apiController{
                     result[0].avatar = infoUser.avatar
                 }
             }
-
-            
             res.json(result[0]);
         })
     }
@@ -207,7 +206,6 @@ class apiController{
         const currentUser = await sqlHelper.getInfoUser(res.locals.username)
         var roomOnline = await functionHelper.filterAndGetRoomOnline(io.sockets.adapter.rooms, currentUser);
         res.json(roomOnline);
-
     }
 
     async getUserInRoomByUsernameIdRoom(req, res){
@@ -220,8 +218,6 @@ class apiController{
         const result = await sqlHelper.getIdRoomNearest(currentUser);
         res.json(result);
     }
-
-
 }
 
 module.exports = new apiController()

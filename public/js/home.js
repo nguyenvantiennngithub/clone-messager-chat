@@ -48,31 +48,23 @@ function htmlToTalGroup(name, idRoom, avatar){
 function calcDateTimeStamp(date1, date2){
     date1 = formatDate(date1)
     date2 = formatDate(date2)
-    var year = Math.abs(date1.getFullYear() - date2.getFullYear())
-    var month = Math.abs(date1.getMonth() - date2.getMonth())
-    var date = Math.abs(date1.getDate() - date2.getDate())
-    var hour = Math.abs(date1.getHours() - date2.getHours())
-    var minute = Math.abs(date1.getMinutes() - date2.getMinutes())
-    if (year == 0){
-        if (month == 0){
-            if (date == 0){
-                if (hour == 0){
-                    if (minute == 0){
-                        return '1m'
-                    }else{//Minutes
-                        return minute + 'm'
-                    }
-                }else{
-                    return hour + 'h';
-                }
-            }else{
-                return date + 'd';
-            }
-        }else{
-            return month + 'm';
-        }
+    console.log(date2.getTime() - date1.getTime())
+    var minuteCalc = (date2.getTime() - date1.getTime())/60000//convert to minute
+    
+    if (minuteCalc < 1){
+        return '1m'
+    }else if (minuteCalc < 60){// < 1 hour
+        return parseInt(minuteCalc) + 'm'
+    }else if (minuteCalc < 1440){// < 1 day
+        return parseInt(minuteCalc/60) + 'h';
+    }else if (minuteCalc < 10080){// < 1 week
+        return parseInt(minuteCalc/1440) + 'd'
+    }else if (minuteCalc < 43200){ // < 1 month
+        return parseInt(minuteCalc/10080) + 'w'
+    }else if (minuteCalc < 525600){ // < 1 year
+        return parseInt(minuteCalc/43200) + 'm'
     }else{
-        return year + 'y';
+        return parseInt(minuteCalc/525600) + 'y'
     }
 }
 
@@ -612,6 +604,7 @@ async function renderCheckedRoom(){
     var html;
     //concat và sort theo updatedAt lại
     result = sortByUpdatedAt(result)
+    console.log(result)
     // console.log(result)
     //render ra html 
     var promises = result.map(async (user)=>{ //{sender, receiver, updatedAt, id}
@@ -673,13 +666,13 @@ async function renderMessage(type){
     var html = [];
     var messages;
     //init if undefined
-    if (!messageStore[idRoom]){
-        messageStore[idRoom] = {}
-    }
+    // if (!messageStore[idRoom]){
+    //     messageStore[idRoom] = {}
+    // }
     //if stored
-    if (messageStore[idRoom].html && messageStore[idRoom].page >= page){
-        html = messageStore[idRoom].html;
-    }else{//if not
+    // if (messageStore[idRoom].html && messageStore[idRoom].page >= page){
+    //     html = messageStore[idRoom].html;
+    // }else{//if not
         messages = await getMessage(idRoom, page);
         var userInRoom = await getGroupCurrentUserByIdRoom(idRoom)
         console.log("userInRoom", userInRoom)
@@ -691,9 +684,9 @@ async function renderMessage(type){
             }
         })
         html = await Promise.all(promises)
-        messageStore[idRoom].html = (messageStore[idRoom].html) ? html.concat(messageStore[idRoom].html) : html
-        messageStore[idRoom].page = page;
-    }
+    //     messageStore[idRoom].html = (messageStore[idRoom].html) ? html.concat(messageStore[idRoom].html) : html
+    //     messageStore[idRoom].page = page;
+    // }
     console.log(idRoom, messageStore)
 
    
@@ -710,18 +703,22 @@ async function renderMessage(type){
     scrollChatList()
 }
 
+
+function hideShowElementWithInputValue(inputEle, containerFilter){
+    var inputValue = $(inputEle).val() 
+    $(containerFilter).find('.dialog__choose-item-label').each(function(){
+        var containerItem = $(this).closest('.dialog__choose-item')
+        if ($(this).text().includes(inputValue)){
+            containerItem.removeAttr('hidden')
+        }else{
+            containerItem.attr('hidden', 'hidden')
+        }
+    })
+}
+
 function filterUserByInputCreateGroup(){
     $('#filterCreateGroup').on('input', function(){
-        //filter .dialog__choose-item
-        var text = $('#filterCreateGroup').val();
-        $('#userCreateGroup').find('.dialog__choose-item-label').each(function(){
-            var container = $(this).closest('.dialog__choose-item')
-            if ($(this).text().includes(text)){
-                container.removeAttr('hidden')
-            }else{
-                container.attr('hidden', 'hidden')
-            }
-        })
+        hideShowElementWithInputValue('#filterCreateGroup', '#userCreateGroup')
     })
 }
 function getUserCheckedCreateGroup(){
@@ -823,15 +820,13 @@ function renderNumberSelectedAddUserToGroups(){
 }
 
 async function renderUserDialog(container, isFilter, input){
-    var users = await getCheckedUser();
+    var users = await getTotalUser();
     var idRoom = getCurrentIdRoom();
     var text = $(input).val();
-
     var isDisable;
     var isChecked;
     var userInRoom;
     var html
-
     //get user checked
     var checkedUsers = $('#selectedCreatePersonalChat')
         .find('.dialog__choose-checked-item')
@@ -841,7 +836,7 @@ async function renderUserDialog(container, isFilter, input){
         .toArray()
     if (text){
         users = users.filter(function(user){
-            return user.username.includes(text);
+            return user.nickname.includes(text);
         })
     }
     userInRoom = await getUserInRoom(idRoom);
@@ -849,7 +844,6 @@ async function renderUserDialog(container, isFilter, input){
         isDisable = false;
         isChecked = false
         if (isFilter){
-
             var usernameInRoom = userInRoom.map(function(user){
                 return user.username
             })
@@ -1483,7 +1477,7 @@ async function getFirstUserCheckedCreateGroup(ele){
 
 function filterGroupByInputAddUserToGroups(receiver){
     $('#filterAddUserToGroups').on('input', function(){
-        renderGroupAddUserToGroups(receiver)
+        hideShowElementWithInputValue('#filterAddUserToGroups', '#groupAddUserToGroups');
     })
 }
 
@@ -1572,7 +1566,8 @@ async function renderGroupAddUserToGroups(receiver){
 //khi mà click vào checkbox trong dialog add group
 function filterUserByInputCreatePersonalChats(container, isFilter){
     $('#filterCreatePersonalChats').on('input', function(){
-        renderUserDialog(container, isFilter, '#filterCreatePersonalChats')
+        // renderUserDialog(container, isFilter, '#filterCreatePersonalChats')
+        hideShowElementWithInputValue('#filterCreatePersonalChats', '#userCreatePersonalChat')
     })
 }
 function handleChangeCheckboxCreatePersonalChats(){
@@ -1631,7 +1626,8 @@ function checkBtnSubmitCreatePersonalChats(){
 
 function filterUserByInputAddUsersToGroup(container, isFilter){
     $('#filterAddUsersToGroup').on('input', function(){
-        renderUserDialog(container, isFilter, '#filterAddUsersToGroup')
+        hideShowElementWithInputValue('#filterAddUsersToGroup', '#userAddUsersToGroup')
+        // renderUserDialog(container, isFilter, '#filterAddUsersToGroup')
     })
 }
 

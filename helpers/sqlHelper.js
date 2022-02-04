@@ -31,7 +31,6 @@ class functionClass{
                 return res(JSON.parse(totalUserCache))
             }
 
-
             var sql = `select nickname, username, avatar from users`
             db.query(sql, (err, result)=>{
                 if (err) rej(err)
@@ -50,7 +49,6 @@ class functionClass{
                 res(result)
             })
         })
-        
     }
 
 
@@ -435,8 +433,6 @@ class functionClass{
             }
         )
     } 
-
-    
 }
 
 

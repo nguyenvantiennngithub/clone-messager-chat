@@ -82,12 +82,6 @@ async function main(){
     console.log(myPeer.id)
     
     openStream().then(async function(myStream){
-        
-        if (myPeer.id == null){
-            alert("NULL")
-            // window.location.reload();
-        }
-
         var user = {username, displayName, avatar, peerId: myPeer.id}
         console.log("user prepare", user);
         addVideo(myStream, user, true);//just mute myseft
